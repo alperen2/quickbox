@@ -24,12 +24,14 @@ struct CaptureView: View {
         static let cardCornerRadius: CGFloat = 18
         static let cardPaddingHorizontal: CGFloat = 16
         static let cardPaddingVertical: CGFloat = 14
-        static let rowHorizontalPadding: CGFloat = 10
+        static let rowHorizontalPadding: CGFloat = 12
         static let rowSpacing: CGFloat = 10
         static let leadingIconWidth: CGFloat = 16
         static let trailingIconWidth: CGFloat = 12
-        static let minimumRowHeight: CGFloat = 44
-        static let rowVerticalPadding: CGFloat = 8
+        static let actionButtonWidth: CGFloat = 30
+        static let actionGap: CGFloat = 6
+        static let minimumRowHeight: CGFloat = 58
+        static let rowVerticalPadding: CGFloat = 6
         static let textFont = NSFont.systemFont(ofSize: 14, weight: .medium)
         static let textLineHeight = ceil(textFont.ascender - textFont.descender + textFont.leading)
         static let maxTextLines: CGFloat = 3
@@ -289,6 +291,8 @@ struct CaptureView: View {
             panelWidth
             - (16 * 2)
             - (Layout.rowHorizontalPadding * 2)
+            - (Layout.actionButtonWidth * 2)
+            - (Layout.actionGap * 2)
             - Layout.leadingIconWidth
             - Layout.trailingIconWidth
             - (Layout.rowSpacing * 2)
@@ -329,106 +333,126 @@ struct CaptureView: View {
     private func taskRow(_ item: InboxItem) -> some View {
         let isEditing = editingItemID == item.id
         let isHovered = hoveredItemID == item.id
+        let rowHeight = estimatedRowHeight(for: item)
 
-        return HStack(spacing: 10) {
-            Button {
-                appState.handleSpotlightMutation(.toggle(item.id))
-            } label: {
-                Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(item.isCompleted ? Color.white.opacity(0.95) : Color.white.opacity(0.62))
-            }
-            .buttonStyle(.plain)
-
-            VStack(alignment: .leading, spacing: 1) {
-                if isEditing {
-                    TextField("Edit task", text: $editingDraftText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.primary)
-                        .focused($focusedField, equals: .rowEditor)
-                        .onSubmit {
-                            saveEditing(item)
-                        }
-
-                    Text(item.time)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text(item.text)
-                        .font(.system(size: 14, weight: .medium))
-                        .strikethrough(item.isCompleted)
-                        .foregroundStyle(item.isCompleted ? .secondary : .primary)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Text(item.time)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+        return HStack(spacing: Layout.actionGap) {
+            HStack(spacing: Layout.rowSpacing) {
+                Button {
+                    appState.handleSpotlightMutation(.toggle(item.id))
+                } label: {
+                    Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(item.isCompleted ? Color.white.opacity(0.95) : Color.white.opacity(0.62))
                 }
+                .buttonStyle(.plain)
+                .disabled(isEditing)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    if isEditing {
+                        TextField("Edit task", text: $editingDraftText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .focused($focusedField, equals: .rowEditor)
+                            .onSubmit {
+                                saveEditing(item)
+                            }
+
+                        Text(item.time)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(item.text)
+                            .font(.system(size: 14, weight: .medium))
+                            .strikethrough(item.isCompleted)
+                            .foregroundStyle(item.isCompleted ? .secondary : .primary)
+                            .lineLimit(2)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Text(item.time)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(.horizontal, Layout.rowHorizontalPadding)
+            .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            HStack(spacing: 8) {
-                if isEditing {
-                    Button {
-                        saveEditing(item)
-                    } label: {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.green)
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        cancelEditing()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    Button {
-                        startEditing(item)
-                    } label: {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .opacity(isHovered ? 1 : 0.35)
-
-                    Button {
-                        appState.handleSpotlightMutation(.delete(item.id))
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.red)
-                    }
-                    .buttonStyle(.plain)
-                    .opacity(isHovered ? 1 : 0.35)
-                }
+            .frame(height: rowHeight, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 11, style: .continuous)
+                    .fill(Color.white.opacity(isHovered || isEditing ? 0.12 : 0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 11, style: .continuous)
+                            .stroke(Color.white.opacity(isHovered || isEditing ? 0.14 : 0.06), lineWidth: 0.9)
+                    )
+            )
+            .onTapGesture(count: 2) {
+                startEditing(item)
             }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Color.white.opacity(isHovered || isEditing ? 0.11 : 0.04))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .stroke(Color.white.opacity(isHovered || isEditing ? 0.12 : 0.0), lineWidth: 0.8)
-                )
-        )
-        .onTapGesture(count: 2) {
-            startEditing(item)
+
+            if isEditing {
+                sideActionButton(
+                    tooltip: "Save",
+                    systemImage: "checkmark",
+                    tint: Color.green.opacity(0.9)
+                ) {
+                    saveEditing(item)
+                }
+
+                sideActionButton(
+                    tooltip: "Cancel",
+                    systemImage: "xmark",
+                    tint: Color.white.opacity(0.72)
+                ) {
+                    cancelEditing()
+                }
+            } else {
+                sideActionButton(
+                    tooltip: "Edit",
+                    systemImage: "pencil",
+                    tint: Color.white.opacity(0.85)
+                ) {
+                    startEditing(item)
+                }
+                .opacity(isHovered ? 1 : 0.86)
+
+                sideActionButton(
+                    tooltip: "Delete",
+                    systemImage: "trash",
+                    tint: Color.red.opacity(0.95)
+                ) {
+                    appState.handleSpotlightMutation(.delete(item.id))
+                }
+                .opacity(isHovered ? 1 : 0.86)
+            }
         }
         .onHover { hovering in
             if !isEditing {
                 hoveredItemID = hovering ? item.id : nil
             }
         }
+    }
+
+    private func sideActionButton(
+        tooltip: String,
+        systemImage: String,
+        tint: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 28, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.white.opacity(0.14))
+                )
+        }
+        .buttonStyle(.plain)
+        .help(tooltip)
     }
 
     private func startEditing(_ item: InboxItem) {
