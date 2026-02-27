@@ -14,9 +14,11 @@ enum CaptureMode {
 
 struct CaptureView: View {
     private enum Layout {
-        static let panelCornerRadius: CGFloat = 18
-        static let panelHorizontalPadding: CGFloat = 18
-        static let panelVerticalPadding: CGFloat = 12
+        static let sectionGap: CGFloat = 14
+        static let outerPadding: CGFloat = 10
+        static let cardCornerRadius: CGFloat = 18
+        static let cardPaddingHorizontal: CGFloat = 16
+        static let cardPaddingVertical: CGFloat = 14
         static let rowHorizontalPadding: CGFloat = 10
         static let rowSpacing: CGFloat = 10
         static let leadingIconWidth: CGFloat = 16
@@ -37,56 +39,16 @@ struct CaptureView: View {
     @State private var hoveredItemID: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                Image(systemName: "square.and.pencil")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.66))
-
-                TextField(
-                    "",
-                    text: $appState.draftText,
-                    prompt: Text("Capture thought...")
-                        .foregroundStyle(Color.white.opacity(0.42))
-                )
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 30, weight: .regular))
-                    .foregroundStyle(Color.white.opacity(0.95))
-                    .focused($isInputFocused)
-                    .onSubmit {
-                        submit()
-                    }
-            }
-            .padding(.horizontal, 2)
-            .padding(.vertical, 4)
-
-            if appState.selectedInboxDateLabel != "Today" {
-                Text("Saving new captures to Today")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
+        VStack(alignment: .leading, spacing: mode == .spotlight ? Layout.sectionGap : 0) {
+            captureSection
 
             if mode == .spotlight {
-                spotlightHeader
-                    .padding(.top, 4)
-                    .padding(.bottom, 2)
-                spotlightList
-            }
-
-            if let message = appState.captureMessage ?? appState.inboxMessage {
-                Text(message)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                spotlightSection
             }
         }
-        .padding(.horizontal, Layout.panelHorizontalPadding)
-        .padding(.vertical, Layout.panelVerticalPadding)
+        .padding(Layout.outerPadding)
         .frame(width: panelWidth)
-        .background(
-            RoundedRectangle(cornerRadius: Layout.panelCornerRadius, style: .continuous)
-                .fill(Color.black.opacity(0.34))
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Layout.panelCornerRadius, style: .continuous))
-        )
+        .background(Color.clear)
         .preferredColorScheme(mode == .spotlight ? .dark : nil)
         .scaleEffect(animateIn ? 1.0 : 0.97)
         .offset(y: animateIn ? 0 : -10)
@@ -127,6 +89,69 @@ struct CaptureView: View {
 
     private var panelWidth: CGFloat {
         mode == .spotlight ? 620 : 520
+    }
+
+    private var captureSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 10) {
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.66))
+
+                TextField(
+                    "",
+                    text: $appState.draftText,
+                    prompt: Text("Capture thought...")
+                        .foregroundStyle(Color.white.opacity(0.42))
+                )
+                .textFieldStyle(.plain)
+                .font(.system(size: 30, weight: .regular))
+                .foregroundStyle(Color.white.opacity(0.95))
+                .focused($isInputFocused)
+                .onSubmit {
+                    submit()
+                }
+            }
+
+            if appState.selectedInboxDateLabel != "Today" {
+                Text("Saving new captures to Today")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, Layout.cardPaddingHorizontal)
+        .padding(.vertical, Layout.cardPaddingVertical)
+        .background(cardBackground())
+    }
+
+    private var spotlightSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            spotlightHeader
+            spotlightList
+
+            if let message = appState.captureMessage ?? appState.inboxMessage {
+                Text(message)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, Layout.cardPaddingHorizontal)
+        .padding(.vertical, Layout.cardPaddingVertical)
+        .background(cardBackground())
+    }
+
+    private func cardBackground() -> some View {
+        RoundedRectangle(cornerRadius: Layout.cardCornerRadius, style: .continuous)
+            .fill(Color.black.opacity(0.34))
+            .background(
+                .ultraThinMaterial,
+                in: RoundedRectangle(cornerRadius: Layout.cardCornerRadius, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: Layout.cardCornerRadius, style: .continuous)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 0.8)
+            )
+            .shadow(color: .black.opacity(0.18), radius: 12, x: 0, y: 6)
     }
 
     private var spotlightHeader: some View {
