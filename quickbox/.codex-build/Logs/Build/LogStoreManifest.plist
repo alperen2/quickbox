@@ -6,7 +6,7 @@
 	<integer>12</integer>
 	<key>logs</key>
 	<dict>
-		<key>2DC3AC17-CACB-4010-9E69-340645358629</key>
+		<key>20C88E02-E82F-4BB3-B55F-D83674979A11</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -15,7 +15,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>2DC3AC17-CACB-4010-9E69-340645358629.xcactivitylog</string>
+			<string>20C88E02-E82F-4BB3-B55F-D83674979A11.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -40,15 +40,15 @@
 			<key>signature</key>
 			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>793924436.68710899</real>
+			<real>793925265.22624004</real>
 			<key>timeStoppedRecording</key>
-			<real>793924436.87025106</real>
+			<real>793925265.412534</real>
 			<key>title</key>
 			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>2DC3AC17-CACB-4010-9E69-340645358629</string>
+			<string>20C88E02-E82F-4BB3-B55F-D83674979A11</string>
 		</dict>
-		<key>6E9896C1-8561-4FFB-95BE-70104ACA463F</key>
+		<key>3E3BFED7-B9AC-4FF6-8D0B-F7D1B5A73C96</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -57,7 +57,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>6E9896C1-8561-4FFB-95BE-70104ACA463F.xcactivitylog</string>
+			<string>3E3BFED7-B9AC-4FF6-8D0B-F7D1B5A73C96.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -82,15 +82,15 @@
 			<key>signature</key>
 			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>793924431.75943398</real>
+			<real>793925174.45248604</real>
 			<key>timeStoppedRecording</key>
-			<real>793924431.96232104</real>
+			<real>793925174.63836598</real>
 			<key>title</key>
 			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>6E9896C1-8561-4FFB-95BE-70104ACA463F</string>
+			<string>3E3BFED7-B9AC-4FF6-8D0B-F7D1B5A73C96</string>
 		</dict>
-		<key>C7C519C1-3F25-4012-B9B0-D2A97A606A2A</key>
+		<key>3FE880A1-D667-4901-83E5-2569AC49DE6C</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -99,7 +99,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>C7C519C1-3F25-4012-B9B0-D2A97A606A2A.xcactivitylog</string>
+			<string>3FE880A1-D667-4901-83E5-2569AC49DE6C.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -124,15 +124,15 @@
 			<key>signature</key>
 			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>793924613.58691394</real>
+			<real>793925767.21031404</real>
 			<key>timeStoppedRecording</key>
-			<real>793924613.76715302</real>
+			<real>793925767.39715302</real>
 			<key>title</key>
 			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>C7C519C1-3F25-4012-B9B0-D2A97A606A2A</string>
+			<string>3FE880A1-D667-4901-83E5-2569AC49DE6C</string>
 		</dict>
-		<key>CE19CC3F-A7A9-46F9-AB78-2ABF4D6524D1</key>
+		<key>6CFC40C9-9A34-4A8F-B36D-DDEDA94B6ED9</key>
 		<dict>
 			<key>className</key>
 			<string>IDECommandLineBuildLog</string>
@@ -141,7 +141,7 @@
 			<key>domainType</key>
 			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
 			<key>fileName</key>
-			<string>CE19CC3F-A7A9-46F9-AB78-2ABF4D6524D1.xcactivitylog</string>
+			<string>6CFC40C9-9A34-4A8F-B36D-DDEDA94B6ED9.xcactivitylog</string>
 			<key>hasPrimaryLog</key>
 			<true/>
 			<key>primaryObservable</key>
@@ -166,13 +166,181 @@
 			<key>signature</key>
 			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
 			<key>timeStartedRecording</key>
-			<real>793924704.33728004</real>
+			<real>793925170.63316</real>
 			<key>timeStoppedRecording</key>
-			<real>793924704.534114</real>
+			<real>793925170.81024897</real>
 			<key>title</key>
 			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
 			<key>uniqueIdentifier</key>
-			<string>CE19CC3F-A7A9-46F9-AB78-2ABF4D6524D1</string>
+			<string>6CFC40C9-9A34-4A8F-B36D-DDEDA94B6ED9</string>
+		</dict>
+		<key>723DB4FA-AD71-4CDE-9EF4-7BBD1A95FF98</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>723DB4FA-AD71-4CDE-9EF4-7BBD1A95FF98.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>quickbox project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>quickbox</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>793925360.25158405</real>
+			<key>timeStoppedRecording</key>
+			<real>793925360.42882204</real>
+			<key>title</key>
+			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>723DB4FA-AD71-4CDE-9EF4-7BBD1A95FF98</string>
+		</dict>
+		<key>AEA6F308-47FB-45F1-8667-2D480EC7D5AC</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>AEA6F308-47FB-45F1-8667-2D480EC7D5AC.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>quickbox project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>quickbox</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>793925706.69785595</real>
+			<key>timeStoppedRecording</key>
+			<real>793925706.88911295</real>
+			<key>title</key>
+			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>AEA6F308-47FB-45F1-8667-2D480EC7D5AC</string>
+		</dict>
+		<key>B39545FA-7669-4D83-9264-2588ADB853AA</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>B39545FA-7669-4D83-9264-2588ADB853AA.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>quickbox project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>quickbox</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>793925508.58984303</real>
+			<key>timeStoppedRecording</key>
+			<real>793925508.79739797</real>
+			<key>title</key>
+			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>B39545FA-7669-4D83-9264-2588ADB853AA</string>
+		</dict>
+		<key>D39D16DA-CD36-41D7-837A-ECB308A57614</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>D39D16DA-CD36-41D7-837A-ECB308A57614.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>quickbox project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>quickbox</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
+			<key>timeStartedRecording</key>
+			<real>793925620.98413396</real>
+			<key>timeStoppedRecording</key>
+			<real>793925621.18720198</real>
+			<key>title</key>
+			<string>Cleaning project quickbox with scheme quickbox and configuration Debug</string>
+			<key>uniqueIdentifier</key>
+			<string>D39D16DA-CD36-41D7-837A-ECB308A57614</string>
 		</dict>
 	</dict>
 </dict>

@@ -1,6 +1,11 @@
 import AppKit
 import SwiftUI
 
+private final class FocusableCapturePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
 final class CaptureWindowController: NSObject, NSWindowDelegate {
     private enum Constants {
         static let panelWidth: CGFloat = 620
@@ -16,9 +21,9 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
 
     init(appState: AppState) {
         self.appState = appState
-        panel = NSPanel(
+        panel = FocusableCapturePanel(
             contentRect: NSRect(x: 0, y: 0, width: Constants.panelWidth, height: 320),
-            styleMask: [.titled, .fullSizeContentView],
+            styleMask: [.borderless, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
@@ -29,11 +34,10 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
         panel.hidesOnDeactivate = true
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        panel.titleVisibility = .hidden
-        panel.titlebarAppearsTransparent = true
         panel.isMovableByWindowBackground = true
         panel.isOpaque = false
         panel.backgroundColor = .clear
+        panel.hasShadow = true
         panel.standardWindowButton(.closeButton)?.isHidden = true
         panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
         panel.standardWindowButton(.zoomButton)?.isHidden = true
@@ -43,7 +47,12 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
             self?.appState?.endSpotlightSession()
             panel?.orderOut(nil)
         }
-        panel.contentView = NSHostingView(rootView: rootView)
+        let hostingView = NSHostingView(rootView: rootView)
+        hostingView.wantsLayer = true
+        hostingView.layer?.backgroundColor = NSColor.clear.cgColor
+        panel.contentView = hostingView
+        panel.contentView?.wantsLayer = true
+        panel.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
 
         heightObserver = NotificationCenter.default.addObserver(
             forName: .quickboxCaptureHeightDidChange,

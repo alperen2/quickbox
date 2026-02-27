@@ -14,8 +14,16 @@
         "comment": "",
         "key": "Capture thought...",
         "location": {
-          "startingColumn": 27,
-          "startingLine": 44
+          "startingColumn": 34,
+          "startingLine": 49
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 21,
+          "startingLine": 47
         }
       },
       {
@@ -23,7 +31,7 @@
         "key": "Open only",
         "location": {
           "startingColumn": 23,
-          "startingLine": 159
+          "startingLine": 157
         }
       },
       {
@@ -31,7 +39,7 @@
         "key": "Undo",
         "location": {
           "startingColumn": 27,
-          "startingLine": 175
+          "startingLine": 173
         }
       }
     ]

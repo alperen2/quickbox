@@ -14,6 +14,9 @@ enum CaptureMode {
 
 struct CaptureView: View {
     private enum Layout {
+        static let panelCornerRadius: CGFloat = 18
+        static let panelHorizontalPadding: CGFloat = 18
+        static let panelVerticalPadding: CGFloat = 12
         static let rowHorizontalPadding: CGFloat = 10
         static let rowSpacing: CGFloat = 10
         static let leadingIconWidth: CGFloat = 16
@@ -31,34 +34,31 @@ struct CaptureView: View {
 
     @FocusState private var isInputFocused: Bool
     @State private var animateIn = false
-    @State private var didJustSave = false
     @State private var hoveredItemID: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(didJustSave ? Color.green : Color.accentColor)
+                Image(systemName: "square.and.pencil")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.66))
 
-                TextField("Capture thought...", text: $appState.draftText)
+                TextField(
+                    "",
+                    text: $appState.draftText,
+                    prompt: Text("Capture thought...")
+                        .foregroundStyle(Color.white.opacity(0.42))
+                )
                     .textFieldStyle(.plain)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 30, weight: .regular))
+                    .foregroundStyle(Color.white.opacity(0.95))
                     .focused($isInputFocused)
                     .onSubmit {
                         submit()
                     }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 11, style: .continuous)
-                    .fill(Color.white.opacity(0.14))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                            .stroke(Color.white.opacity(0.22), lineWidth: 1)
-                    )
-            )
+            .padding(.horizontal, 2)
+            .padding(.vertical, 4)
 
             if appState.selectedInboxDateLabel != "Today" {
                 Text("Saving new captures to Today")
@@ -68,7 +68,8 @@ struct CaptureView: View {
 
             if mode == .spotlight {
                 spotlightHeader
-                Divider().opacity(0.5)
+                    .padding(.top, 4)
+                    .padding(.bottom, 2)
                 spotlightList
             }
 
@@ -78,18 +79,15 @@ struct CaptureView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, Layout.panelHorizontalPadding)
+        .padding(.vertical, Layout.panelVerticalPadding)
         .frame(width: panelWidth)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(.white.opacity(0.25), lineWidth: 0.9)
-                )
-                .shadow(color: .black.opacity(0.24), radius: 20, x: 0, y: 10)
+            RoundedRectangle(cornerRadius: Layout.panelCornerRadius, style: .continuous)
+                .fill(Color.black.opacity(0.34))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Layout.panelCornerRadius, style: .continuous))
         )
+        .preferredColorScheme(mode == .spotlight ? .dark : nil)
         .scaleEffect(animateIn ? 1.0 : 0.97)
         .offset(y: animateIn ? 0 : -10)
         .opacity(animateIn ? 1.0 : 0.0)
@@ -158,14 +156,14 @@ struct CaptureView: View {
             } label: {
                 Label("Open only", systemImage: appState.showOnlyOpenTasks ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                     .font(.footnote.weight(.medium))
-                    .foregroundStyle(appState.showOnlyOpenTasks ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(appState.showOnlyOpenTasks ? Color.white.opacity(0.95) : Color.white.opacity(0.68))
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(
                 Capsule(style: .continuous)
-                    .fill(appState.showOnlyOpenTasks ? Color.accentColor.opacity(0.16) : Color.white.opacity(0.08))
+                    .fill(appState.showOnlyOpenTasks ? Color.white.opacity(0.16) : Color.white.opacity(0.08))
             )
 
             if appState.canUndoDelete {
@@ -219,14 +217,6 @@ struct CaptureView: View {
         case .savedAndClose:
             onClose()
         case .savedKeepOpen:
-            withAnimation(.easeOut(duration: 0.18)) {
-                didJustSave = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    didJustSave = false
-                }
-            }
             DispatchQueue.main.async {
                 isInputFocused = true
             }
@@ -244,7 +234,7 @@ struct CaptureView: View {
         let listHeight = itemsForSizing.reduce(CGFloat.zero) { partial, item in
             partial + estimatedRowHeight(for: item)
         }
-        let staticHeight: CGFloat = 170
+        let staticHeight: CGFloat = 140
         let totalHeight = staticHeight + max(84, listHeight)
         NotificationCenter.default.post(name: .quickboxCaptureHeightDidChange, object: totalHeight)
     }
@@ -307,7 +297,7 @@ struct CaptureView: View {
             } label: {
                 Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(item.isCompleted ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(item.isCompleted ? Color.white.opacity(0.95) : Color.white.opacity(0.62))
             }
             .buttonStyle(.plain)
 
@@ -339,7 +329,11 @@ struct CaptureView: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Color.white.opacity(hoveredItemID == item.id ? 0.12 : 0.07))
+                .fill(Color.white.opacity(hoveredItemID == item.id ? 0.11 : 0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .stroke(Color.white.opacity(hoveredItemID == item.id ? 0.12 : 0.0), lineWidth: 0.8)
+                )
         )
         .onHover { hovering in
             hoveredItemID = hovering ? item.id : nil
