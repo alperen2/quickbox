@@ -7,7 +7,7 @@
         "key": "Saving new captures to Today",
         "location": {
           "startingColumn": 22,
-          "startingLine": 130
+          "startingLine": 132
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Capture thought...",
         "location": {
           "startingColumn": 34,
-          "startingLine": 117
+          "startingLine": 119
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "",
         "location": {
           "startingColumn": 21,
-          "startingLine": 115
+          "startingLine": 117
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Open only",
         "location": {
           "startingColumn": 23,
-          "startingLine": 195
+          "startingLine": 197
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "Undo",
         "location": {
           "startingColumn": 27,
-          "startingLine": 211
+          "startingLine": 213
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "Edit task",
         "location": {
           "startingColumn": 35,
-          "startingLine": 352
+          "startingLine": 364
         }
       }
     ]

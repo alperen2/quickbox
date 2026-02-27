@@ -32,6 +32,8 @@ struct CaptureView: View {
         static let actionGap: CGFloat = 6
         static let minimumRowHeight: CGFloat = 58
         static let rowVerticalPadding: CGFloat = 6
+        static let rowSeparatorHeight: CGFloat = 1
+        static let rowSeparatorVerticalPadding: CGFloat = 2
         static let textFont = NSFont.systemFont(ofSize: 14, weight: .medium)
         static let textLineHeight = ceil(textFont.ascender - textFont.descender + textFont.leading)
         static let maxTextLines: CGFloat = 3
@@ -232,9 +234,13 @@ struct CaptureView: View {
                     .padding(.vertical, 10)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 8) {
-                        ForEach(appState.visibleInboxItems) { item in
+                    let items = Array(appState.visibleInboxItems.enumerated())
+                    LazyVStack(spacing: 0) {
+                        ForEach(items, id: \.element.id) { index, item in
                             taskRow(item)
+                            if index < items.count - 1 {
+                                taskSeparator
+                            }
                         }
                     }
                 }
@@ -269,9 +275,12 @@ struct CaptureView: View {
         }
 
         let itemsForSizing = Array(appState.visibleInboxItems.prefix(8))
-        let listHeight = itemsForSizing.reduce(CGFloat.zero) { partial, item in
+        let rowsHeight = itemsForSizing.reduce(CGFloat.zero) { partial, item in
             partial + estimatedRowHeight(for: item)
         }
+        let separators = CGFloat(max(itemsForSizing.count - 1, 0))
+        let separatorsHeight = separators * (Layout.rowSeparatorHeight + (Layout.rowSeparatorVerticalPadding * 2))
+        let listHeight = rowsHeight + separatorsHeight
         let staticHeight: CGFloat = 140
         let totalHeight = staticHeight + max(84, listHeight)
         NotificationCenter.default.post(name: .quickboxCaptureHeightDidChange, object: totalHeight)
@@ -279,9 +288,12 @@ struct CaptureView: View {
 
     private var listMaxHeight: CGFloat {
         let itemsForSizing = Array(appState.visibleInboxItems.prefix(8))
-        let measured = itemsForSizing.reduce(CGFloat.zero) { partial, item in
+        let rowsHeight = itemsForSizing.reduce(CGFloat.zero) { partial, item in
             partial + estimatedRowHeight(for: item)
         }
+        let separators = CGFloat(max(itemsForSizing.count - 1, 0))
+        let separatorsHeight = separators * (Layout.rowSeparatorHeight + (Layout.rowSeparatorVerticalPadding * 2))
+        let measured = rowsHeight + separatorsHeight
         return min(max(120, measured), 430)
     }
 
@@ -380,14 +392,7 @@ struct CaptureView: View {
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)
             .frame(height: rowHeight, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 11, style: .continuous)
-                    .fill(Color.white.opacity(isHovered || isEditing ? 0.12 : 0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 11, style: .continuous)
-                            .stroke(Color.white.opacity(isHovered || isEditing ? 0.14 : 0.06), lineWidth: 0.9)
-                    )
-            )
+            .contentShape(Rectangle())
             .onTapGesture(count: 2) {
                 startEditing(item)
             }
@@ -435,6 +440,15 @@ struct CaptureView: View {
         }
     }
 
+    private var taskSeparator: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.08))
+            .frame(height: Layout.rowSeparatorHeight)
+            .padding(.vertical, Layout.rowSeparatorVerticalPadding)
+            .padding(.leading, Layout.rowHorizontalPadding + Layout.leadingIconWidth + Layout.rowSpacing)
+            .padding(.trailing, (Layout.actionButtonWidth * 2) + (Layout.actionGap * 2))
+    }
+
     private func sideActionButton(
         tooltip: String,
         systemImage: String,
@@ -458,9 +472,7 @@ struct CaptureView: View {
     private func startEditing(_ item: InboxItem) {
         editingItemID = item.id
         editingDraftText = item.text
-        DispatchQueue.main.async {
-            focusedField = .rowEditor
-        }
+        focusRowEditorWithoutSelectingAll()
     }
 
     private func cancelEditing() {
@@ -478,6 +490,20 @@ struct CaptureView: View {
 
         if appState.editInboxItem(id: item.id, text: cleaned) {
             cancelEditing()
+        }
+    }
+
+    private func focusRowEditorWithoutSelectingAll() {
+        DispatchQueue.main.async {
+            focusedField = .rowEditor
+            DispatchQueue.main.async {
+                guard let textView = NSApp.keyWindow?.firstResponder as? NSTextView else {
+                    return
+                }
+                let end = textView.string.count
+                textView.setSelectedRange(NSRange(location: end, length: 0))
+                textView.scrollRangeToVisible(NSRange(location: end, length: 0))
+            }
         }
     }
 }
