@@ -8,5 +8,5 @@ script = ""
 [[actions]]
 name = "Çalıştır"
 icon = "run"
-command = "cd \"/Users/alperen/Documents/New project/quickbox\" && xcodebuild -project quickbox.xcodeproj -scheme quickbox -configuration Debug -destination 'platform=macOS' -showBuildSettings | awk -F' = ' '/TARGET_BUILD_DIR/{dir=$2} /FULL_PRODUCT_NAME/{name=$2} END{print dir \"/\" name}' | xargs open"
+command = "cd \"/Users/alperen/Documents/New project/quickbox\" && osascript -e 'tell application id \"alperen.quickbox\" to quit' >/dev/null 2>&1 || true && xcodebuild -project quickbox.xcodeproj -scheme quickbox -configuration Debug -destination 'platform=macOS' -derivedDataPath .codex-build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO clean build && open \"$(pwd)/.codex-build/Build/Products/Debug/quickbox.app\""
 platform = "darwin"

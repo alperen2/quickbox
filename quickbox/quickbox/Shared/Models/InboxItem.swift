@@ -16,6 +16,10 @@ enum InboxMutation {
 }
 
 protocol InboxRepositorying {
+    func load(on date: Date) throws -> [InboxItem]
+    func apply(_ mutation: InboxMutation, on date: Date) throws -> [InboxItem]
+    func reload(on date: Date) throws -> [InboxItem]
+
     func loadToday() throws -> [InboxItem]
     func apply(_ mutation: InboxMutation) throws -> [InboxItem]
     func reload() throws -> [InboxItem]

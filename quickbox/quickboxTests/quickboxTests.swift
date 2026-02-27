@@ -38,6 +38,23 @@ struct quickboxTests {
     }
 
     @Test
+    func fileNameUsesPrefixAndCustomDateFormat() {
+        var preferences = AppPreferences.default
+        preferences.fileDateFormat = "dd-MM-yyyy"
+        preferences.fileNamePrefix = "qb-"
+        let resolver = StorageAccessManager(preferences: preferences)
+        let writer = InboxWriter(storageResolver: resolver)
+
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 2
+        components.day = 27
+        let date = Calendar(identifier: .gregorian).date(from: components)!
+
+        #expect(writer.fileName(for: date) == "qb-27-02-2026.md")
+    }
+
+    @Test
     func appendCreatesAndExtendsDailyFile() throws {
         let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: tempFolder) }
@@ -82,7 +99,10 @@ struct quickboxTests {
             afterSaveMode: .keepOpen,
             storageBookmarkData: Data([1, 2, 3]),
             fallbackStoragePath: "/tmp/quickbox",
-            launchAtLogin: true
+            launchAtLogin: true,
+            fileDateFormat: "dd-MM-yyyy",
+            timeFormat: "hh:mm a",
+            fileNamePrefix: "qb-"
         )
 
         store.save(expected)
@@ -93,6 +113,9 @@ struct quickboxTests {
         #expect(loaded.storageBookmarkData == expected.storageBookmarkData)
         #expect(loaded.fallbackStoragePath == expected.fallbackStoragePath)
         #expect(loaded.launchAtLogin == expected.launchAtLogin)
+        #expect(loaded.fileDateFormat == expected.fileDateFormat)
+        #expect(loaded.timeFormat == expected.timeFormat)
+        #expect(loaded.fileNamePrefix == expected.fileNamePrefix)
     }
 
     @Test
@@ -117,7 +140,10 @@ struct quickboxTests {
             afterSaveMode: .close,
             storageBookmarkData: Data([1, 2, 3]),
             fallbackStoragePath: "/tmp",
-            launchAtLogin: false
+            launchAtLogin: false,
+            fileDateFormat: AppPreferences.defaultFileDateFormat,
+            timeFormat: AppPreferences.defaultTimeFormat,
+            fileNamePrefix: ""
         )
 
         let resolver = StorageAccessManager(preferences: preferences)
@@ -296,6 +322,56 @@ struct quickboxTests {
         #expect(appState.inboxItems.count == 1)
     }
 
+    @MainActor
+    @Test
+    func dayNavigationChangesLabelAndStopsAtToday() {
+        let appState = makeAppState(
+            clipboard: { nil },
+            writer: TestWriter(),
+            repository: TestRepository()
+        )
+
+        appState.prepareSpotlightSession()
+        #expect(appState.selectedInboxDateLabel == "Today")
+        #expect(!appState.canNavigateForwardInboxDate)
+
+        appState.navigateInboxDayBackward()
+        #expect(appState.selectedInboxDateLabel == "Yesterday")
+        #expect(appState.canNavigateForwardInboxDate)
+
+        appState.navigateInboxDayBackward()
+        #expect(appState.selectedInboxDateLabel.contains("-"))
+
+        appState.navigateInboxDayForward()
+        #expect(appState.selectedInboxDateLabel == "Yesterday")
+        appState.navigateInboxDayForward()
+        #expect(appState.selectedInboxDateLabel == "Today")
+        #expect(!appState.canNavigateForwardInboxDate)
+    }
+
+    @MainActor
+    @Test
+    func formatUpdatesChangePreviewAndValidateInput() {
+        let appState = makeAppState(
+            clipboard: { nil },
+            writer: TestWriter(),
+            repository: TestRepository()
+        )
+
+        appState.updateFileNamePrefix("qb/")
+        appState.updateFileDateFormat("dd-MM-yyyy")
+        appState.updateTimeFormat("hh:mm a")
+
+        #expect(appState.settingsPreviewFileName.hasPrefix("qb-"))
+        #expect(appState.settingsPreviewFileName.hasSuffix(".md"))
+        #expect(appState.settingsPreviewLine.contains("Example task"))
+
+        let previousFormat = appState.preferences.fileDateFormat
+        appState.updateFileDateFormat("invalid-format")
+        #expect(appState.preferences.fileDateFormat == previousFormat)
+        #expect(appState.settingsMessage == "Invalid date format.")
+    }
+
     private func todayFileName() -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -353,6 +429,12 @@ private final class TestRepository: InboxRepositorying {
     var items: [InboxItem] = []
     var reloadCallCount = 0
 
+    func load(on date: Date) throws -> [InboxItem] { items }
+    func apply(_ mutation: InboxMutation, on date: Date) throws -> [InboxItem] { items }
+    func reload(on date: Date) throws -> [InboxItem] {
+        reloadCallCount += 1
+        return items
+    }
     func loadToday() throws -> [InboxItem] { items }
     func apply(_ mutation: InboxMutation) throws -> [InboxItem] { items }
     func reload() throws -> [InboxItem] {

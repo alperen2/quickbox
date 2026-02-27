@@ -9,7 +9,8 @@ final class SettingsWindowController: NSWindowController {
 
         window.title = "quickbox Settings"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 540, height: 380))
+        window.setContentSize(NSSize(width: 680, height: 560))
+        window.minSize = NSSize(width: 620, height: 500)
         window.center()
 
         super.init(window: window)

@@ -21,10 +21,6 @@ struct CaptureView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            if mode == .spotlight {
-                spotlightHeader
-            }
-
             TextField("Capture thought...", text: $appState.draftText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 22, weight: .semibold))
@@ -33,8 +29,15 @@ struct CaptureView: View {
                     submit()
                 }
 
+            if appState.selectedInboxDateLabel != "Today" {
+                Text("Saving new captures to Today")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
             if mode == .spotlight {
                 spotlightActions
+                spotlightHeader
                 Divider().opacity(0.5)
                 spotlightList
             }
@@ -74,6 +77,9 @@ struct CaptureView: View {
         .onChange(of: appState.showOnlyOpenTasks) { _ in
             notifyHeightChange()
         }
+        .onChange(of: appState.selectedInboxDate) { _ in
+            notifyHeightChange()
+        }
         .onReceive(NotificationCenter.default.publisher(for: .quickboxFocusCapture)) { _ in
             DispatchQueue.main.async {
                 isInputFocused = true
@@ -97,9 +103,24 @@ struct CaptureView: View {
 
     private var spotlightHeader: some View {
         HStack {
-            Text("Today Inbox")
+            Button("<") {
+                appState.navigateInboxDayBackward()
+            }
+            .buttonStyle(.plain)
+            .font(.headline)
+
+            Text(appState.selectedInboxDateLabel)
                 .font(.headline)
+
+            Button(">") {
+                appState.navigateInboxDayForward()
+            }
+            .buttonStyle(.plain)
+            .font(.headline)
+            .disabled(!appState.canNavigateForwardInboxDate)
+
             Spacer()
+
             if appState.canUndoDelete {
                 Button("Undo") {
                     appState.handleSpotlightMutation(.undoLastDelete)
@@ -111,15 +132,6 @@ struct CaptureView: View {
 
     private var spotlightActions: some View {
         HStack(spacing: 10) {
-            Button("Reload") {
-                appState.reloadInbox()
-            }
-            Button("Open Today File") {
-                appState.openTodayFile()
-            }
-            Button("Open Inbox Folder") {
-                appState.openInboxFolder()
-            }
             Spacer()
             Toggle("Open only", isOn: $appState.showOnlyOpenTasks)
                 .toggleStyle(.switch)

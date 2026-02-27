@@ -22,6 +22,7 @@ final class InboxRepository: InboxRepositorying {
     private struct DeletedLine {
         let line: String
         let lineIndex: Int
+        let sourceID: String
     }
 
     private let storageResolver: StorageResolving
@@ -35,26 +36,35 @@ final class InboxRepository: InboxRepositorying {
         self.fileManager = fileManager
     }
 
-    func loadToday() throws -> [InboxItem] {
+    func load(on date: Date) throws -> [InboxItem] {
         try InboxStorageQueue.shared.sync {
-            let fileURL = try todayFileURL()
+            let fileURL = try fileURL(for: date)
             let lines = try readLines(fileURL: fileURL)
             return parser.parse(lines: lines, sourceID: fileURL.lastPathComponent)
         }
     }
 
-    func reload() throws -> [InboxItem] {
-        try loadToday()
+    func loadToday() throws -> [InboxItem] {
+        try load(on: Date())
     }
 
-    func apply(_ mutation: InboxMutation) throws -> [InboxItem] {
+    func reload(on date: Date) throws -> [InboxItem] {
+        try load(on: date)
+    }
+
+    func reload() throws -> [InboxItem] {
+        try load(on: Date())
+    }
+
+    func apply(_ mutation: InboxMutation, on date: Date) throws -> [InboxItem] {
         try InboxStorageQueue.shared.sync {
-            let fileURL = try todayFileURL()
+            let fileURL = try fileURL(for: date)
             var lines = try readLines(fileURL: fileURL)
+            let sourceID = fileURL.lastPathComponent
 
             switch mutation {
             case .toggle(let id):
-                let items = parser.parse(lines: lines, sourceID: fileURL.lastPathComponent)
+                let items = parser.parse(lines: lines, sourceID: sourceID)
                 guard let item = items.first(where: { $0.id == id }) else {
                     throw InboxRepositoryError.itemNotFound
                 }
@@ -68,16 +78,16 @@ final class InboxRepository: InboxRepositorying {
                 lines[item.lineIndex] = updated
 
             case .delete(let id):
-                let items = parser.parse(lines: lines, sourceID: fileURL.lastPathComponent)
+                let items = parser.parse(lines: lines, sourceID: sourceID)
                 guard let item = items.first(where: { $0.id == id }) else {
                     throw InboxRepositoryError.itemNotFound
                 }
 
                 lines.remove(at: item.lineIndex)
-                lastDeleted = DeletedLine(line: item.rawLine, lineIndex: item.lineIndex)
+                lastDeleted = DeletedLine(line: item.rawLine, lineIndex: item.lineIndex, sourceID: sourceID)
 
             case .undoLastDelete:
-                guard let deleted = lastDeleted else {
+                guard let deleted = lastDeleted, deleted.sourceID == sourceID else {
                     throw InboxRepositoryError.nothingToUndo
                 }
 
@@ -87,18 +97,26 @@ final class InboxRepository: InboxRepositorying {
             }
 
             try writeLines(lines, to: fileURL)
-            return parser.parse(lines: lines, sourceID: fileURL.lastPathComponent)
+            return parser.parse(lines: lines, sourceID: sourceID)
         }
     }
 
-    private func todayFileURL() throws -> URL {
+    func apply(_ mutation: InboxMutation) throws -> [InboxItem] {
+        try apply(mutation, on: Date())
+    }
+
+    private func fileURL(for date: Date) throws -> URL {
         let folderURL = try storageResolver.resolvedBaseURL()
         try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
-        return folderURL.appendingPathComponent(fileName(for: Date()))
+        return folderURL.appendingPathComponent(fileName(for: date))
     }
 
     private func fileName(for date: Date) -> String {
-        Self.fileNameFormatter.string(from: date) + ".md"
+        FormatSettings.fileName(for: date, preferences: currentPreferences())
+    }
+
+    private func currentPreferences() -> AppPreferences {
+        (storageResolver as? StorageAccessManager)?.preferences ?? .default
     }
 
     private func readLines(fileURL: URL) throws -> [String] {
@@ -131,13 +149,6 @@ final class InboxRepository: InboxRepositorying {
         }
     }
 
-    private static let fileNameFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
 }
 
 private extension Array where Element == String {

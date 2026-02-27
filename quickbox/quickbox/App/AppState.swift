@@ -17,6 +17,7 @@ final class AppState: ObservableObject {
     @Published var settingsMessage: String?
     @Published var inboxItems: [InboxItem] = []
     @Published var inboxMessage: String?
+    @Published var selectedInboxDate: Date = Calendar(identifier: .gregorian).startOfDay(for: Date())
     @Published var canUndoDelete: Bool = false
     @Published var showOnlyOpenTasks: Bool = false
     @Published var isSpotlightModeActive: Bool = false
@@ -97,6 +98,31 @@ final class AppState: ObservableObject {
         return inboxItems
     }
 
+    var selectedInboxDateLabel: String {
+        let selected = Self.calendar.startOfDay(for: selectedInboxDate)
+        let today = Self.calendar.startOfDay(for: Date())
+        if selected == today {
+            return "Today"
+        }
+        if let yesterday = Self.calendar.date(byAdding: .day, value: -1, to: today), selected == yesterday {
+            return "Yesterday"
+        }
+        return FormatSettings.dateLabel(for: selected, preferences: preferences)
+    }
+
+    var canNavigateForwardInboxDate: Bool {
+        Self.calendar.startOfDay(for: selectedInboxDate) < Self.calendar.startOfDay(for: Date())
+    }
+
+    var settingsPreviewFileName: String {
+        FormatSettings.fileName(for: Date(), preferences: preferences)
+    }
+
+    var settingsPreviewLine: String {
+        let time = FormatSettings.timeText(for: Date(), preferences: preferences)
+        return "- [ ] \(time) Example task"
+    }
+
     func submitCapture() -> SubmitResult {
         do {
             try inboxWriter.appendEntry(draftText, now: Date())
@@ -132,6 +158,7 @@ final class AppState: ObservableObject {
     func prepareSpotlightSession() {
         isSpotlightModeActive = true
         clearCaptureStateForPresentation()
+        selectedInboxDate = Self.calendar.startOfDay(for: Date())
         loadTodayForSpotlight()
     }
 
@@ -168,11 +195,11 @@ final class AppState: ObservableObject {
 
     func loadInbox() {
         do {
-            let items = try inboxRepository.loadToday()
+            let items = try inboxRepository.load(on: selectedInboxDate)
             inboxItems = sorted(items)
             canUndoDelete = inboxRepository.canUndoDelete
             if inboxItems.isEmpty {
-                inboxMessage = "No notes for today yet."
+                inboxMessage = "No notes for selected day."
             } else {
                 inboxMessage = nil
             }
@@ -183,7 +210,7 @@ final class AppState: ObservableObject {
 
     func reloadInbox(silent: Bool = false) {
         do {
-            let items = try inboxRepository.reload()
+            let items = try inboxRepository.reload(on: selectedInboxDate)
             inboxItems = sorted(items)
             canUndoDelete = inboxRepository.canUndoDelete
             if !silent {
@@ -217,6 +244,26 @@ final class AppState: ObservableObject {
         }
     }
 
+    func navigateInboxDayBackward() {
+        guard let previous = Self.calendar.date(byAdding: .day, value: -1, to: selectedInboxDate) else {
+            return
+        }
+        selectedInboxDate = Self.calendar.startOfDay(for: previous)
+        loadInbox()
+    }
+
+    func navigateInboxDayForward() {
+        guard canNavigateForwardInboxDate,
+              let next = Self.calendar.date(byAdding: .day, value: 1, to: selectedInboxDate)
+        else {
+            return
+        }
+
+        let today = Self.calendar.startOfDay(for: Date())
+        selectedInboxDate = min(Self.calendar.startOfDay(for: next), today)
+        loadInbox()
+    }
+
     func updateAfterSaveMode(_ mode: AfterSaveMode) {
         preferences.afterSaveMode = mode
         persistPreferences(message: "After-save mode updated.")
@@ -248,6 +295,52 @@ final class AppState: ObservableObject {
         }
     }
 
+    func updateFileDateFormat(_ format: String) {
+        guard FormatSettings.isValidDateFormat(format) else {
+            settingsMessage = "Invalid date format."
+            return
+        }
+
+        preferences.fileDateFormat = format.trimmingCharacters(in: .whitespacesAndNewlines)
+        persistPreferences(message: "Date format updated.")
+    }
+
+    func updateTimeFormat(_ format: String) {
+        guard FormatSettings.isValidTimeFormat(format) else {
+            settingsMessage = "Invalid time format."
+            return
+        }
+
+        preferences.timeFormat = format.trimmingCharacters(in: .whitespacesAndNewlines)
+        persistPreferences(message: "Time format updated.")
+    }
+
+    func updateFileNamePrefix(_ prefix: String) {
+        preferences.fileNamePrefix = FormatSettings.sanitizePrefix(prefix)
+        persistPreferences(message: "File prefix updated.")
+    }
+
+    func resetPreferencesToDefaults() {
+        let defaults = AppPreferences.default
+        preferences = defaults
+        storageAccessManager.preferences = defaults
+        settingsStore.save(defaults)
+
+        do {
+            let combo = HotKeyCombo.parse(defaults.shortcutKey) ?? .default
+            try hotkeyManager.register(combo)
+        } catch {
+            settingsMessage = "Settings reset, but shortcut registration failed: \(error.localizedDescription)"
+            loadInbox()
+            return
+        }
+
+        applyLaunchAtLogin(defaults.launchAtLogin)
+        selectedInboxDate = Self.calendar.startOfDay(for: Date())
+        loadInbox()
+        settingsMessage = "Settings reset to defaults."
+    }
+
     func chooseStorageFolder() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
@@ -275,7 +368,7 @@ final class AppState: ObservableObject {
             defer { storageAccessManager.stopAccess(for: folderURL) }
 
             try FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
-            let fileURL = folderURL.appendingPathComponent(todayFileName())
+            let fileURL = folderURL.appendingPathComponent(FormatSettings.fileName(for: Date(), preferences: preferences))
             if !FileManager.default.fileExists(atPath: fileURL.path) {
                 try Data().write(to: fileURL, options: .atomic)
             }
@@ -298,7 +391,7 @@ final class AppState: ObservableObject {
 
     private func applyInboxMutation(_ mutation: InboxMutation, successMessage: String?) {
         do {
-            let updatedItems = try inboxRepository.apply(mutation)
+            let updatedItems = try inboxRepository.apply(mutation, on: selectedInboxDate)
             inboxItems = sorted(updatedItems)
             canUndoDelete = inboxRepository.canUndoDelete
             inboxMessage = successMessage
@@ -346,15 +439,5 @@ final class AppState: ObservableObject {
         settingsMessage = message
     }
 
-    private func todayFileName() -> String {
-        Self.fileNameFormatter.string(from: Date()) + ".md"
-    }
-
-    private static let fileNameFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
+    private static let calendar = Calendar(identifier: .gregorian)
 }

@@ -1,0 +1,229 @@
+{
+  "" : {
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickbox-primary.dia",
+    "emit-module-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickbox-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickbox-primary-emit-module.dia",
+    "pch" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickbox-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickbox-primary.swiftdeps"
+  },
+  "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/App/AppDelegate.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppDelegate.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppDelegate.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppDelegate.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppDelegate.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppDelegate.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppDelegate.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppDelegate.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppDelegate~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/App/AppState.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppState.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppState.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppState.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppState.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppState.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppState.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppState.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppState~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Capture/CaptureView.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureView.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureView.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureView.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureView.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureView.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureView.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureView.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureView~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Capture/CaptureWindowController.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureWindowController.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureWindowController.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureWindowController.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureWindowController.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureWindowController.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureWindowController.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureWindowController.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/CaptureWindowController~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/ContentView.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Hotkey/HotKeyCombo.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotKeyCombo.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotKeyCombo.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotKeyCombo.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotKeyCombo.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotKeyCombo.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotKeyCombo.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotKeyCombo.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotKeyCombo~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Hotkey/HotkeyManager.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotkeyManager.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotkeyManager.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotkeyManager.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotkeyManager.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotkeyManager.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotkeyManager.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotkeyManager.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/HotkeyManager~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Settings/FormatSettings.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/FormatSettings.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/FormatSettings.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/FormatSettings.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/FormatSettings.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/FormatSettings.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/FormatSettings.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/FormatSettings.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/FormatSettings~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Settings/SettingsStore.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsStore.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsStore.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsStore.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsStore.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsStore.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsStore.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsStore.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsStore~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Storage/InboxParser.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxParser.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxParser.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxParser.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxParser.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxParser.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxParser.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxParser.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxParser~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Storage/InboxRepository.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxRepository.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxRepository.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxRepository.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxRepository.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxRepository.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxRepository.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxRepository.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxRepository~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Storage/InboxStorageQueue.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxStorageQueue.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxStorageQueue.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxStorageQueue.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxStorageQueue.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxStorageQueue.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxStorageQueue.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxStorageQueue.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxStorageQueue~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Storage/InboxWriter.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxWriter.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxWriter.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxWriter.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxWriter.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxWriter.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxWriter.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxWriter.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxWriter~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Core/Storage/StorageAccessManager.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/StorageAccessManager.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/StorageAccessManager.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/StorageAccessManager.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/StorageAccessManager.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/StorageAccessManager.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/StorageAccessManager.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/StorageAccessManager.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/StorageAccessManager~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Features/Settings/SettingsView.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Features/Settings/SettingsWindowController.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsWindowController.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsWindowController.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsWindowController.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsWindowController.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsWindowController.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsWindowController.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsWindowController.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/SettingsWindowController~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/MenuBar/InboxPopoverView.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxPopoverView.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxPopoverView.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxPopoverView.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxPopoverView.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxPopoverView.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxPopoverView.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxPopoverView.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxPopoverView~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/MenuBar/MenuBarController.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/MenuBarController.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/MenuBarController.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/MenuBarController.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/MenuBarController.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/MenuBarController.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/MenuBarController.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/MenuBarController.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/MenuBarController~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Shared/Models/AppPreferences.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppPreferences.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppPreferences.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppPreferences.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppPreferences.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppPreferences.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppPreferences.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppPreferences.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/AppPreferences~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/Shared/Models/InboxItem.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxItem.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxItem.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxItem.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxItem.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxItem.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxItem.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxItem.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/InboxItem~partial.swiftmodule"
+  },
+  "/Users/alperen/Documents/New project/quickbox/quickbox/quickboxApp.swift" : {
+    "const-values" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickboxApp.swiftconstvalues",
+    "dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickboxApp.d",
+    "diagnostics" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickboxApp.dia",
+    "index-unit-output-path" : "/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickboxApp.o",
+    "llvm-bc" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickboxApp.bc",
+    "object" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickboxApp.o",
+    "swift-dependencies" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickboxApp.swiftdeps",
+    "swiftmodule" : "/Users/alperen/Documents/New project/quickbox/.codex-build/Build/Intermediates.noindex/quickbox.build/Debug/quickbox.build/Objects-normal/arm64/quickboxApp~partial.swiftmodule"
+  }
+}

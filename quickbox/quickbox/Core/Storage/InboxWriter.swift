@@ -30,6 +30,7 @@ final class InboxWriter: InboxWriting {
             throw InboxWriterError.emptyEntry
         }
 
+        let preferences = currentPreferences()
         let line = formattedLine(for: trimmed, at: now)
         try InboxStorageQueue.shared.sync {
             let folderURL = try storageResolver.resolvedBaseURL()
@@ -37,7 +38,7 @@ final class InboxWriter: InboxWriting {
 
             try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
 
-            let fileURL = folderURL.appendingPathComponent(fileName(for: now))
+            let fileURL = folderURL.appendingPathComponent(FormatSettings.fileName(for: now, preferences: preferences))
             let entryText = normalizedEntry(for: fileURL, line: line)
             let data = Data(entryText.utf8)
 
@@ -54,7 +55,7 @@ final class InboxWriter: InboxWriting {
     }
 
     func fileName(for date: Date) -> String {
-        Self.fileNameFormatter.string(from: date) + ".md"
+        FormatSettings.fileName(for: date, preferences: currentPreferences())
     }
 
     func formattedLine(for text: String, at date: Date) -> String {
@@ -62,8 +63,12 @@ final class InboxWriter: InboxWriting {
             .replacingOccurrences(of: "\r\n", with: " ")
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "\r", with: " ")
-        let time = Self.timeFormatter.string(from: date)
+        let time = FormatSettings.timeText(for: date, preferences: currentPreferences())
         return "- [ ] \(time) \(oneLine)"
+    }
+
+    private func currentPreferences() -> AppPreferences {
+        (storageResolver as? StorageAccessManager)?.preferences ?? .default
     }
 
     private func normalizedEntry(for fileURL: URL, line: String) -> String {
@@ -81,19 +86,4 @@ final class InboxWriter: InboxWriting {
         return "\n" + line + "\n"
     }
 
-    private static let fileNameFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
-
-    private static let timeFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.dateFormat = "HH:mm"
-        return formatter
-    }()
 }

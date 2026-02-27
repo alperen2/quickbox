@@ -10,6 +10,18 @@ struct MenuBarDashboardView: View {
             Text("quickbox")
                 .font(.headline)
 
+            HStack(spacing: 12) {
+                Button("Open Today File") {
+                    appState.openTodayFile()
+                }
+                Button("Open Inbox Folder") {
+                    appState.openInboxFolder()
+                }
+            }
+            .font(.footnote)
+
+            Divider()
+
             HStack {
                 Button("Settings", action: onOpenSettings)
                 Spacer()
