@@ -26,7 +26,7 @@ struct AppPreferences: Codable {
     var timeFormat: String
     var fileNamePrefix: String
 
-    static let defaultShortcut = "control+option+space"
+    static let defaultShortcut = "command+shift+space"
     static let defaultFolderName = "Quickbox"
     static let defaultFileDateFormat = "yyyy-MM-dd"
     static let defaultTimeFormat = "HH:mm"

@@ -7,7 +7,7 @@
         "key": "Settings",
         "location": {
           "startingColumn": 22,
-          "startingLine": 30
+          "startingLine": 36
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "Use at least one modifier (⌃⌥⇧⌘).",
         "location": {
           "startingColumn": 22,
-          "startingLine": 74
+          "startingLine": 83
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "Press keys...",
         "location": {
           "startingColumn": 50,
-          "startingLine": 63
+          "startingLine": 72
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "Record Shortcut",
         "location": {
           "startingColumn": 68,
-          "startingLine": 63
+          "startingLine": 72
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "Cancel",
         "location": {
           "startingColumn": 32,
-          "startingLine": 68
+          "startingLine": 77
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "Choose Folder",
         "location": {
           "startingColumn": 24,
-          "startingLine": 94
+          "startingLine": 103
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "Optional",
         "location": {
           "startingColumn": 31,
-          "startingLine": 105
+          "startingLine": 114
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "",
         "location": {
           "startingColumn": 28,
-          "startingLine": 114
+          "startingLine": 126
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "Custom date format",
         "location": {
           "startingColumn": 35,
-          "startingLine": 131
+          "startingLine": 143
         }
       },
       {
@@ -79,7 +79,7 @@
         "key": "Apply",
         "location": {
           "startingColumn": 32,
-          "startingLine": 136
+          "startingLine": 148
         }
       },
       {
@@ -87,7 +87,7 @@
         "key": "",
         "location": {
           "startingColumn": 28,
-          "startingLine": 143
+          "startingLine": 155
         }
       },
       {
@@ -95,7 +95,7 @@
         "key": "Custom time format",
         "location": {
           "startingColumn": 35,
-          "startingLine": 160
+          "startingLine": 172
         }
       },
       {
@@ -103,7 +103,7 @@
         "key": "Apply",
         "location": {
           "startingColumn": 32,
-          "startingLine": 165
+          "startingLine": 177
         }
       },
       {
@@ -111,7 +111,7 @@
         "key": "Example file: %@",
         "location": {
           "startingColumn": 26,
-          "startingLine": 172
+          "startingLine": 184
         }
       },
       {
@@ -119,7 +119,7 @@
         "key": "Example line: %@",
         "location": {
           "startingColumn": 26,
-          "startingLine": 173
+          "startingLine": 185
         }
       },
       {
@@ -127,7 +127,7 @@
         "key": "Launch at login",
         "location": {
           "startingColumn": 24,
-          "startingLine": 202
+          "startingLine": 219
         }
       },
       {
@@ -135,7 +135,7 @@
         "key": "",
         "location": {
           "startingColumn": 28,
-          "startingLine": 191
+          "startingLine": 208
         }
       },
       {
@@ -143,7 +143,7 @@
         "key": "Reset to defaults",
         "location": {
           "startingColumn": 20,
-          "startingLine": 212
+          "startingLine": 229
         }
       }
     ]

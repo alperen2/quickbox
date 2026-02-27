@@ -13,15 +13,21 @@ struct SettingsView: View {
     @State private var customDateFormat: String
     @State private var customTimeFormat: String
     @State private var prefixDraft: String
+    @State private var previewFileName: String
+    @FocusState private var isPrefixFieldFocused: Bool
 
     init(appState: AppState) {
         self.appState = appState
+        let initialPreferences = appState.preferences
+        var previewPreferences = initialPreferences
+        previewPreferences.fileNamePrefix = FormatSettings.sanitizePrefix(initialPreferences.fileNamePrefix)
         _currentCombo = State(initialValue: HotKeyCombo.parse(appState.preferences.shortcutKey) ?? .default)
-        _selectedDatePreset = State(initialValue: DateFormatPreset.preset(for: appState.preferences.fileDateFormat))
-        _selectedTimePreset = State(initialValue: TimeFormatPreset.preset(for: appState.preferences.timeFormat))
-        _customDateFormat = State(initialValue: appState.preferences.fileDateFormat)
-        _customTimeFormat = State(initialValue: appState.preferences.timeFormat)
-        _prefixDraft = State(initialValue: appState.preferences.fileNamePrefix)
+        _selectedDatePreset = State(initialValue: DateFormatPreset.preset(for: initialPreferences.fileDateFormat))
+        _selectedTimePreset = State(initialValue: TimeFormatPreset.preset(for: initialPreferences.timeFormat))
+        _customDateFormat = State(initialValue: initialPreferences.fileDateFormat)
+        _customTimeFormat = State(initialValue: initialPreferences.timeFormat)
+        _prefixDraft = State(initialValue: initialPreferences.fileNamePrefix)
+        _previewFileName = State(initialValue: FormatSettings.fileName(for: Date(), preferences: previewPreferences))
     }
 
     var body: some View {
@@ -48,6 +54,9 @@ struct SettingsView: View {
         .frame(width: 640, height: 520)
         .onDisappear {
             stopShortcutRecording()
+        }
+        .onReceive(appState.$preferences) { _ in
+            refreshPreviewFileName()
         }
     }
 
@@ -104,9 +113,12 @@ struct SettingsView: View {
                 SettingRow(label: "File prefix") {
                     TextField("Optional", text: $prefixDraft)
                         .textFieldStyle(.roundedBorder)
+                        .focused($isPrefixFieldFocused)
+                        .onChange(of: prefixDraft) { _ in
+                            refreshPreviewFileName()
+                        }
                         .onSubmit {
-                            appState.updateFileNamePrefix(prefixDraft)
-                            prefixDraft = appState.preferences.fileNamePrefix
+                            persistPrefixDraftIfNeeded()
                         }
                 }
 
@@ -169,7 +181,7 @@ struct SettingsView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Example file: \(appState.settingsPreviewFileName)")
+                    Text("Example file: \(previewFileName)")
                     Text("Example line: \(appState.settingsPreviewLine)")
                 }
                 .font(.footnote)
@@ -180,6 +192,11 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.secondary.opacity(0.1))
                 )
+            }
+        }
+        .onChange(of: isPrefixFieldFocused) { focused in
+            if !focused {
+                persistPrefixDraftIfNeeded()
             }
         }
     }
@@ -255,7 +272,26 @@ struct SettingsView: View {
         customDateFormat = appState.preferences.fileDateFormat
         customTimeFormat = appState.preferences.timeFormat
         prefixDraft = appState.preferences.fileNamePrefix
+        refreshPreviewFileName()
         stopShortcutRecording()
+    }
+
+    private func persistPrefixDraftIfNeeded() {
+        let sanitizedDraft = FormatSettings.sanitizePrefix(prefixDraft)
+        guard sanitizedDraft != appState.preferences.fileNamePrefix else {
+            prefixDraft = sanitizedDraft
+            return
+        }
+
+        appState.updateFileNamePrefix(sanitizedDraft)
+        prefixDraft = appState.preferences.fileNamePrefix
+        refreshPreviewFileName()
+    }
+
+    private func refreshPreviewFileName() {
+        var previewPreferences = appState.preferences
+        previewPreferences.fileNamePrefix = FormatSettings.sanitizePrefix(prefixDraft)
+        previewFileName = FormatSettings.fileName(for: Date(), preferences: previewPreferences)
     }
 }
 
