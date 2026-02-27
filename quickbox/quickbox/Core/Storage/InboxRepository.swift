@@ -3,6 +3,7 @@ import Foundation
 enum InboxRepositoryError: LocalizedError {
     case itemNotFound
     case nothingToUndo
+    case emptyEditedText
 
     var errorDescription: String? {
         switch self {
@@ -10,6 +11,8 @@ enum InboxRepositoryError: LocalizedError {
             return "The selected item no longer exists."
         case .nothingToUndo:
             return "There is nothing to undo."
+        case .emptyEditedText:
+            return "Task text cannot be empty."
         }
     }
 }
@@ -86,6 +89,20 @@ final class InboxRepository: InboxRepositorying {
                 lines.remove(at: item.lineIndex)
                 lastDeleted = DeletedLine(line: item.rawLine, lineIndex: item.lineIndex, sourceID: sourceID)
 
+            case .edit(let id, text: let text):
+                let items = parser.parse(lines: lines, sourceID: sourceID)
+                guard let item = items.first(where: { $0.id == id }) else {
+                    throw InboxRepositoryError.itemNotFound
+                }
+
+                let normalizedText = normalizeToSingleLine(text)
+                guard !normalizedText.isEmpty else {
+                    throw InboxRepositoryError.emptyEditedText
+                }
+
+                let status = item.isCompleted ? "x" : " "
+                lines[item.lineIndex] = "- [\(status)] \(item.time) \(normalizedText)"
+
             case .undoLastDelete:
                 guard let deleted = lastDeleted, deleted.sourceID == sourceID else {
                     throw InboxRepositoryError.nothingToUndo
@@ -147,6 +164,14 @@ final class InboxRepository: InboxRepositorying {
         } else {
             try fileManager.moveItem(at: tempURL, to: fileURL)
         }
+    }
+
+    private func normalizeToSingleLine(_ text: String) -> String {
+        text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\r\n", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
     }
 
 }

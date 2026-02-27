@@ -194,6 +194,11 @@ struct quickboxTests {
         let fileAfterToggle = try String(contentsOf: fileURL)
         #expect(fileAfterToggle.contains("- [x] 08:00 first"))
 
+        let firstItem = try #require(items.first(where: { $0.text == "first" }))
+        items = try repository.apply(.edit(firstItem.id, text: "first updated"))
+        let fileAfterEdit = try String(contentsOf: fileURL)
+        #expect(fileAfterEdit.contains("- [x] 08:00 first updated"))
+
         let secondItem = try #require(items.first(where: { $0.text == "second" }))
         _ = try repository.apply(.delete(secondItem.id))
         let fileAfterDelete = try String(contentsOf: fileURL)

@@ -13,6 +13,11 @@ enum CaptureMode {
 }
 
 struct CaptureView: View {
+    private enum FocusTarget: Hashable {
+        case capture
+        case rowEditor
+    }
+
     private enum Layout {
         static let sectionGap: CGFloat = 14
         static let outerPadding: CGFloat = 10
@@ -34,9 +39,11 @@ struct CaptureView: View {
     let mode: CaptureMode
     let onClose: () -> Void
 
-    @FocusState private var isInputFocused: Bool
+    @FocusState private var focusedField: FocusTarget?
     @State private var animateIn = false
     @State private var hoveredItemID: String?
+    @State private var editingItemID: String?
+    @State private var editingDraftText: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: mode == .spotlight ? Layout.sectionGap : 0) {
@@ -58,7 +65,7 @@ struct CaptureView: View {
             withAnimation(.spring(response: 0.18, dampingFraction: 0.9)) {
                 animateIn = true
             }
-            isInputFocused = true
+            focusedField = .capture
             notifyHeightChange()
         }
         .onChange(of: appState.visibleInboxItems.count) { _ in
@@ -72,7 +79,7 @@ struct CaptureView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .quickboxFocusCapture)) { _ in
             DispatchQueue.main.async {
-                isInputFocused = true
+                focusedField = .capture
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .quickboxCapturePresented)) { _ in
@@ -83,7 +90,11 @@ struct CaptureView: View {
             notifyHeightChange()
         }
         .onExitCommand {
-            onClose()
+            if editingItemID != nil {
+                cancelEditing()
+            } else {
+                onClose()
+            }
         }
     }
 
@@ -107,7 +118,7 @@ struct CaptureView: View {
                 .textFieldStyle(.plain)
                 .font(.system(size: 30, weight: .regular))
                 .foregroundStyle(Color.white.opacity(0.95))
-                .focused($isInputFocused)
+                .focused($focusedField, equals: .capture)
                 .onSubmit {
                     submit()
                 }
@@ -243,7 +254,7 @@ struct CaptureView: View {
             onClose()
         case .savedKeepOpen:
             DispatchQueue.main.async {
-                isInputFocused = true
+                focusedField = .capture
             }
         case .failed:
             break
@@ -316,7 +327,10 @@ struct CaptureView: View {
     }
 
     private func taskRow(_ item: InboxItem) -> some View {
-        HStack(spacing: 10) {
+        let isEditing = editingItemID == item.id
+        let isHovered = hoveredItemID == item.id
+
+        return HStack(spacing: 10) {
             Button {
                 appState.handleSpotlightMutation(.toggle(item.id))
             } label: {
@@ -327,41 +341,119 @@ struct CaptureView: View {
             .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(item.text)
-                    .font(.system(size: 14, weight: .medium))
-                    .strikethrough(item.isCompleted)
-                    .foregroundStyle(item.isCompleted ? .secondary : .primary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
+                if isEditing {
+                    TextField("Edit task", text: $editingDraftText)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .focused($focusedField, equals: .rowEditor)
+                        .onSubmit {
+                            saveEditing(item)
+                        }
 
-                Text(item.time)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    Text(item.time)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(item.text)
+                        .font(.system(size: 14, weight: .medium))
+                        .strikethrough(item.isCompleted)
+                        .foregroundStyle(item.isCompleted ? .secondary : .primary)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text(item.time)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            Button {
-                appState.handleSpotlightMutation(.delete(item.id))
-            } label: {
-                Image(systemName: "trash")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.red)
+            HStack(spacing: 8) {
+                if isEditing {
+                    Button {
+                        saveEditing(item)
+                    } label: {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.green)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        cancelEditing()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Button {
+                        startEditing(item)
+                    } label: {
+                        Image(systemName: "pencil")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(isHovered ? 1 : 0.35)
+
+                    Button {
+                        appState.handleSpotlightMutation(.delete(item.id))
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.red)
+                    }
+                    .buttonStyle(.plain)
+                    .opacity(isHovered ? 1 : 0.35)
+                }
             }
-            .buttonStyle(.plain)
-            .opacity(hoveredItemID == item.id ? 1 : 0.35)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 9, style: .continuous)
-                .fill(Color.white.opacity(hoveredItemID == item.id ? 0.11 : 0.04))
+                .fill(Color.white.opacity(isHovered || isEditing ? 0.11 : 0.04))
                 .overlay(
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .stroke(Color.white.opacity(hoveredItemID == item.id ? 0.12 : 0.0), lineWidth: 0.8)
+                        .stroke(Color.white.opacity(isHovered || isEditing ? 0.12 : 0.0), lineWidth: 0.8)
                 )
         )
+        .onTapGesture(count: 2) {
+            startEditing(item)
+        }
         .onHover { hovering in
-            hoveredItemID = hovering ? item.id : nil
+            if !isEditing {
+                hoveredItemID = hovering ? item.id : nil
+            }
+        }
+    }
+
+    private func startEditing(_ item: InboxItem) {
+        editingItemID = item.id
+        editingDraftText = item.text
+        DispatchQueue.main.async {
+            focusedField = .rowEditor
+        }
+    }
+
+    private func cancelEditing() {
+        editingItemID = nil
+        editingDraftText = ""
+        focusedField = .capture
+    }
+
+    private func saveEditing(_ item: InboxItem) {
+        let cleaned = editingDraftText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard cleaned != item.text else {
+            cancelEditing()
+            return
+        }
+
+        if appState.editInboxItem(id: item.id, text: cleaned) {
+            cancelEditing()
         }
     }
 }

@@ -12,6 +12,7 @@ struct InboxItem: Identifiable, Equatable {
 enum InboxMutation {
     case toggle(String)
     case delete(String)
+    case edit(String, text: String)
     case undoLastDelete
 }
 

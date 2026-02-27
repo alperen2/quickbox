@@ -233,12 +233,19 @@ final class AppState: ObservableObject {
         applyInboxMutation(.undoLastDelete, successMessage: "Restored")
     }
 
+    @discardableResult
+    func editInboxItem(id: String, text: String) -> Bool {
+        applyInboxMutation(.edit(id, text: text), successMessage: nil)
+    }
+
     func handleSpotlightMutation(_ mutation: InboxMutation) {
         switch mutation {
         case .toggle(let id):
             applyInboxMutation(.toggle(id), successMessage: nil)
         case .delete(let id):
             applyInboxMutation(.delete(id), successMessage: "Deleted. You can undo.")
+        case .edit(let id, text: let text):
+            applyInboxMutation(.edit(id, text: text), successMessage: nil)
         case .undoLastDelete:
             applyInboxMutation(.undoLastDelete, successMessage: "Restored")
         }
@@ -389,14 +396,17 @@ final class AppState: ObservableObject {
         }
     }
 
-    private func applyInboxMutation(_ mutation: InboxMutation, successMessage: String?) {
+    @discardableResult
+    private func applyInboxMutation(_ mutation: InboxMutation, successMessage: String?) -> Bool {
         do {
             let updatedItems = try inboxRepository.apply(mutation, on: selectedInboxDate)
             inboxItems = sorted(updatedItems)
             canUndoDelete = inboxRepository.canUndoDelete
             inboxMessage = successMessage
+            return true
         } catch {
             inboxMessage = error.localizedDescription
+            return false
         }
     }
 
