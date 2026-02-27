@@ -4,8 +4,10 @@ import SwiftUI
 final class CaptureWindowController: NSObject, NSWindowDelegate {
     private enum Constants {
         static let panelWidth: CGFloat = 620
-        static let minPanelHeight: CGFloat = 220
-        static let maxPanelHeight: CGFloat = 430
+        static let minPanelHeight: CGFloat = 240
+        static let maxPanelHeight: CGFloat = 620
+        static let savedRelativeXKey = "quickbox.capturePanel.relativeX"
+        static let savedRelativeYKey = "quickbox.capturePanel.relativeY"
     }
 
     private let panel: NSPanel
@@ -70,7 +72,7 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
         }
 
         prefillAction()
-        positionNearTopCenter()
+        positionForPresentation()
         panel.alphaValue = 0
         panel.makeKeyAndOrderFront(nil)
         NSAnimationContext.runAnimationGroup { context in
@@ -100,6 +102,10 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
         hide()
     }
 
+    func windowDidMove(_ notification: Notification) {
+        saveCurrentOrigin()
+    }
+
     private func resizePanel(contentHeight: CGFloat) {
         let clampedHeight = min(max(contentHeight, Constants.minPanelHeight), Constants.maxPanelHeight)
         let currentFrame = panel.frame
@@ -113,7 +119,7 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
     }
 
     private func positionNearTopCenter() {
-        guard let screen = NSScreen.main else {
+        guard let screen = targetScreenForPresentation() else {
             panel.center()
             return
         }
@@ -122,5 +128,75 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
         let x = visible.midX - (panel.frame.width / 2)
         let y = visible.minY + (visible.height * 0.72)
         panel.setFrameOrigin(NSPoint(x: x, y: y))
+    }
+
+    private func positionForPresentation() {
+        guard let targetScreen = targetScreenForPresentation() else {
+            panel.center()
+            return
+        }
+
+        if let savedRelativeOrigin = restoredRelativeOrigin() {
+            let translated = translatedOrigin(fromRelative: savedRelativeOrigin, in: targetScreen)
+            panel.setFrameOrigin(clampedOrigin(translated, in: targetScreen))
+        } else {
+            positionNearTopCenter()
+        }
+    }
+
+    private func saveCurrentOrigin() {
+        guard let screen = panel.screen ?? targetScreenForPresentation() else {
+            return
+        }
+
+        let visible = screen.visibleFrame
+        guard visible.width > panel.frame.width, visible.height > panel.frame.height else {
+            return
+        }
+
+        let defaults = UserDefaults.standard
+        let relativeX = (panel.frame.origin.x - visible.minX) / (visible.width - panel.frame.width)
+        let relativeY = (panel.frame.origin.y - visible.minY) / (visible.height - panel.frame.height)
+        defaults.set(min(max(relativeX, 0), 1), forKey: Constants.savedRelativeXKey)
+        defaults.set(min(max(relativeY, 0), 1), forKey: Constants.savedRelativeYKey)
+    }
+
+    private func restoredRelativeOrigin() -> NSPoint? {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: Constants.savedRelativeXKey) != nil,
+              defaults.object(forKey: Constants.savedRelativeYKey) != nil else {
+            return nil
+        }
+
+        return NSPoint(
+            x: defaults.double(forKey: Constants.savedRelativeXKey),
+            y: defaults.double(forKey: Constants.savedRelativeYKey)
+        )
+    }
+
+    private func clampedOrigin(_ origin: NSPoint, in screen: NSScreen) -> NSPoint {
+        let visible = screen.visibleFrame
+        let maxX = max(visible.minX, visible.maxX - panel.frame.width)
+        let maxY = max(visible.minY, visible.maxY - panel.frame.height)
+        let x = min(max(origin.x, visible.minX), maxX)
+        let y = min(max(origin.y, visible.minY), maxY)
+        return NSPoint(x: x, y: y)
+    }
+
+    private func translatedOrigin(fromRelative relative: NSPoint, in screen: NSScreen) -> NSPoint {
+        let visible = screen.visibleFrame
+        let clampedRelativeX = min(max(relative.x, 0), 1)
+        let clampedRelativeY = min(max(relative.y, 0), 1)
+        let x = visible.minX + ((visible.width - panel.frame.width) * clampedRelativeX)
+        let y = visible.minY + ((visible.height - panel.frame.height) * clampedRelativeY)
+        return NSPoint(x: x, y: y)
+    }
+
+    private func targetScreenForPresentation() -> NSScreen? {
+        let mouseLocation = NSEvent.mouseLocation
+        if let hovered = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) }) {
+            return hovered
+        }
+        return NSScreen.main
     }
 }

@@ -315,6 +315,7 @@ SWIFT_CLASS("_TtC8quickbox11AppDelegate")
 SWIFT_CLASS("_TtC8quickbox23CaptureWindowController")
 @interface CaptureWindowController : NSObject <NSWindowDelegate>
 - (void)windowDidResignKey:(NSNotification * _Nonnull)notification;
+- (void)windowDidMove:(NSNotification * _Nonnull)notification;
 - (nonnull instancetype)init SWIFT_UNAVAILABLE;
 + (nonnull instancetype)new SWIFT_UNAVAILABLE_MSG("-init is unavailable");
 @end
