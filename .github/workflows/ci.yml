@@ -22,8 +22,12 @@ jobs:
           xcodebuild test \
             -project quickbox.xcodeproj \
             -scheme quickbox \
-            -destination 'platform=macOS' \
-            -only-testing:quickboxTests | tee xcodebuild.log
+            -destination 'platform=macOS,arch=arm64' \
+            -only-testing:quickboxTests \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" | tee xcodebuild.log
 
       - name: Enforce warning budget
         run: |
