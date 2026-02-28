@@ -49,7 +49,7 @@ final class HotkeyManager {
         try ensureEventHandlerInstalled()
         unregister()
 
-        var hotKeyID = EventHotKeyID(signature: hotkeySignature, id: hotkeyIdentifier)
+        let hotKeyID = EventHotKeyID(signature: hotkeySignature, id: hotkeyIdentifier)
         let status = RegisterEventHotKey(
             combo.keyCode,
             combo.carbonModifiers,
