@@ -114,7 +114,7 @@ struct SettingsView: View {
                     TextField("Optional", text: $prefixDraft)
                         .textFieldStyle(.roundedBorder)
                         .focused($isPrefixFieldFocused)
-                        .onChange(of: prefixDraft) { _ in
+                        .onChange(of: prefixDraft) {
                             refreshPreviewFileName()
                         }
                         .onSubmit {
@@ -129,7 +129,7 @@ struct SettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .onChange(of: selectedDatePreset) { preset in
+                    .onChange(of: selectedDatePreset) { _, preset in
                         guard let format = preset.formatString else {
                             return
                         }
@@ -158,7 +158,7 @@ struct SettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .onChange(of: selectedTimePreset) { preset in
+                    .onChange(of: selectedTimePreset) { _, preset in
                         guard let format = preset.formatString else {
                             return
                         }
@@ -194,7 +194,7 @@ struct SettingsView: View {
                 )
             }
         }
-        .onChange(of: isPrefixFieldFocused) { focused in
+        .onChange(of: isPrefixFieldFocused) { _, focused in
             if !focused {
                 persistPrefixDraftIfNeeded()
             }

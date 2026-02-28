@@ -72,13 +72,13 @@ struct CaptureView: View {
             focusedField = .capture
             notifyHeightChange()
         }
-        .onChange(of: appState.visibleInboxItems.count) { _ in
+        .onChange(of: appState.visibleInboxItems.count) {
             notifyHeightChange()
         }
-        .onChange(of: appState.showOnlyOpenTasks) { _ in
+        .onChange(of: appState.showOnlyOpenTasks) {
             notifyHeightChange()
         }
-        .onChange(of: appState.selectedInboxDate) { _ in
+        .onChange(of: appState.selectedInboxDate) {
             notifyHeightChange()
         }
         .onReceive(NotificationCenter.default.publisher(for: .quickboxFocusCapture)) { _ in
