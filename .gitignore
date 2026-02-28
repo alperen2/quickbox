@@ -1,0 +1,20 @@
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.moved-aside
+
+# Codex local build artifacts
+.codex-build/
+.codex/
+
+# macOS
+.DS_Store
+
+# Python / docs
+.venv/
+site/
+
+# Logs
+*.log

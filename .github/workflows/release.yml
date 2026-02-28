@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: macos-14
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build archive
+        run: scripts/release/build_archive.sh
+
+      - name: Export app
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: scripts/release/export_app.sh
+
+      - name: Configure notary profile
+        env:
+          APPLE_NOTARY_PROFILE: ${{ secrets.APPLE_NOTARY_PROFILE }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun notarytool store-credentials "$APPLE_NOTARY_PROFILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
+            --team-id "$TEAM_ID"
+
+      - name: Notarize and staple
+        env:
+          NOTARY_PROFILE: ${{ secrets.APPLE_NOTARY_PROFILE }}
+        run: scripts/release/notarize_and_staple.sh
+
+      - name: Build DMG
+        run: scripts/release/build_dmg.sh
+
+      - name: Generate appcast
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+          DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/quickbox.dmg"
+          VERSION="$VERSION" BUILD="$BUILD_NUMBER" DOWNLOAD_URL="$DOWNLOAD_URL" APPCAST_PATH="build/release/appcast.xml" scripts/release/publish_appcast.sh
+          VERSION="$VERSION" BUILD="$BUILD_NUMBER" DOWNLOAD_URL="$DOWNLOAD_URL" APPCAST_PATH="build/release/appcast-beta.xml" scripts/release/publish_appcast.sh
+
+      - name: Create checksum artifact
+        run: ls -la build/release
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            build/release/quickbox.dmg
+            build/release/quickbox.dmg.sha256
+            build/release/appcast.xml
+            build/release/appcast-beta.xml

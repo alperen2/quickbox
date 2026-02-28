@@ -1,0 +1,32 @@
+name: Bug Report
+description: Report a reproducible bug
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce the issue
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: quickbox Version
+      placeholder: 1.0.0-beta.1
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: macOS Version
+      placeholder: macOS 14.x
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Logs / Screenshots
+      description: Include non-sensitive logs and screenshots
