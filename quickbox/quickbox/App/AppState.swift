@@ -222,7 +222,8 @@ final class AppState: ObservableObject {
     }
 
     func toggleInboxItem(id: String) {
-        applyInboxMutation(.toggle(id), successMessage: nil)
+        applyOptimisticToggle(id: id)
+        applyInboxMutationAsync(.toggle(id), successMessage: nil)
     }
 
     func deleteInboxItem(id: String) {
@@ -241,7 +242,8 @@ final class AppState: ObservableObject {
     func handleSpotlightMutation(_ mutation: InboxMutation) {
         switch mutation {
         case .toggle(let id):
-            applyInboxMutation(.toggle(id), successMessage: nil)
+            applyOptimisticToggle(id: id)
+            applyInboxMutationAsync(.toggle(id), successMessage: nil)
         case .delete(let id):
             applyInboxMutation(.delete(id), successMessage: "Deleted. You can undo.")
         case .edit(let id, text: let text):
@@ -410,6 +412,31 @@ final class AppState: ObservableObject {
         }
     }
 
+    private func applyInboxMutationAsync(_ mutation: InboxMutation, successMessage: String?) {
+        let date = selectedInboxDate
+        Task.detached { [inboxRepository] in
+            do {
+                let updatedItems = try inboxRepository.apply(mutation, on: date)
+                await MainActor.run {
+                    guard self.selectedInboxDate == date else {
+                        return
+                    }
+                    self.inboxItems = self.sorted(updatedItems)
+                    self.canUndoDelete = inboxRepository.canUndoDelete
+                    self.inboxMessage = successMessage
+                }
+            } catch {
+                await MainActor.run {
+                    guard self.selectedInboxDate == date else {
+                        return
+                    }
+                    self.loadInbox()
+                    self.inboxMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
     private func sorted(_ items: [InboxItem]) -> [InboxItem] {
         items.sorted { lhs, rhs in
             lhs.lineIndex > rhs.lineIndex
@@ -450,4 +477,20 @@ final class AppState: ObservableObject {
     }
 
     private static let calendar = Calendar(identifier: .gregorian)
+
+    private func applyOptimisticToggle(id: String) {
+        guard let index = inboxItems.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+
+        let current = inboxItems[index]
+        inboxItems[index] = InboxItem(
+            id: current.id,
+            text: current.text,
+            time: current.time,
+            isCompleted: !current.isCompleted,
+            lineIndex: current.lineIndex,
+            rawLine: current.rawLine
+        )
+    }
 }
