@@ -15,6 +15,7 @@ nav:
   - Privacy: privacy.md
   - FAQ: faq.md
   - Contributing: contributing.md
+  - Release Playbook: release-playbook.md
   - Release Process: release-process.md
   - Support Runbook: support-runbook.md
 

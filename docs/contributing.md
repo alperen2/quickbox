@@ -1,5 +1,10 @@
 # Contributing
 
-See the root [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+Quick contribution rules for quickbox:
 
-For UI changes, include screenshots and keep the minimal-first interaction philosophy.
+- Keep scope focused and minimal
+- Run tests before opening a PR
+- Include screenshots for UI changes
+- Avoid unrelated file changes
+
+Full guide: [CONTRIBUTING.md](https://github.com/alperen2/quickbox/blob/main/CONTRIBUTING.md).
