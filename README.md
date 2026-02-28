@@ -44,7 +44,15 @@ Release scripts are under `scripts/release/`. See:
 ## Documentation
 
 - Docs source: `docs/`
-- GitHub Pages: configured with MkDocs Material
+- Docs framework: VitePress
+- Local preview:
+
+```bash
+npm install
+npm run docs:dev
+```
+
+- Published site: [alperen2.github.io/quickbox](https://alperen2.github.io/quickbox/)
 
 ## Privacy
 
@@ -60,4 +68,4 @@ Please read [`SECURITY.md`](SECURITY.md) for vulnerability reporting.
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT - see [`LICENSE`](LICENSE).

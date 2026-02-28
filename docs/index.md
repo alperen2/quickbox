@@ -1,12 +1,23 @@
-# quickbox
+---
+layout: home
 
-quickbox is a minimalist macOS quick-capture inbox.
+hero:
+  name: quickbox
+  text: Fast thought capture for macOS
+  tagline: Capture in 1-2 seconds and get back to work.
+  actions:
+    - theme: brand
+      text: Get Started
+      link: /getting-started
+    - theme: alt
+      text: Usage
+      link: /usage
 
-Core goal: capture fast, return to work immediately.
-
-## Principles
-
-- Speed over feature volume
-- Minimal visual and cognitive load
-- Local-first data
-- Practical, reliable daily operation
+features:
+  - title: Minimal by design
+    details: quickbox stays focused on fast capture and light triage instead of becoming a full task manager.
+  - title: Local-first
+    details: Your notes stay on your machine. No network dependency for daily use.
+  - title: Production-ready baseline
+    details: CI, release scripts, docs deployment, and OSS contribution workflow are included.
+---
