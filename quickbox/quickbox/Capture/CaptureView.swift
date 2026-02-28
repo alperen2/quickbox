@@ -27,13 +27,13 @@ struct CaptureView: View {
         static let rowHorizontalPadding: CGFloat = 12
         static let rowSpacing: CGFloat = 10
         static let leadingIconWidth: CGFloat = 16
-        static let trailingIconWidth: CGFloat = 12
+        static let trailingIconWidth: CGFloat = 44
         static let actionButtonWidth: CGFloat = 30
         static let actionGap: CGFloat = 6
         static let minimumRowHeight: CGFloat = 58
         static let rowVerticalPadding: CGFloat = 6
         static let rowSeparatorHeight: CGFloat = 1
-        static let rowSeparatorVerticalPadding: CGFloat = 2
+        static let rowSeparatorVerticalPadding: CGFloat = 0
         static let textFont = NSFont.systemFont(ofSize: 14, weight: .medium)
         static let textLineHeight = ceil(textFont.ascender - textFont.descender + textFont.leading)
         static let maxTextLines: CGFloat = 3
@@ -359,7 +359,7 @@ struct CaptureView: View {
                 .buttonStyle(.plain)
                 .disabled(isEditing)
 
-                VStack(alignment: .leading, spacing: 1) {
+                HStack(alignment: .top, spacing: 8) {
                     if isEditing {
                         TextField("Edit task", text: $editingDraftText)
                             .textFieldStyle(.plain)
@@ -369,10 +369,6 @@ struct CaptureView: View {
                             .onSubmit {
                                 saveEditing(item)
                             }
-
-                        Text(item.time)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
                     } else {
                         Text(item.text)
                             .font(.system(size: 14, weight: .medium))
@@ -380,11 +376,14 @@ struct CaptureView: View {
                             .foregroundStyle(item.isCompleted ? .secondary : .primary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
-
-                        Text(item.time)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
                     }
+
+                    Spacer(minLength: 6)
+
+                    Text(item.time)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 36, alignment: .trailing)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -426,7 +425,7 @@ struct CaptureView: View {
                 sideActionButton(
                     tooltip: "Delete",
                     systemImage: "trash",
-                    tint: Color.red.opacity(0.95)
+                    tint: isHovered ? Color.red.opacity(0.9) : Color.white.opacity(0.85)
                 ) {
                     appState.handleSpotlightMutation(.delete(item.id))
                 }
@@ -442,7 +441,7 @@ struct CaptureView: View {
 
     private var taskSeparator: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.08))
+            .fill(Color.white.opacity(0.04))
             .frame(height: Layout.rowSeparatorHeight)
             .padding(.vertical, Layout.rowSeparatorVerticalPadding)
             .padding(.leading, Layout.rowHorizontalPadding + Layout.leadingIconWidth + Layout.rowSpacing)
