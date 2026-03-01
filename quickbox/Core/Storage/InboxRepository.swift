@@ -225,11 +225,15 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                     let allMarkdowns = contents.filter { $0.pathExtension == "md" }
                     
                     let defaultFileURL = try self.fileURL(for: date, in: folderURL)
+                    let editedFileName = fileURL.lastPathComponent
+                    let defaultFileName = defaultFileURL.lastPathComponent
                     
                     for mdFileURL in allMarkdowns {
-                        if mdFileURL == fileURL {
+                        let markdownFileName = mdFileURL.lastPathComponent
+                        // URL equality can fail for the same temp file when paths differ as /var vs /private/var.
+                        if markdownFileName == editedFileName {
                             // We just edited this one, use the fresh parse
-                            if mdFileURL == defaultFileURL {
+                            if markdownFileName == defaultFileName {
                                 allItems.append(contentsOf: itemsThisFile)
                             } else {
                                 // Filter by date tag if it's a project
@@ -238,7 +242,7 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                             }
                         } else {
                             let otherLines = try readLines(fileURL: mdFileURL)
-                            if mdFileURL == defaultFileURL {
+                            if markdownFileName == defaultFileName {
                                 let otherItems = parser.parse(lines: otherLines, sourceID: mdFileURL.lastPathComponent)
                                 allItems.append(contentsOf: otherItems)
                             } else {
