@@ -54,10 +54,8 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                 try withResolvedFolder { folderURL in
                     var allItems: [InboxItem] = []
                     
-                    let dateFormatter = DateFormatter()
-                    dateFormatter.dateFormat = "yyyy-MM-dd"
-                    let dateString = dateFormatter.string(from: date)
-                    let dateTag = "date:\(dateString)"
+                    let formattedRouteDate = self.fileName(for: date).replacingOccurrences(of: ".md", with: "")
+                    let dateTag = "date:\(formattedRouteDate)"
                     
                     // 1. Load the default daily log file
                     let defaultFileURL = try fileURL(for: date, in: folderURL)
@@ -220,10 +218,8 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                     // 2. Load the rest of the items for this date to reconstruct the full Inbox view
                     var allItems: [InboxItem] = []
                     
-                    let dateFormatter = DateFormatter()
-                    dateFormatter.dateFormat = "yyyy-MM-dd"
-                    let dateString = dateFormatter.string(from: date)
-                    let dateTag = "date:\(dateString)"
+                    let formattedRouteDate = self.fileName(for: date).replacingOccurrences(of: ".md", with: "")
+                    let dateTag = "date:\(formattedRouteDate)"
                     
                     let contents = try fileManager.contentsOfDirectory(at: folderURL, includingPropertiesForKeys: nil)
                     let allMarkdowns = contents.filter { $0.pathExtension == "md" }

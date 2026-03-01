@@ -290,7 +290,7 @@ struct quickboxTests {
         let resolver = TestStorageResolver(baseURL: tempFolder)
         let repository = InboxRepository(storageResolver: resolver)
 
-        let fileURL = tempFolder.appendingPathComponent(todayFileName())
+        let fileURL = tempFolder.appendingPathComponent(todayFileName(for: Date()))
         try "- [ ] 08:00 first\n- [ ] 09:00 second\n".write(to: fileURL, atomically: true, encoding: .utf8)
 
         var items = try repository.loadToday()
@@ -444,7 +444,7 @@ struct quickboxTests {
 
         appState.prepareSpotlightSession()
         #expect(appState.selectedInboxDateLabel == "Today")
-        #expect(!appState.canNavigateForwardInboxDate)
+        #expect(appState.canNavigateForwardInboxDate)
 
         appState.navigateInboxDayBackward()
         #expect(appState.selectedInboxDateLabel == "Yesterday")
@@ -457,7 +457,9 @@ struct quickboxTests {
         #expect(appState.selectedInboxDateLabel == "Yesterday")
         appState.navigateInboxDayForward()
         #expect(appState.selectedInboxDateLabel == "Today")
-        #expect(!appState.canNavigateForwardInboxDate)
+        appState.navigateInboxDayForward()
+        #expect(appState.selectedInboxDateLabel == "Tomorrow")
+        #expect(appState.canNavigateForwardInboxDate)
     }
 
     @MainActor
@@ -529,12 +531,12 @@ struct quickboxTests {
         #expect(appState.preferences.betaChannelEnabled == false)
     }
 
-    private func todayFileName() -> String {
+    private func todayFileName(for date: Date = Date()) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: Date()) + ".md"
+        return formatter.string(from: date) + ".md"
     }
 
     @MainActor
