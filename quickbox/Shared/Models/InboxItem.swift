@@ -7,6 +7,7 @@ struct InboxItem: Identifiable, Equatable, Sendable {
     var dueDate: String? = nil
     var priority: Int? = nil
     var projectName: String? = nil
+    var metadata: [String: String] = [:] // Holds dynamic key:value pairs like time:30m
     let time: String
     let isCompleted: Bool
     let lineIndex: Int

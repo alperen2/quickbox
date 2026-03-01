@@ -126,6 +126,13 @@ final class InboxWriter: InboxWriting {
             }
         }
         
+        // Append all dynamic key:value metadata
+        for key in item.metadata.keys.sorted() {
+             if let value = item.metadata[key] {
+                 components.append("\(key):\(value)")
+             }
+        }
+        
         // Always append the date tag if it's sent to a project file rather than the daily log
         if isProjectRoute {
             let formattedRouteDate = FormatSettings.fileName(for: routeDate, preferences: currentPreferences()).replacingOccurrences(of: ".md", with: "")

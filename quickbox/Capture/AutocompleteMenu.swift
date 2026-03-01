@@ -5,7 +5,7 @@ enum AutocompleteType {
     case tag(query: String)
     case project(query: String)
     case priority(query: String)
-    case dueDate(query: String)
+    case metadata(key: String, query: String)
 }
 
 struct AutocompleteMenu: View {
@@ -56,7 +56,7 @@ struct AutocompleteMenu: View {
         case .tag: Image(systemName: "number")
         case .project: Image(systemName: "folder.fill")
         case .priority: Image(systemName: "exclamationmark")
-        case .dueDate: Image(systemName: "calendar")
+        case .metadata(let key, _): Image(systemName: iconForMetadataKey(key))
         case .none: EmptyView()
         }
     }
@@ -66,8 +66,18 @@ struct AutocompleteMenu: View {
         case .tag: return .green.opacity(0.8)
         case .project: return .purple.opacity(0.8)
         case .priority: return .orange.opacity(0.8)
-        case .dueDate: return .blue.opacity(0.8)
+        case .metadata: return .blue.opacity(0.8)
         case .none: return .clear
+        }
+    }
+    
+    private func iconForMetadataKey(_ key: String) -> String {
+        switch key.lowercased() {
+        case "due": return "calendar"
+        case "dur", "time", "duration": return "clock"
+        case "defer", "start": return "hourglass.bottomhalf.filled"
+        case "remind", "alarm": return "bell.fill"
+        default: return "tag"
         }
     }
 }

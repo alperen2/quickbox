@@ -181,12 +181,6 @@ struct CaptureView: View {
                     .alignmentGuide(.leading) { d in d[.leading] + 28 } // Align roughly under text start
                 }
             }
-
-            if appState.selectedInboxDateLabel != "Today" {
-                Text("Saving new captures to Today")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
         }
         .padding(.horizontal, Layout.cardPaddingHorizontal)
         .padding(.vertical, Layout.cardPaddingVertical)
@@ -233,6 +227,35 @@ struct CaptureView: View {
             return
         }
         
+        if lastWord.contains(":") && !lastWord.lowercased().hasPrefix("http") {
+             let parts = lastWord.components(separatedBy: ":")
+             if parts.count >= 2 {
+                 let key = parts[0].lowercased()
+                 let valQuery = parts.dropFirst().joined(separator: ":").lowercased()
+
+                 let dateOptions = ["tdy", "tmr", "tmrw", "nw", "eow", "eom"]
+                 let timeOptions = ["15m", "30m", "45m", "1h", "2h", "1d"]
+                 let reminderOptions = ["15m", "30m", "1h", "1d"]
+                 
+                 let options: [String]
+                 switch key {
+                 case "due", "defer", "start": options = dateOptions
+                 case "time", "dur", "duration": options = timeOptions
+                 case "remind", "alarm": options = reminderOptions
+                 default: options = []
+                 }
+                 
+                 if !options.isEmpty {
+                     autocompleteType = .metadata(key: key, query: valQuery)
+                     let matches = valQuery.isEmpty ? options : options.filter { $0.hasPrefix(valQuery) }
+                     autocompleteSuggestions = Array(matches.prefix(5))
+                     autocompleteSelectedIndex = 0
+                     if autocompleteSuggestions.isEmpty { closeAutocomplete() }
+                     return
+                 }
+             }
+        }
+        
         closeAutocomplete()
     }
     
@@ -254,6 +277,7 @@ struct CaptureView: View {
         switch autocompleteType {
         case .tag: prefix = "#"
         case .project: prefix = "@"
+        case .metadata(let key, _): prefix = "\(key):"
         default: prefix = ""
         }
         
@@ -501,7 +525,7 @@ struct CaptureView: View {
                                 .lineLimit(2)
                                 .fixedSize(horizontal: false, vertical: true)
                                 
-                            if !item.tags.isEmpty || item.projectName != nil {
+                            if !item.tags.isEmpty || item.projectName != nil || !item.metadata.isEmpty {
                                 HStack(spacing: 6) {
                                     if let project = item.projectName {
                                         HStack(spacing: 4) {
@@ -524,6 +548,21 @@ struct CaptureView: View {
                                             .background(Color.blue.opacity(0.2))
                                             .cornerRadius(4)
                                             .foregroundStyle(.blue)
+                                    }
+                                    
+                                    ForEach(item.metadata.keys.sorted(), id: \.self) { key in
+                                        if let val = item.metadata[key] {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: iconForMetadataKey(key))
+                                                Text("\(key):\(val)")
+                                            }
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.purple.opacity(0.2))
+                                            .cornerRadius(4)
+                                            .foregroundStyle(.purple)
+                                        }
                                     }
                                 }
                             }
@@ -663,6 +702,16 @@ struct CaptureView: View {
         case 2: return Color.orange.opacity(0.85)
         case 3: return Color.blue.opacity(0.85)
         default: return Color.white.opacity(0.62)
+        }
+    }
+    
+    // MARK: - Helpers
+    private func iconForMetadataKey(_ key: String) -> String {
+        switch key.lowercased() {
+        case "dur", "time", "duration": return "clock"
+        case "defer", "start": return "hourglass.bottomhalf.filled"
+        case "remind", "alarm": return "bell.fill"
+        default: return "tag"
         }
     }
 }

@@ -88,8 +88,24 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                         }
                     }
                     
+                    // 3. Filter out deferred tasks
+                    // A task with a future `defer:` date shouldn't show up until that date arrives.
+                    let deferResolver = DeferDateResolver()
+                    let activeItems = allItems.filter { item in
+                        if let deferStr = item.metadata["defer"], 
+                           let deferDate = deferResolver.resolve(deferDateString: deferStr, from: Date()) {
+                            // If the defer date is strictly greater than the viewing date, hide it.
+                            // We normalize both to start of day to compare purely by date, not time.
+                            let calendar = Calendar.current
+                            let viewingStartOfDay = calendar.startOfDay(for: date)
+                            let deferStartOfDay = calendar.startOfDay(for: deferDate)
+                            return viewingStartOfDay >= deferStartOfDay
+                        }
+                        return true
+                    }
+                    
                     // Sort items by time, just in case they were appended out of order across files
-                    return allItems.sorted { $0.time < $1.time }
+                    return activeItems.sorted { $0.time < $1.time }
                 }
             }
         } catch {
