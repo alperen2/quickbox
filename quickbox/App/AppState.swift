@@ -146,9 +146,7 @@ final class AppState: ObservableObject {
             let parser = InboxParser()
             let parsedItems = parser.parse(lines: ["- [ ] 00:00 " + draftText], sourceID: "temp")
             if let item = parsedItems.first {
-                Task {
-                    await IndexManager.shared.inject(tags: item.tags, project: item.projectName)
-                }
+                IndexManager.shared.inject(tags: item.tags, project: item.projectName)
             }
             
             draftText = ""
@@ -169,9 +167,7 @@ final class AppState: ObservableObject {
             let parser = InboxParser()
             let parsedItems = parser.parse(lines: ["- [ ] 00:00 " + draftText], sourceID: "temp")
             if let item = parsedItems.first {
-                Task {
-                    await IndexManager.shared.inject(tags: item.tags, project: item.projectName)
-                }
+                IndexManager.shared.inject(tags: item.tags, project: item.projectName)
             }
             draftText = ""
             captureMessage = nil
@@ -240,9 +236,7 @@ final class AppState: ObservableObject {
             
             // Build autocomplete index in the background
             if let folderURL = try? storageAccessManager.resolvedBaseURL() {
-                Task {
-                    await IndexManager.shared.buildIndex(in: folderURL)
-                }
+                IndexManager.shared.buildIndex(in: folderURL)
             }
             
         } catch {

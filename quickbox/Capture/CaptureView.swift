@@ -724,6 +724,7 @@ struct CaptureView: View {
                     return
                 }
                 let end = textView.string.count
+                textView.setSelectedRange(NSRange(location: end, length: 0))
             }
         }
     }
