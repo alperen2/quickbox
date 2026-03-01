@@ -34,7 +34,15 @@ struct quickboxTests {
         components.minute = 7
         let date = Calendar(identifier: .gregorian).date(from: components)!
 
-        let line = writer.formattedLine(for: "Call designer", at: date)
+        let item = InboxItem(
+            id: UUID().uuidString,
+            text: "Call designer",
+            time: "18:07",
+            isCompleted: false,
+            lineIndex: 0,
+            rawLine: ""
+        )
+        let line = writer.formattedLine(for: item, captureDate: date, routeDate: date, isProjectRoute: false)
         #expect(line == "- [ ] 18:07 Call designer")
     }
 
