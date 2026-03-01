@@ -170,14 +170,14 @@ struct CaptureView: View {
                 )
                 .focused($focusedField, equals: .capture)
             }
-            .overlay(alignment: .bottomLeading) {
+            .overlay(alignment: .topLeading) {
                 if !autocompleteSuggestions.isEmpty {
                     AutocompleteMenu(
                         mode: autocompleteType,
                         suggestions: autocompleteSuggestions,
                         selectedIndex: autocompleteSelectedIndex
                     )
-                    .alignmentGuide(.bottom) { d in d[.top] + 8 }
+                    .alignmentGuide(.top) { d in d[.bottom] + 4 }
                     .alignmentGuide(.leading) { d in d[.leading] + 28 } // Align roughly under text start
                 }
             }

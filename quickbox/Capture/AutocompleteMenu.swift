@@ -17,33 +17,16 @@ struct AutocompleteMenu: View {
         if suggestions.isEmpty {
             EmptyView()
         } else {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(Array(suggestions.enumerated()), id: \.offset) { index, item in
-                    HStack(spacing: 6) {
-                        icon(for: mode)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(iconColor(for: mode))
-                        
-                        Text(item)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(index == selectedIndex ? .white : .primary)
-                        
-                        if let previewStr = preview(for: mode, item: item) {
-                            Text(previewStr)
-                                .font(.system(size: 11))
-                                .foregroundColor(index == selectedIndex ? Color.white.opacity(0.7) : .secondary)
-                        }
-                        
-                        Spacer()
+            Group {
+                if suggestions.count > 8 {
+                    ScrollView(showsIndicators: false) {
+                        suggestionsList
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(index == selectedIndex ? Color.accentColor : Color.clear)
-                    .contentShape(Rectangle())
-                    .cornerRadius(4)
+                    .frame(height: 260)
+                } else {
+                    suggestionsList
                 }
             }
-            .padding(4)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color(nsColor: .windowBackgroundColor))
@@ -54,6 +37,36 @@ struct AutocompleteMenu: View {
                     .stroke(Color.gray.opacity(0.2), lineWidth: 1)
             )
         }
+    }
+    
+    private var suggestionsList: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(suggestions.enumerated()), id: \.offset) { index, item in
+                HStack(spacing: 6) {
+                    icon(for: mode)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(iconColor(for: mode))
+                    
+                    Text(item)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(index == selectedIndex ? .white : .primary)
+                    
+                    if let previewStr = preview(for: mode, item: item) {
+                        Text(previewStr)
+                            .font(.system(size: 11))
+                            .foregroundColor(index == selectedIndex ? Color.white.opacity(0.7) : .secondary)
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(index == selectedIndex ? Color.accentColor : Color.clear)
+                .contentShape(Rectangle())
+                .cornerRadius(4)
+            }
+        }
+        .padding(4)
     }
     
     @ViewBuilder
