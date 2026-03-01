@@ -3,6 +3,10 @@ import Foundation
 struct InboxItem: Identifiable, Equatable, Sendable {
     let id: String
     let text: String
+    var tags: [String] = []
+    var dueDate: String? = nil
+    var priority: Int? = nil
+    var projectName: String? = nil
     let time: String
     let isCompleted: Bool
     let lineIndex: Int

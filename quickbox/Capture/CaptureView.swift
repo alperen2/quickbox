@@ -48,6 +48,13 @@ struct CaptureView: View {
     @State private var hoveredItemID: String?
     @State private var editingItemID: String?
     @State private var editingDraftText: String = ""
+    
+    // Autocomplete State
+    @State private var autocompleteType: AutocompleteType = .none
+    @State private var autocompleteSuggestions: [String] = []
+    @State private var autocompleteSelectedIndex: Int = 0
+    @State private var availableTags: [String] = []
+    @State private var availableProjects: [String] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: mode == .spotlight ? Layout.sectionGap : 0) {
@@ -72,6 +79,12 @@ struct CaptureView: View {
             focusedField = .capture
             notifyHeightChange()
         }
+        .onReceive(IndexManager.shared.tagsPublisher) { tags in
+            self.availableTags = tags
+        }
+        .onReceive(IndexManager.shared.projectsPublisher) { projects in
+            self.availableProjects = projects
+        }
         .onChange(of: appState.visibleInboxItems.count) {
             notifyHeightChange()
         }
@@ -80,6 +93,9 @@ struct CaptureView: View {
         }
         .onChange(of: appState.selectedInboxDate) {
             notifyHeightChange()
+        }
+        .onChange(of: appState.draftText) {
+            handleTextChange(appState.draftText)
         }
         .onReceive(NotificationCenter.default.publisher(for: .quickboxFocusCapture)) { _ in
             DispatchQueue.main.async {
@@ -96,8 +112,10 @@ struct CaptureView: View {
         .onExitCommand {
             if editingItemID != nil {
                 cancelEditing()
-            } else {
+            } else if case .none = autocompleteType {
                 onClose()
+            } else {
+                closeAutocomplete()
             }
         }
     }
@@ -113,18 +131,54 @@ struct CaptureView: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Color.white.opacity(0.66))
 
-                TextField(
-                    "",
+                CustomTextFieldWithKeyHandling(
                     text: $appState.draftText,
-                    prompt: Text("Capture thought...")
-                        .foregroundStyle(Color.white.opacity(0.42))
+                    prompt: "Capture thought...",
+                    onUpArrow: {
+                        if !autocompleteSuggestions.isEmpty {
+                            autocompleteSelectedIndex = max(0, autocompleteSelectedIndex - 1)
+                            return true
+                        }
+                        return false
+                    },
+                    onDownArrow: {
+                        if !autocompleteSuggestions.isEmpty {
+                            autocompleteSelectedIndex = min(autocompleteSuggestions.count - 1, autocompleteSelectedIndex + 1)
+                            return true
+                        }
+                        return false
+                    },
+                    onEnter: {
+                        if !autocompleteSuggestions.isEmpty {
+                            acceptAutocomplete()
+                            return true
+                        }
+                        return false
+                    },
+                    onTab: {
+                        if !autocompleteSuggestions.isEmpty {
+                            acceptAutocomplete()
+                            return true
+                        }
+                        return false
+                    },
+                    onSubmit: {
+                        if autocompleteSuggestions.isEmpty {
+                            submit()
+                        }
+                    }
                 )
-                .textFieldStyle(.plain)
-                .font(.system(size: 30, weight: .regular))
-                .foregroundStyle(Color.white.opacity(0.95))
                 .focused($focusedField, equals: .capture)
-                .onSubmit {
-                    submit()
+            }
+            .overlay(alignment: .bottomLeading) {
+                if !autocompleteSuggestions.isEmpty {
+                    AutocompleteMenu(
+                        mode: autocompleteType,
+                        suggestions: autocompleteSuggestions,
+                        selectedIndex: autocompleteSelectedIndex
+                    )
+                    .alignmentGuide(.bottom) { d in d[.top] + 8 }
+                    .alignmentGuide(.leading) { d in d[.leading] + 28 } // Align roughly under text start
                 }
             }
 
@@ -137,6 +191,75 @@ struct CaptureView: View {
         .padding(.horizontal, Layout.cardPaddingHorizontal)
         .padding(.vertical, Layout.cardPaddingVertical)
         .background(cardBackground())
+    }
+    
+    // MARK: - Autocomplete Logic
+    private func handleTextChange(_ newText: String) {
+        // Quick extraction to see what word the cursor is currently on.
+        // For simplicity in SwiftUI textfield, we'll look at the last word typed.
+        guard let lastWord = newText.components(separatedBy: .whitespaces).last, !lastWord.isEmpty else {
+            closeAutocomplete()
+            return
+        }
+        
+        let prefix = String(lastWord.prefix(1))
+        let query = String(lastWord.dropFirst()).lowercased()
+        
+        if prefix == "#" && query.isEmpty {
+            autocompleteType = .tag(query: "")
+            autocompleteSuggestions = Array(availableTags.prefix(5))
+            autocompleteSelectedIndex = 0
+            return
+        } else if prefix == "#" {
+            autocompleteType = .tag(query: query)
+            let matches = availableTags.filter { $0.lowercased().hasPrefix(query) }
+            autocompleteSuggestions = Array(matches.prefix(5))
+            autocompleteSelectedIndex = 0
+            if autocompleteSuggestions.isEmpty { closeAutocomplete() }
+            return
+        }
+        
+        if prefix == "@" && query.isEmpty {
+            autocompleteType = .project(query: "")
+            autocompleteSuggestions = Array(availableProjects.prefix(5))
+            autocompleteSelectedIndex = 0
+            return
+        } else if prefix == "@" {
+            autocompleteType = .project(query: query)
+            let matches = availableProjects.filter { $0.lowercased().hasPrefix(query) }
+            autocompleteSuggestions = Array(matches.prefix(5))
+            autocompleteSelectedIndex = 0
+            if autocompleteSuggestions.isEmpty { closeAutocomplete() }
+            return
+        }
+        
+        closeAutocomplete()
+    }
+    
+    private func closeAutocomplete() {
+        autocompleteType = .none
+        autocompleteSuggestions = []
+        autocompleteSelectedIndex = 0
+    }
+    
+    private func acceptAutocomplete() {
+        guard autocompleteSuggestions.indices.contains(autocompleteSelectedIndex) else { return }
+        let accepted = autocompleteSuggestions[autocompleteSelectedIndex]
+        
+        // Replace the last typed keyword with the accepted suggestion
+        var components = appState.draftText.components(separatedBy: .whitespaces)
+        guard !components.isEmpty else { return }
+        
+        let prefix: String
+        switch autocompleteType {
+        case .tag: prefix = "#"
+        case .project: prefix = "@"
+        default: prefix = ""
+        }
+        
+        components[components.count - 1] = "\(prefix)\(accepted) "
+        appState.draftText = components.joined(separator: " ")
+        closeAutocomplete()
     }
 
     private var spotlightSection: some View {
@@ -354,7 +477,7 @@ struct CaptureView: View {
                 } label: {
                     Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(item.isCompleted ? Color.white.opacity(0.95) : Color.white.opacity(0.62))
+                        .foregroundStyle(item.isCompleted ? Color.white.opacity(0.95) : priorityColor(for: item.priority))
                 }
                 .buttonStyle(.plain)
                 .disabled(isEditing)
@@ -370,12 +493,41 @@ struct CaptureView: View {
                                 saveEditing(item)
                             }
                     } else {
-                        Text(item.text)
-                            .font(.system(size: 14, weight: .medium))
-                            .strikethrough(item.isCompleted)
-                            .foregroundStyle(item.isCompleted ? .secondary : .primary)
-                            .lineLimit(2)
-                            .fixedSize(horizontal: false, vertical: true)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.text)
+                                .font(.system(size: 14, weight: .medium))
+                                .strikethrough(item.isCompleted)
+                                .foregroundStyle(item.isCompleted ? .secondary : .primary)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                                
+                            if !item.tags.isEmpty || item.projectName != nil {
+                                HStack(spacing: 6) {
+                                    if let project = item.projectName {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "folder.fill")
+                                            Text(project)
+                                        }
+                                        .font(.system(size: 11, weight: .bold))
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.white.opacity(0.12))
+                                        .cornerRadius(4)
+                                        .foregroundStyle(Color.white.opacity(0.85))
+                                    }
+                                    
+                                    ForEach(item.tags, id: \.self) { tag in
+                                        Text("#\(tag)")
+                                            .font(.system(size: 11, weight: .semibold))
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.blue.opacity(0.2))
+                                            .cornerRadius(4)
+                                            .foregroundStyle(.blue)
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     Spacer(minLength: 6)
@@ -500,9 +652,17 @@ struct CaptureView: View {
                     return
                 }
                 let end = textView.string.count
-                textView.setSelectedRange(NSRange(location: end, length: 0))
-                textView.scrollRangeToVisible(NSRange(location: end, length: 0))
             }
+        }
+    }
+
+    private func priorityColor(for priority: Int?) -> Color {
+        guard let priority = priority else { return Color.white.opacity(0.62) }
+        switch priority {
+        case 1: return Color.red.opacity(0.85)
+        case 2: return Color.orange.opacity(0.85)
+        case 3: return Color.blue.opacity(0.85)
+        default: return Color.white.opacity(0.62)
         }
     }
 }

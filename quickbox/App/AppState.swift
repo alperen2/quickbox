@@ -118,11 +118,14 @@ final class AppState: ObservableObject {
         if let yesterday = Self.calendar.date(byAdding: .day, value: -1, to: today), selected == yesterday {
             return "Yesterday"
         }
+        if let tomorrow = Self.calendar.date(byAdding: .day, value: 1, to: today), selected == tomorrow {
+            return "Tomorrow"
+        }
         return FormatSettings.dateLabel(for: selected, preferences: preferences)
     }
 
     var canNavigateForwardInboxDate: Bool {
-        Self.calendar.startOfDay(for: selectedInboxDate) < Self.calendar.startOfDay(for: Date())
+        return true // Unlimited forward navigation
     }
 
     var settingsPreviewFileName: String {
@@ -137,6 +140,17 @@ final class AppState: ObservableObject {
     func submitCapture() -> SubmitResult {
         do {
             try inboxWriter.appendEntry(draftText, now: Date())
+            
+            // Manually extracting tags and project from the draft to inject them immediately into IndexManager
+            // without waiting for a full rebuild
+            let parser = InboxParser()
+            let parsedItems = parser.parse(lines: ["- [ ] 00:00 " + draftText], sourceID: "temp")
+            if let item = parsedItems.first {
+                Task {
+                    await IndexManager.shared.inject(tags: item.tags, project: item.projectName)
+                }
+            }
+            
             draftText = ""
             captureMessage = "Saved"
             reloadInbox(silent: true)
@@ -152,6 +166,13 @@ final class AppState: ObservableObject {
     func submitCaptureFromSpotlight() -> SubmitResult {
         do {
             try inboxWriter.appendEntry(draftText, now: Date())
+            let parser = InboxParser()
+            let parsedItems = parser.parse(lines: ["- [ ] 00:00 " + draftText], sourceID: "temp")
+            if let item = parsedItems.first {
+                Task {
+                    await IndexManager.shared.inject(tags: item.tags, project: item.projectName)
+                }
+            }
             draftText = ""
             captureMessage = nil
             refreshSpotlightListAfterMutation()
@@ -216,6 +237,14 @@ final class AppState: ObservableObject {
             } else {
                 inboxMessage = nil
             }
+            
+            // Build autocomplete index in the background
+            if let folderURL = try? storageAccessManager.resolvedBaseURL() {
+                Task {
+                    await IndexManager.shared.buildIndex(in: folderURL)
+                }
+            }
+            
         } catch {
             inboxMessage = error.localizedDescription
             recordNonFatal(error, context: ["operation": "loadInbox"])
@@ -277,14 +306,11 @@ final class AppState: ObservableObject {
     }
 
     func navigateInboxDayForward() {
-        guard canNavigateForwardInboxDate,
-              let next = Self.calendar.date(byAdding: .day, value: 1, to: selectedInboxDate)
-        else {
+        guard let next = Self.calendar.date(byAdding: .day, value: 1, to: selectedInboxDate) else {
             return
         }
 
-        let today = Self.calendar.startOfDay(for: Date())
-        selectedInboxDate = min(Self.calendar.startOfDay(for: next), today)
+        selectedInboxDate = Self.calendar.startOfDay(for: next)
         loadInbox()
     }
 

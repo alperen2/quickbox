@@ -38,9 +38,14 @@ final class InboxWriter: InboxWriting {
         guard !trimmed.isEmpty else {
             throw InboxWriterError.emptyEntry
         }
-
+        
+        // Parse the text to extract tokens
+        let parser = InboxParser()
+        let parsedItems = parser.parse(lines: ["- [ ] 00:00 " + trimmed], sourceID: "temp")
+        guard let item = parsedItems.first else { throw InboxWriterError.emptyEntry }
+        
         let preferences = currentPreferences()
-        let line = formattedLine(for: trimmed, at: now)
+        
         do {
             try InboxStorageQueue.shared.sync {
                 let folderURL = try storageResolver.resolvedBaseURL()
@@ -48,7 +53,25 @@ final class InboxWriter: InboxWriting {
 
                 try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
 
-                let fileURL = folderURL.appendingPathComponent(FormatSettings.fileName(for: now, preferences: preferences))
+                // Determine target file URL
+                let targetFileName: String
+                let isProjectRoute = item.projectName != nil
+                
+                let targetDate: Date
+                if let dueStr = item.dueDate, let resolvedDue = DueDateResolver().resolve(dueDateString: dueStr, from: now) {
+                    targetDate = resolvedDue
+                } else {
+                    targetDate = now
+                }
+                
+                if let project = item.projectName {
+                    targetFileName = "\(project).md"
+                } else {
+                    targetFileName = FormatSettings.fileName(for: targetDate, preferences: preferences)
+                }
+                
+                let fileURL = folderURL.appendingPathComponent(targetFileName)
+                let line = formattedLine(for: item, captureDate: now, routeDate: targetDate, isProjectRoute: isProjectRoute)
                 let entryText = normalizedEntry(for: fileURL, line: line)
                 let data = Data(entryText.utf8)
 
@@ -75,13 +98,43 @@ final class InboxWriter: InboxWriting {
         FormatSettings.fileName(for: date, preferences: currentPreferences())
     }
 
-    func formattedLine(for text: String, at date: Date) -> String {
-        let oneLine = text
+    // Reconstructs the line ensuring correct formatting
+    func formattedLine(for item: InboxItem, captureDate: Date, routeDate: Date, isProjectRoute: Bool) -> String {
+        let oneLine = item.text
             .replacingOccurrences(of: "\r\n", with: " ")
             .replacingOccurrences(of: "\n", with: " ")
             .replacingOccurrences(of: "\r", with: " ")
-        let time = FormatSettings.timeText(for: date, preferences: currentPreferences())
-        return "- [ ] \(time) \(oneLine)"
+            
+        var components = [oneLine]
+        
+        if let priority = item.priority {
+            components.append("!\(priority)")
+        }
+        if let project = item.projectName {
+            components.append("@\(project)")
+        }
+        for tag in item.tags {
+            components.append("#\(tag)")
+        }
+        if let due = item.dueDate {
+            // Re-resolve the date to format it consistently based on user settings
+            if let resolvedDue = DueDateResolver().resolve(dueDateString: due, from: captureDate) {
+                let formattedDue = FormatSettings.fileName(for: resolvedDue, preferences: currentPreferences()).replacingOccurrences(of: ".md", with: "")
+                components.append("due:\(formattedDue)")
+            } else {
+                components.append("due:\(due)") // fallback to original if unresolvable
+            }
+        }
+        
+        // Always append the date tag if it's sent to a project file rather than the daily log
+        if isProjectRoute {
+            let formattedRouteDate = FormatSettings.fileName(for: routeDate, preferences: currentPreferences()).replacingOccurrences(of: ".md", with: "")
+            components.append("date:\(formattedRouteDate)")
+        }
+        
+        let finalString = components.joined(separator: " ")
+        let time = FormatSettings.timeText(for: captureDate, preferences: currentPreferences())
+        return "- [ ] \(time) \(finalString)"
     }
 
     private func currentPreferences() -> AppPreferences {
