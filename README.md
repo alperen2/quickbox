@@ -10,6 +10,7 @@ When you are in flow and a thought appears, you should be able to capture it in 
 
 - Global shortcut to open capture panel
 - Daily markdown inbox (`YYYY-MM-DD.md` style)
+- Powerful Natural Language Syntax (`@Project`, `!priority`, `due:tdy`, `time:15m`)
 - Today list with quick toggle/edit/delete/undo
 - Lightweight settings (shortcut, storage, formats)
 

@@ -518,12 +518,21 @@ struct CaptureView: View {
                             }
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(item.text)
-                                .font(.system(size: 14, weight: .medium))
-                                .strikethrough(item.isCompleted)
-                                .foregroundStyle(item.isCompleted ? .secondary : .primary)
-                                .lineLimit(2)
-                                .fixedSize(horizontal: false, vertical: true)
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                if item.metadata["defer"] != nil || item.metadata["start"] != nil {
+                                    Image(systemName: "tray.and.arrow.down.fill")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(.blue.opacity(0.8))
+                                        .help("Deferred Arrival")
+                                }
+                                
+                                Text(item.text)
+                                    .font(.system(size: 14, weight: .medium))
+                                    .strikethrough(item.isCompleted)
+                                    .foregroundStyle(item.isCompleted ? .secondary : .primary)
+                                    .lineLimit(2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                                 
                             if !item.tags.isEmpty || item.projectName != nil || !item.metadata.isEmpty {
                                 HStack(spacing: 6) {
@@ -552,16 +561,40 @@ struct CaptureView: View {
                                     
                                     ForEach(item.metadata.keys.sorted(), id: \.self) { key in
                                         if let val = item.metadata[key] {
-                                            HStack(spacing: 4) {
-                                                Image(systemName: iconForMetadataKey(key))
-                                                Text("\(key):\(val)")
+                                            Menu {
+                                                if key == "dur" || key == "time" || key == "duration" {
+                                                    Button("15m") { updateMetadata(item: item, key: key, newValue: "15m") }
+                                                    Button("30m") { updateMetadata(item: item, key: key, newValue: "30m") }
+                                                    Button("1h") { updateMetadata(item: item, key: key, newValue: "1h") }
+                                                    Divider()
+                                                    Button("Remove") { updateMetadata(item: item, key: key, newValue: nil) }
+                                                } else if key == "remind" || key == "alarm" {
+                                                    Button("15m") { updateMetadata(item: item, key: key, newValue: "15m") }
+                                                    Button("1h") { updateMetadata(item: item, key: key, newValue: "1h") }
+                                                    Button("1d") { updateMetadata(item: item, key: key, newValue: "1d") }
+                                                    Divider()
+                                                    Button("Remove") { updateMetadata(item: item, key: key, newValue: nil) }
+                                                } else if key == "defer" || key == "due" || key == "start" {
+                                                    Button("Today") { updateMetadata(item: item, key: key, newValue: "tdy") }
+                                                    Button("Tomorrow") { updateMetadata(item: item, key: key, newValue: "tmr") }
+                                                    Button("Next Week") { updateMetadata(item: item, key: key, newValue: "nw") }
+                                                    Divider()
+                                                    Button("Remove") { updateMetadata(item: item, key: key, newValue: nil) }
+                                                }
+                                            } label: {
+                                                HStack(spacing: 4) {
+                                                    Image(systemName: iconForMetadataKey(key))
+                                                    Text("\(key):\(val)")
+                                                }
+                                                .font(.system(size: 11, weight: .semibold))
+                                                .padding(.horizontal, 6)
+                                                .padding(.vertical, 2)
+                                                .background(colorForMetadataKey(key).opacity(0.2))
+                                                .cornerRadius(4)
+                                                .foregroundStyle(colorForMetadataKey(key))
                                             }
-                                            .font(.system(size: 11, weight: .semibold))
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(Color.purple.opacity(0.2))
-                                            .cornerRadius(4)
-                                            .foregroundStyle(.purple)
+                                            .menuStyle(.borderlessButton)
+                                            .fixedSize()
                                         }
                                     }
                                 }
@@ -571,7 +604,7 @@ struct CaptureView: View {
 
                     Spacer(minLength: 6)
 
-                    Text(item.time)
+                    Text(plannedTimeDisplay(for: item))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(minWidth: 36, alignment: .trailing)
@@ -706,6 +739,32 @@ struct CaptureView: View {
     }
     
     // MARK: - Helpers
+    private func plannedTimeDisplay(for item: InboxItem) -> String {
+        guard let durStr = item.metadata["dur"] ?? item.metadata["time"] ?? item.metadata["duration"] else {
+            return item.time
+        }
+        
+        var minutesToAdd = 0
+        if durStr.hasSuffix("m"), let val = Int(durStr.dropLast()) {
+            minutesToAdd = val
+        } else if durStr.hasSuffix("h"), let val = Int(durStr.dropLast()) {
+            minutesToAdd = val * 60
+        } else if durStr.hasSuffix("d"), let val = Int(durStr.dropLast()) {
+            minutesToAdd = val * 24 * 60
+        } else {
+            return item.time
+        }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        guard let startTime = formatter.date(from: item.time),
+              let endTime = Calendar.current.date(byAdding: .minute, value: minutesToAdd, to: startTime) else {
+            return item.time
+        }
+        
+        return "\(item.time) - \(formatter.string(from: endTime))"
+    }
+    
     private func iconForMetadataKey(_ key: String) -> String {
         switch key.lowercased() {
         case "dur", "time", "duration": return "clock"
@@ -713,5 +772,31 @@ struct CaptureView: View {
         case "remind", "alarm": return "bell.fill"
         default: return "tag"
         }
+    }
+    
+    private func colorForMetadataKey(_ key: String) -> Color {
+        switch key.lowercased() {
+        case "dur", "time", "duration": return .gray
+        case "defer", "start": return .blue
+        case "remind", "alarm": return .orange
+        default: return .purple
+        }
+    }
+    
+    private func updateMetadata(item: InboxItem, key: String, newValue: String?) {
+        guard let oldVal = item.metadata[key] else { return }
+        let oldString = "\(key):\(oldVal)"
+        var newText = item.rawLine
+        
+        if let newVal = newValue {
+            let newString = "\(key):\(newVal)"
+            newText = newText.replacingOccurrences(of: oldString, with: newString)
+        } else {
+            newText = newText.replacingOccurrences(of: " " + oldString, with: "")
+            newText = newText.replacingOccurrences(of: oldString, with: "")
+        }
+        
+        newText = newText.trimmingCharacters(in: .whitespaces)
+        appState.handleSpotlightMutation(.edit(item.id, text: newText))
     }
 }

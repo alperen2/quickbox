@@ -25,8 +25,14 @@ struct AutocompleteMenu: View {
                             .foregroundColor(iconColor(for: mode))
                         
                         Text(item)
-                            .font(.system(size: 13))
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundColor(index == selectedIndex ? .white : .primary)
+                        
+                        if let previewStr = preview(for: mode, item: item) {
+                            Text(previewStr)
+                                .font(.system(size: 11))
+                                .foregroundColor(index == selectedIndex ? Color.white.opacity(0.7) : .secondary)
+                        }
                         
                         Spacer()
                     }
@@ -79,5 +85,35 @@ struct AutocompleteMenu: View {
         case "remind", "alarm": return "bell.fill"
         default: return "tag"
         }
+    }
+    
+    private func preview(for mode: AutocompleteType, item: String) -> String? {
+        guard case .metadata(let key, _) = mode else { return nil }
+        
+        switch key.lowercased() {
+        case "due", "defer", "start":
+            // DeferDateResolver allows reusing the existing smart date logic
+            if let date = DeferDateResolver().resolve(deferDateString: item, from: Date()) {
+                let formatter = DateFormatter()
+                formatter.dateFormat = "d MMM, EEE" // e.g. 2 Mar, Mon
+                return "(\(formatter.string(from: date)))"
+            }
+        case "time", "dur", "duration", "remind", "alarm":
+            var minutesToAdd = 0
+            if item.hasSuffix("m"), let val = Int(item.dropLast()) {
+                minutesToAdd = val
+            } else if item.hasSuffix("h"), let val = Int(item.dropLast()) {
+                minutesToAdd = val * 60
+            } else if item.hasSuffix("d"), let val = Int(item.dropLast()) {
+                minutesToAdd = val * 24 * 60
+            }
+            if minutesToAdd > 0, let targetTime = Calendar.current.date(byAdding: .minute, value: minutesToAdd, to: Date()) {
+                let formatter = DateFormatter()
+                formatter.timeStyle = .short
+                return "(\(formatter.string(from: targetTime)))"
+            }
+        default: break
+        }
+        return nil
     }
 }

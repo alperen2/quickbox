@@ -32,7 +32,7 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
 
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = true
-        panel.level = .floating
+        panel.level = .popUpMenu
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isMovableByWindowBackground = true
         panel.isOpaque = false
@@ -76,6 +76,7 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         if panel.isVisible {
             panel.makeKeyAndOrderFront(nil)
+            panel.orderFrontRegardless()
             NotificationCenter.default.post(name: .quickboxFocusCapture, object: nil)
             return
         }
@@ -84,6 +85,7 @@ final class CaptureWindowController: NSObject, NSWindowDelegate {
         positionForPresentation()
         panel.alphaValue = 0
         panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.12
             panel.animator().alphaValue = 1
