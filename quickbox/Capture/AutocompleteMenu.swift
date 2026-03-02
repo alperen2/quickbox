@@ -12,35 +12,65 @@ struct AutocompleteMenu: View {
     let mode: AutocompleteType
     let suggestions: [String]
     let selectedIndex: Int
+
+    private let menuWidth: CGFloat = 380
+    private let menuMaxHeight: CGFloat = 248
     
     var body: some View {
         if suggestions.isEmpty {
             EmptyView()
         } else {
-            Group {
-                if suggestions.count > 8 {
-                    ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 0) {
+                header
+                    .padding(.horizontal, 10)
+                    .padding(.top, 8)
+                    .padding(.bottom, 6)
+
+                Divider()
+                    .overlay(Color.white.opacity(0.12))
+
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: true) {
                         suggestionsList
                     }
-                    .frame(height: 260)
-                } else {
-                    suggestionsList
+                    .frame(height: min(menuMaxHeight, CGFloat(suggestions.count) * 34 + 12))
+                    .onAppear {
+                        proxy.scrollTo(selectedIndex, anchor: .center)
+                    }
+                    .onChange(of: selectedIndex) {
+                        withAnimation(.easeOut(duration: 0.12)) {
+                            proxy.scrollTo(selectedIndex, anchor: .center)
+                        }
+                    }
                 }
             }
+            .frame(width: menuWidth, alignment: .leading)
+            .padding(6)
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(nsColor: .windowBackgroundColor))
-                    .shadow(color: Color.black.opacity(0.15), radius: 6, y: 3)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.black.opacity(0.75))
+                    .background(
+                        .ultraThinMaterial,
+                        in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    )
+                    .shadow(color: Color.black.opacity(0.45), radius: 18, x: 0, y: 11)
+                    .shadow(color: Color.black.opacity(0.24), radius: 4, x: 0, y: 2)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.white.opacity(0.18), lineWidth: 0.9)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.black.opacity(0.52), lineWidth: 1.2)
+            )
+            .compositingGroup()
+            .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .topLeading)))
         }
     }
     
     private var suggestionsList: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 2) {
             ForEach(Array(suggestions.enumerated()), id: \.offset) { index, item in
                 HStack(spacing: 6) {
                     icon(for: mode)
@@ -48,25 +78,44 @@ struct AutocompleteMenu: View {
                         .foregroundColor(iconColor(for: mode))
                     
                     Text(item)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(index == selectedIndex ? .white : .primary)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(index == selectedIndex ? .white : Color.white.opacity(0.92))
                     
                     if let previewStr = preview(for: mode, item: item) {
                         Text(previewStr)
                             .font(.system(size: 11))
-                            .foregroundColor(index == selectedIndex ? Color.white.opacity(0.7) : .secondary)
+                            .foregroundColor(index == selectedIndex ? Color.white.opacity(0.76) : Color.white.opacity(0.58))
                     }
                     
                     Spacer()
                 }
                 .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(index == selectedIndex ? Color.accentColor : Color.clear)
+                .padding(.vertical, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(index == selectedIndex ? Color.accentColor.opacity(0.96) : Color.clear)
+                )
                 .contentShape(Rectangle())
-                .cornerRadius(4)
+                .padding(.horizontal, 3)
+                .id(index)
             }
         }
-        .padding(4)
+        .padding(.vertical, 6)
+    }
+
+    private var header: some View {
+        HStack(spacing: 6) {
+            icon(for: mode)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(iconColor(for: mode).opacity(0.95))
+            Text(modeTitle)
+                .font(.caption.weight(.semibold))
+                .foregroundColor(Color.white.opacity(0.78))
+            Spacer()
+            Text("\(suggestions.count)")
+                .font(.caption2.weight(.semibold))
+                .foregroundColor(Color.white.opacity(0.52))
+        }
     }
     
     @ViewBuilder
@@ -97,6 +146,21 @@ struct AutocompleteMenu: View {
         case "defer", "start": return "hourglass.bottomhalf.filled"
         case "remind", "alarm": return "bell.fill"
         default: return "tag"
+        }
+    }
+
+    private var modeTitle: String {
+        switch mode {
+        case .tag:
+            return "Tag suggestions"
+        case .project:
+            return "Project suggestions"
+        case .priority:
+            return "Priority suggestions"
+        case .metadata(let key, _):
+            return "\(key.uppercased()) suggestions"
+        case .none:
+            return "Suggestions"
         }
     }
     

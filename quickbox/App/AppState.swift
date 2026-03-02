@@ -5,6 +5,11 @@ import ServiceManagement
 
 @MainActor
 final class AppState: ObservableObject {
+    struct CalendarDayIndicator: Equatable, Sendable {
+        var priorities: Set<Int>
+        var hasUnprioritized: Bool
+    }
+
     enum SubmitResult {
         case savedAndClose
         case savedKeepOpen
@@ -21,6 +26,7 @@ final class AppState: ObservableObject {
     @Published var canUndoDelete: Bool = false
     @Published var showOnlyOpenTasks: Bool = false
     @Published var isSpotlightModeActive: Bool = false
+    @Published private(set) var calendarDayIndicators: [Date: CalendarDayIndicator] = [:]
 
     private let settingsStore: SettingsStore
     private let hotkeyManager: HotkeyManager
@@ -228,6 +234,7 @@ final class AppState: ObservableObject {
             let items = try inboxRepository.load(on: selectedInboxDate)
             inboxItems = sorted(items)
             canUndoDelete = inboxRepository.canUndoDelete
+            updateCalendarIndicator(for: selectedInboxDate, using: inboxItems)
             if inboxItems.isEmpty {
                 inboxMessage = "No notes for selected day."
             } else {
@@ -250,6 +257,7 @@ final class AppState: ObservableObject {
             let items = try inboxRepository.reload(on: selectedInboxDate)
             inboxItems = sorted(items)
             canUndoDelete = inboxRepository.canUndoDelete
+            updateCalendarIndicator(for: selectedInboxDate, using: inboxItems)
             if !silent {
                 inboxMessage = "Reloaded"
             }
@@ -295,17 +303,49 @@ final class AppState: ObservableObject {
         guard let previous = Self.calendar.date(byAdding: .day, value: -1, to: selectedInboxDate) else {
             return
         }
-        selectedInboxDate = Self.calendar.startOfDay(for: previous)
-        loadInbox()
+        selectInboxDate(previous)
     }
 
     func navigateInboxDayForward() {
         guard let next = Self.calendar.date(byAdding: .day, value: 1, to: selectedInboxDate) else {
             return
         }
+        selectInboxDate(next)
+    }
 
-        selectedInboxDate = Self.calendar.startOfDay(for: next)
+    func selectInboxDate(_ date: Date) {
+        let normalized = Self.calendar.startOfDay(for: date)
+        guard normalized != selectedInboxDate else {
+            return
+        }
+        selectedInboxDate = normalized
         loadInbox()
+    }
+
+    func loadCalendarIndicators(from startDate: Date, to endDate: Date) {
+        let start = Self.calendar.startOfDay(for: startDate)
+        let end = Self.calendar.startOfDay(for: endDate)
+        guard start <= end else {
+            calendarDayIndicators = [:]
+            return
+        }
+
+        let calendar = Self.calendar
+
+        var current = start
+        var indicators: [Date: CalendarDayIndicator] = [:]
+        while current <= end {
+            if let items = try? inboxRepository.load(on: current),
+               let indicator = Self.makeIndicator(from: items) {
+                indicators[current] = indicator
+            }
+
+            guard let next = calendar.date(byAdding: .day, value: 1, to: current) else {
+                break
+            }
+            current = calendar.startOfDay(for: next)
+        }
+        calendarDayIndicators = indicators
     }
 
     func updateAfterSaveMode(_ mode: AfterSaveMode) {
@@ -476,6 +516,7 @@ final class AppState: ObservableObject {
             let updatedItems = try inboxRepository.apply(mutation, on: selectedInboxDate)
             inboxItems = sorted(updatedItems)
             canUndoDelete = inboxRepository.canUndoDelete
+            updateCalendarIndicator(for: selectedInboxDate, using: inboxItems)
             inboxMessage = successMessage
             return true
         } catch {
@@ -496,6 +537,7 @@ final class AppState: ObservableObject {
                     guard self.selectedInboxDate == date else { return }
                     self.inboxItems = self.sorted(updatedItems)
                     self.canUndoDelete = repository.canUndoDelete
+                    self.updateCalendarIndicator(for: date, using: self.inboxItems)
                     self.inboxMessage = successMessage
                 }
             } catch {
@@ -514,6 +556,32 @@ final class AppState: ObservableObject {
         items.sorted { lhs, rhs in
             lhs.lineIndex > rhs.lineIndex
         }
+    }
+
+    private func updateCalendarIndicator(for date: Date, using items: [InboxItem]) {
+        let normalized = Self.calendar.startOfDay(for: date)
+        if let indicator = Self.makeIndicator(from: items) {
+            calendarDayIndicators[normalized] = indicator
+        } else {
+            calendarDayIndicators.removeValue(forKey: normalized)
+        }
+    }
+
+    nonisolated private static func makeIndicator(from items: [InboxItem]) -> CalendarDayIndicator? {
+        guard !items.isEmpty else {
+            return nil
+        }
+
+        var priorities = Set<Int>()
+        var hasUnprioritized = false
+        for item in items {
+            if let priority = item.priority, (1...3).contains(priority) {
+                priorities.insert(priority)
+            } else {
+                hasUnprioritized = true
+            }
+        }
+        return CalendarDayIndicator(priorities: priorities, hasUnprioritized: hasUnprioritized)
     }
 
     private func applyHotkeyFromPreferences() {

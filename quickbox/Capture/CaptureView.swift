@@ -55,6 +55,8 @@ struct CaptureView: View {
     @State private var autocompleteSelectedIndex: Int = 0
     @State private var availableTags: [String] = []
     @State private var availableProjects: [String] = []
+    @State private var isCalendarViewActive: Bool = false
+    @State private var calendarMonthAnchor: Date = Calendar(identifier: .gregorian).startOfDay(for: Date())
 
     var body: some View {
         VStack(alignment: .leading, spacing: mode == .spotlight ? Layout.sectionGap : 0) {
@@ -92,10 +94,30 @@ struct CaptureView: View {
             notifyHeightChange()
         }
         .onChange(of: appState.selectedInboxDate) {
+            if isCalendarViewActive && !isSameMonth(appState.selectedInboxDate, calendarMonthAnchor) {
+                calendarMonthAnchor = appState.selectedInboxDate
+            }
             notifyHeightChange()
         }
         .onChange(of: appState.draftText) {
             handleTextChange(appState.draftText)
+        }
+        .onChange(of: isCalendarViewActive) {
+            notifyHeightChange()
+            if isCalendarViewActive {
+                calendarMonthAnchor = appState.selectedInboxDate
+                refreshCalendarIndicators()
+            } else {
+                DispatchQueue.main.async {
+                    focusedField = .capture
+                }
+            }
+        }
+        .onChange(of: calendarMonthAnchor) {
+            guard isCalendarViewActive else {
+                return
+            }
+            refreshCalendarIndicators()
         }
         .onReceive(NotificationCenter.default.publisher(for: .quickboxFocusCapture)) { _ in
             DispatchQueue.main.async {
@@ -110,7 +132,9 @@ struct CaptureView: View {
             notifyHeightChange()
         }
         .onExitCommand {
-            if editingItemID != nil {
+            if isCalendarViewActive {
+                closeCalendarView()
+            } else if editingItemID != nil {
                 cancelEditing()
             } else if case .none = autocompleteType {
                 onClose()
@@ -121,7 +145,10 @@ struct CaptureView: View {
     }
 
     private var panelWidth: CGFloat {
-        mode == .spotlight ? 620 : 520
+        if mode == .spotlight {
+            return isCalendarViewActive ? 760 : 620
+        }
+        return 520
     }
 
     private var captureSection: some View {
@@ -169,6 +196,10 @@ struct CaptureView: View {
                     }
                 )
                 .focused($focusedField, equals: .capture)
+
+                if mode == .spotlight {
+                    calendarModeButton
+                }
             }
             .overlay(alignment: .topLeading) {
                 if !autocompleteSuggestions.isEmpty {
@@ -177,14 +208,15 @@ struct CaptureView: View {
                         suggestions: autocompleteSuggestions,
                         selectedIndex: autocompleteSelectedIndex
                     )
-                    .alignmentGuide(.top) { d in d[.bottom] + 4 }
-                    .alignmentGuide(.leading) { d in d[.leading] + 28 } // Align roughly under text start
+                    .offset(x: 28, y: 40) // below input, absolute overlay
+                    .zIndex(30)
                 }
             }
         }
         .padding(.horizontal, Layout.cardPaddingHorizontal)
         .padding(.vertical, Layout.cardPaddingVertical)
         .background(cardBackground())
+        .zIndex(autocompleteSuggestions.isEmpty ? 1 : 20)
     }
     
     // MARK: - Autocomplete Logic
@@ -201,13 +233,13 @@ struct CaptureView: View {
         
         if prefix == "#" && query.isEmpty {
             autocompleteType = .tag(query: "")
-            autocompleteSuggestions = Array(availableTags.prefix(5))
+            autocompleteSuggestions = availableTags
             autocompleteSelectedIndex = 0
             return
         } else if prefix == "#" {
             autocompleteType = .tag(query: query)
             let matches = availableTags.filter { $0.lowercased().hasPrefix(query) }
-            autocompleteSuggestions = Array(matches.prefix(5))
+            autocompleteSuggestions = matches
             autocompleteSelectedIndex = 0
             if autocompleteSuggestions.isEmpty { closeAutocomplete() }
             return
@@ -215,13 +247,13 @@ struct CaptureView: View {
         
         if prefix == "@" && query.isEmpty {
             autocompleteType = .project(query: "")
-            autocompleteSuggestions = Array(availableProjects.prefix(5))
+            autocompleteSuggestions = availableProjects
             autocompleteSelectedIndex = 0
             return
         } else if prefix == "@" {
             autocompleteType = .project(query: query)
             let matches = availableProjects.filter { $0.lowercased().hasPrefix(query) }
-            autocompleteSuggestions = Array(matches.prefix(5))
+            autocompleteSuggestions = matches
             autocompleteSelectedIndex = 0
             if autocompleteSuggestions.isEmpty { closeAutocomplete() }
             return
@@ -248,7 +280,7 @@ struct CaptureView: View {
                  if !options.isEmpty {
                      autocompleteType = .metadata(key: key, query: valQuery)
                      let matches = valQuery.isEmpty ? options : options.filter { $0.hasPrefix(valQuery) }
-                     autocompleteSuggestions = Array(matches.prefix(5))
+                     autocompleteSuggestions = matches
                      autocompleteSelectedIndex = 0
                      if autocompleteSuggestions.isEmpty { closeAutocomplete() }
                      return
@@ -288,8 +320,12 @@ struct CaptureView: View {
 
     private var spotlightSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            spotlightHeader
-            spotlightList
+            if isCalendarViewActive {
+                spotlightCalendar
+            } else {
+                spotlightHeader
+                spotlightList
+            }
 
             if let message = appState.captureMessage ?? appState.inboxMessage {
                 Text(message)
@@ -300,6 +336,7 @@ struct CaptureView: View {
         .padding(.horizontal, Layout.cardPaddingHorizontal)
         .padding(.vertical, Layout.cardPaddingVertical)
         .background(cardBackground())
+        .zIndex(1)
     }
 
     private func cardBackground() -> some View {
@@ -314,6 +351,31 @@ struct CaptureView: View {
                     .stroke(Color.white.opacity(0.08), lineWidth: 0.8)
             )
             .shadow(color: .black.opacity(0.18), radius: 12, x: 0, y: 6)
+    }
+
+    private var calendarModeButton: some View {
+        Button {
+            closeAutocomplete()
+            withAnimation(.spring(response: 0.18, dampingFraction: 0.9)) {
+                isCalendarViewActive.toggle()
+            }
+        } label: {
+            Image(systemName: isCalendarViewActive ? "calendar.circle.fill" : "calendar.circle")
+                .font(.system(size: 23, weight: .medium))
+                .foregroundStyle(isCalendarViewActive ? Color.white.opacity(0.95) : Color.white.opacity(0.78))
+                .frame(width: 32, height: 32)
+                .background(
+                    Circle()
+                        .fill(isCalendarViewActive ? Color.white.opacity(0.18) : Color.white.opacity(0.10))
+                )
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(isCalendarViewActive ? 0.34 : 0.14), lineWidth: 0.9)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Calendar view")
+        .help("Open calendar")
     }
 
     private var spotlightHeader: some View {
@@ -371,6 +433,289 @@ struct CaptureView: View {
         }
     }
 
+    private var spotlightCalendar: some View {
+        HStack(alignment: .top, spacing: 14) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 12, weight: .semibold))
+                        .frame(width: 20, height: 20)
+                        .background(
+                            Circle()
+                                .fill(Color.white.opacity(0.10))
+                        )
+                    Text("Calendar")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.white.opacity(0.9))
+                    Text(appState.selectedInboxDateLabel)
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(Color.white.opacity(0.7))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(Color.white.opacity(0.08))
+                        )
+                    Spacer()
+                    Button {
+                        closeCalendarView()
+                    } label: {
+                        Label("Done", systemImage: "checkmark")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Color.white.opacity(0.9))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Color.white.opacity(0.10))
+                    )
+                }
+
+                HStack(spacing: 6) {
+                    calendarJumpButton(title: "Today", systemName: "sun.max") {
+                        appState.selectInboxDate(Date())
+                    }
+                    calendarJumpButton(title: "-1W", systemName: "chevron.left.2") {
+                        shiftInboxDate(days: -7)
+                    }
+                    calendarJumpButton(title: "+1W", systemName: "chevron.right.2") {
+                        shiftInboxDate(days: 7)
+                    }
+                    calendarJumpButton(title: "-1M", systemName: "arrow.left.to.line") {
+                        shiftInboxDate(months: -1)
+                    }
+                    calendarJumpButton(title: "+1M", systemName: "arrow.right.to.line") {
+                        shiftInboxDate(months: 1)
+                    }
+                }
+
+                VStack(spacing: 8) {
+                    HStack {
+                        Button {
+                            shiftCalendarMonth(by: -1)
+                        } label: {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Color.white.opacity(0.86))
+
+                        Spacer()
+
+                        Text(calendarMonthTitle)
+                            .font(.headline.weight(.semibold))
+                            .foregroundStyle(Color.white.opacity(0.92))
+
+                        Spacer()
+
+                        Button {
+                            shiftCalendarMonth(by: 1)
+                        } label: {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Color.white.opacity(0.86))
+                    }
+                    .padding(.horizontal, 8)
+
+                    HStack(spacing: 0) {
+                        ForEach(Array(calendarWeekdaySymbols.enumerated()), id: \.offset) { _, symbol in
+                            Text(symbol)
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(Color.white.opacity(0.55))
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, 4)
+
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(minimum: 34, maximum: 120), spacing: 6), count: 7),
+                        spacing: 8
+                    ) {
+                        ForEach(calendarVisibleDates, id: \.self) { date in
+                            calendarDayCell(for: date)
+                        }
+                    }
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.white.opacity(0.05))
+                )
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            calendarSidebar
+        }
+    }
+
+    private var calendarSidebar: some View {
+        let totalCount = appState.inboxItems.count
+        let openCount = appState.inboxItems.filter { !$0.isCompleted }.count
+        let completedCount = totalCount - openCount
+
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Quick Jump")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.white.opacity(0.88))
+
+            calendarSidebarButton("Yesterday", systemName: "arrow.left") {
+                shiftInboxDate(days: -1)
+            }
+            calendarSidebarButton("Tomorrow", systemName: "arrow.right") {
+                shiftInboxDate(days: 1)
+            }
+            calendarSidebarButton("Next Month", systemName: "calendar.badge.plus") {
+                shiftInboxDate(months: 1)
+            }
+            calendarSidebarButton("Prev Month", systemName: "calendar.badge.minus") {
+                shiftInboxDate(months: -1)
+            }
+
+            Divider()
+                .overlay(Color.white.opacity(0.08))
+
+            Text("Selected Day")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Color.white.opacity(0.88))
+            Text(appState.selectedInboxDateLabel)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.white.opacity(0.95))
+
+            HStack {
+                Label("\(openCount) open", systemImage: "circle")
+                    .foregroundStyle(Color.white.opacity(0.80))
+                Spacer()
+            }
+            .font(.caption)
+
+            HStack {
+                Label("\(completedCount) done", systemImage: "checkmark.circle")
+                    .foregroundStyle(Color.white.opacity(0.72))
+                Spacer()
+            }
+            .font(.caption)
+
+            HStack {
+                Label("\(totalCount) total", systemImage: "number")
+                    .foregroundStyle(Color.white.opacity(0.66))
+                Spacer()
+            }
+            .font(.caption)
+        }
+        .padding(12)
+        .frame(width: 190, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.white.opacity(0.06))
+        )
+    }
+
+    private var calendarMonthTitle: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.dateFormat = "LLLL yyyy"
+        return formatter.string(from: startOfMonth(for: calendarMonthAnchor))
+    }
+
+    private var calendarWeekdaySymbols: [String] {
+        let calendar = Calendar(identifier: .gregorian)
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        let source = formatter.shortStandaloneWeekdaySymbols
+            ?? formatter.shortWeekdaySymbols
+            ?? ["S", "M", "T", "W", "T", "F", "S"]
+        let firstIndex = max(0, calendar.firstWeekday - 1)
+        return (0..<source.count).map { index in
+            source[(firstIndex + index) % source.count]
+        }
+    }
+
+    private var calendarVisibleDates: [Date] {
+        let calendar = Calendar(identifier: .gregorian)
+        let monthStart = startOfMonth(for: calendarMonthAnchor)
+        let firstWeekdayInMonth = calendar.component(.weekday, from: monthStart)
+        let leadingDays = (firstWeekdayInMonth - calendar.firstWeekday + 7) % 7
+        guard let gridStart = calendar.date(byAdding: .day, value: -leadingDays, to: monthStart) else {
+            return []
+        }
+        return (0..<42).compactMap { offset in
+            calendar.date(byAdding: .day, value: offset, to: gridStart)
+        }
+    }
+
+    private func calendarDayCell(for date: Date) -> some View {
+        let dayNumber = Calendar(identifier: .gregorian).component(.day, from: date)
+        let isSelected = isSameDay(date, appState.selectedInboxDate)
+        let isCurrentMonth = isSameMonth(date, calendarMonthAnchor)
+        let isToday = isSameDay(date, Date())
+        let dotColors = calendarDotColors(for: date)
+
+        return Button {
+            appState.selectInboxDate(date)
+        } label: {
+            VStack(spacing: 4) {
+                Text("\(dayNumber)")
+                    .font(.caption.weight(isSelected ? .bold : .semibold))
+                    .foregroundStyle(
+                        isSelected
+                        ? Color.black.opacity(0.86)
+                        : (isCurrentMonth ? Color.white.opacity(0.92) : Color.white.opacity(0.38))
+                    )
+                    .frame(maxWidth: .infinity)
+
+                HStack(spacing: 3) {
+                    ForEach(Array(dotColors.enumerated()), id: \.offset) { _, color in
+                        Circle()
+                            .fill(color)
+                            .frame(width: 4.5, height: 4.5)
+                    }
+                }
+                .frame(height: 6)
+            }
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, minHeight: 40)
+            .background(
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .fill(
+                        isSelected
+                        ? Color.white.opacity(0.92)
+                        : (isToday ? Color.white.opacity(0.16) : Color.white.opacity(0.03))
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    .stroke(isToday && !isSelected ? Color.white.opacity(0.25) : Color.clear, lineWidth: 0.8)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func calendarDotColors(for date: Date) -> [Color] {
+        let normalized = Calendar(identifier: .gregorian).startOfDay(for: date)
+        guard let indicator = appState.calendarDayIndicators[normalized] else {
+            return []
+        }
+
+        var colors: [Color] = []
+        if indicator.priorities.contains(1) {
+            colors.append(Color.red.opacity(0.92))
+        }
+        if indicator.priorities.contains(2) {
+            colors.append(Color.orange.opacity(0.92))
+        }
+        if indicator.priorities.contains(3) {
+            colors.append(Color.blue.opacity(0.92))
+        }
+        if indicator.hasUnprioritized {
+            colors.append(Color.white.opacity(0.45))
+        }
+        return Array(colors.prefix(4))
+    }
+
     private var spotlightList: some View {
         Group {
             if appState.visibleInboxItems.isEmpty {
@@ -418,6 +763,11 @@ struct CaptureView: View {
 
     private func notifyHeightChange() {
         guard mode == .spotlight else {
+            return
+        }
+
+        if isCalendarViewActive {
+            NotificationCenter.default.post(name: .quickboxCaptureHeightDidChange, object: CGFloat(600))
             return
         }
 
@@ -485,6 +835,41 @@ struct CaptureView: View {
                     Circle()
                         .fill(Color.white.opacity(0.10))
                 )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func calendarJumpButton(title: String, systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(title, systemImage: systemName)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(Color.white.opacity(0.85))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(Color.white.opacity(0.09))
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func calendarSidebarButton(_ title: String, systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: systemName)
+                    .font(.system(size: 11, weight: .semibold))
+                Text(title)
+                    .font(.caption.weight(.medium))
+                Spacer()
+            }
+            .foregroundStyle(Color.white.opacity(0.84))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(Color.white.opacity(0.08))
+            )
         }
         .buttonStyle(.plain)
     }
@@ -727,6 +1112,61 @@ struct CaptureView: View {
                 textView.setSelectedRange(NSRange(location: end, length: 0))
             }
         }
+    }
+
+    private func closeCalendarView() {
+        withAnimation(.spring(response: 0.18, dampingFraction: 0.9)) {
+            isCalendarViewActive = false
+        }
+    }
+
+    private func refreshCalendarIndicators() {
+        guard let first = calendarVisibleDates.first,
+              let last = calendarVisibleDates.last else {
+            return
+        }
+        appState.loadCalendarIndicators(from: first, to: last)
+    }
+
+    private func shiftCalendarMonth(by value: Int) {
+        let calendar = Calendar(identifier: .gregorian)
+        guard let shifted = calendar.date(byAdding: .month, value: value, to: calendarMonthAnchor) else {
+            return
+        }
+        calendarMonthAnchor = startOfMonth(for: shifted)
+    }
+
+    private func shiftInboxDate(days: Int) {
+        let calendar = Calendar(identifier: .gregorian)
+        guard let shifted = calendar.date(byAdding: .day, value: days, to: appState.selectedInboxDate) else {
+            return
+        }
+        appState.selectInboxDate(shifted)
+    }
+
+    private func startOfMonth(for date: Date) -> Date {
+        let calendar = Calendar(identifier: .gregorian)
+        let components = calendar.dateComponents([.year, .month], from: date)
+        return calendar.date(from: components) ?? date
+    }
+
+    private func isSameDay(_ lhs: Date, _ rhs: Date) -> Bool {
+        Calendar(identifier: .gregorian).isDate(lhs, inSameDayAs: rhs)
+    }
+
+    private func isSameMonth(_ lhs: Date, _ rhs: Date) -> Bool {
+        let calendar = Calendar(identifier: .gregorian)
+        let lhsComps = calendar.dateComponents([.year, .month], from: lhs)
+        let rhsComps = calendar.dateComponents([.year, .month], from: rhs)
+        return lhsComps.year == rhsComps.year && lhsComps.month == rhsComps.month
+    }
+
+    private func shiftInboxDate(months: Int) {
+        let calendar = Calendar(identifier: .gregorian)
+        guard let shifted = calendar.date(byAdding: .month, value: months, to: appState.selectedInboxDate) else {
+            return
+        }
+        appState.selectInboxDate(shifted)
     }
 
     private func priorityColor(for priority: Int?) -> Color {

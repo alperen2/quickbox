@@ -464,6 +464,46 @@ struct quickboxTests {
 
     @MainActor
     @Test
+    func selectInboxDateLoadsInboxForChosenDay() throws {
+        let repository = TestRepository()
+        let appState = makeAppState(
+            clipboard: { nil },
+            writer: TestWriter(),
+            repository: repository
+        )
+        appState.prepareSpotlightSession()
+        let initialLoadCount = repository.loadCallCount
+
+        let calendar = Calendar(identifier: .gregorian)
+        let target = try #require(calendar.date(byAdding: .day, value: -3, to: appState.selectedInboxDate))
+
+        appState.selectInboxDate(target)
+
+        #expect(calendar.startOfDay(for: appState.selectedInboxDate) == calendar.startOfDay(for: target))
+        #expect(repository.loadCallCount == initialLoadCount + 1)
+        let lastLoadedDate = try #require(repository.lastLoadedDate)
+        #expect(calendar.startOfDay(for: lastLoadedDate) == calendar.startOfDay(for: target))
+    }
+
+    @MainActor
+    @Test
+    func selectInboxDateSameDayDoesNotReload() {
+        let repository = TestRepository()
+        let appState = makeAppState(
+            clipboard: { nil },
+            writer: TestWriter(),
+            repository: repository
+        )
+        appState.prepareSpotlightSession()
+        let initialLoadCount = repository.loadCallCount
+
+        appState.selectInboxDate(appState.selectedInboxDate)
+
+        #expect(repository.loadCallCount == initialLoadCount)
+    }
+
+    @MainActor
+    @Test
     func formatUpdatesChangePreviewAndValidateInput() {
         let appState = makeAppState(
             clipboard: { nil },
@@ -616,8 +656,14 @@ private final class TestRepository: InboxRepositorying, @unchecked Sendable {
     var canUndoDelete: Bool = false
     var items: [InboxItem] = []
     var reloadCallCount = 0
+    var loadCallCount = 0
+    var lastLoadedDate: Date?
 
-    func load(on date: Date) throws -> [InboxItem] { items }
+    func load(on date: Date) throws -> [InboxItem] {
+        loadCallCount += 1
+        lastLoadedDate = date
+        return items
+    }
     func apply(_ mutation: InboxMutation, on date: Date) throws -> [InboxItem] { items }
     func reload(on date: Date) throws -> [InboxItem] {
         reloadCallCount += 1

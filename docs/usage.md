@@ -13,6 +13,7 @@ Inside spotlight panel, manage today's items quickly:
 - toggle done/undone
 - edit
 - delete + undo
+- use the circled calendar button next to quick capture to open the larger calendar view with quick day/week/month jumps
 
 ## Quickbox Syntax
 
