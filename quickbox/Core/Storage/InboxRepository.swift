@@ -187,6 +187,11 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                         if let project = parsedOld.projectName { components.append("@\(project)") }
                         for tag in parsedOld.tags { components.append("#\(tag)") }
                         if let due = parsedOld.dueDate { components.append("due:\(due)") }
+                        for key in parsedOld.metadata.keys.sorted() {
+                            if let value = parsedOld.metadata[key] {
+                                components.append("\(key):\(value)")
+                            }
+                        }
                         
                         // Keep the date metadata tag if it exists in the raw line (even if parser stripped it)
                         let datePattern = /date:([0-9]{4}-[0-9]{2}-[0-9]{2})/

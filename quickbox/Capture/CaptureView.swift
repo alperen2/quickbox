@@ -53,6 +53,7 @@ struct CaptureView: View {
     @State private var autocompleteType: AutocompleteType = .none
     @State private var autocompleteSuggestions: [String] = []
     @State private var autocompleteSelectedIndex: Int = 0
+    @State private var autocompleteReplacementTokenRange: Range<Int>? = nil
     @State private var availableTags: [String] = []
     @State private var availableProjects: [String] = []
     @State private var isCalendarViewActive: Bool = false
@@ -221,9 +222,13 @@ struct CaptureView: View {
     
     // MARK: - Autocomplete Logic
     private func handleTextChange(_ newText: String) {
-        // Quick extraction to see what word the cursor is currently on.
-        // For simplicity in SwiftUI textfield, we'll look at the last word typed.
-        guard let lastWord = newText.components(separatedBy: .whitespaces).last, !lastWord.isEmpty else {
+        if newText.last?.isWhitespace == true {
+            closeAutocomplete()
+            return
+        }
+
+        let tokens = newText.split(whereSeparator: \.isWhitespace).map(String.init)
+        guard let lastWord = tokens.last, !lastWord.isEmpty else {
             closeAutocomplete()
             return
         }
@@ -235,12 +240,14 @@ struct CaptureView: View {
             autocompleteType = .tag(query: "")
             autocompleteSuggestions = availableTags
             autocompleteSelectedIndex = 0
+            autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
             return
         } else if prefix == "#" {
             autocompleteType = .tag(query: query)
             let matches = availableTags.filter { $0.lowercased().hasPrefix(query) }
             autocompleteSuggestions = matches
             autocompleteSelectedIndex = 0
+            autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
             if autocompleteSuggestions.isEmpty { closeAutocomplete() }
             return
         }
@@ -249,43 +256,71 @@ struct CaptureView: View {
             autocompleteType = .project(query: "")
             autocompleteSuggestions = availableProjects
             autocompleteSelectedIndex = 0
+            autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
             return
         } else if prefix == "@" {
             autocompleteType = .project(query: query)
             let matches = availableProjects.filter { $0.lowercased().hasPrefix(query) }
             autocompleteSuggestions = matches
             autocompleteSelectedIndex = 0
+            autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
             if autocompleteSuggestions.isEmpty { closeAutocomplete() }
             return
         }
-        
-        if lastWord.contains(":") && !lastWord.lowercased().hasPrefix("http") {
-             let parts = lastWord.components(separatedBy: ":")
-             if parts.count >= 2 {
-                 let key = parts[0].lowercased()
-                 let valQuery = parts.dropFirst().joined(separator: ":").lowercased()
 
-                 let dateOptions = ["tdy", "tmr", "tmrw", "nw", "eow", "eom"]
-                 let timeOptions = ["15m", "30m", "45m", "1h", "2h", "1d"]
-                 let reminderOptions = ["15m", "30m", "1h", "1d"]
-                 
-                 let options: [String]
-                 switch key {
-                 case "due", "defer", "start": options = dateOptions
-                 case "time", "dur", "duration": options = timeOptions
-                 case "remind", "alarm": options = reminderOptions
-                 default: options = []
-                 }
-                 
-                 if !options.isEmpty {
-                     autocompleteType = .metadata(key: key, query: valQuery)
-                     let matches = valQuery.isEmpty ? options : options.filter { $0.hasPrefix(valQuery) }
-                     autocompleteSuggestions = matches
-                     autocompleteSelectedIndex = 0
-                     if autocompleteSuggestions.isEmpty { closeAutocomplete() }
-                     return
-                 }
-             }
+        if prefix == "!" {
+            let options = ["1", "2", "3"]
+            autocompleteType = .priority(query: query)
+            autocompleteSuggestions = query.isEmpty
+                ? options
+                : options.filter { $0.hasPrefix(query) }
+            autocompleteSelectedIndex = 0
+            autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
+            if autocompleteSuggestions.isEmpty { closeAutocomplete() }
+            return
+        }
+
+        if let dateContext = trailingDateMetadataContext(in: tokens) {
+            let valueQuery = dateContext.valueQuery.lowercased()
+            let options = metadataValueOptions(for: dateContext.key)
+            autocompleteType = .metadata(key: dateContext.key, query: valueQuery)
+            autocompleteSuggestions = filterSuggestions(options, query: valueQuery)
+            autocompleteSelectedIndex = 0
+            autocompleteReplacementTokenRange = dateContext.tokenRange
+            if autocompleteSuggestions.isEmpty { closeAutocomplete() }
+            return
+        }
+
+        if lastWord.contains(":") && !lastWord.lowercased().hasPrefix("http") {
+            let parts = lastWord.components(separatedBy: ":")
+            if parts.count >= 2 {
+                let keyQuery = parts[0].lowercased()
+                let valueQuery = parts.dropFirst().joined(separator: ":").lowercased()
+
+                if let resolvedKey = resolveMetadataKey(from: keyQuery) {
+                    let options = metadataValueOptions(for: resolvedKey)
+                    autocompleteType = .metadata(key: resolvedKey, query: valueQuery)
+                    autocompleteSuggestions = filterSuggestions(options, query: valueQuery)
+                    autocompleteSelectedIndex = 0
+                    autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
+                    if autocompleteSuggestions.isEmpty { closeAutocomplete() }
+                    return
+                }
+
+                if valueQuery.isEmpty {
+                    autocompleteType = .metadataKey(query: keyQuery)
+                    autocompleteSuggestions = keyQuery.isEmpty
+                        ? metadataKeyOptions
+                        : metadataKeyOptions.filter { option in
+                            let normalized = option.lowercased()
+                            return normalized.hasPrefix(keyQuery) || normalized.contains(keyQuery)
+                        }
+                    autocompleteSelectedIndex = 0
+                    autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
+                    if autocompleteSuggestions.isEmpty { closeAutocomplete() }
+                    return
+                }
+            }
         }
         
         closeAutocomplete()
@@ -295,26 +330,179 @@ struct CaptureView: View {
         autocompleteType = .none
         autocompleteSuggestions = []
         autocompleteSelectedIndex = 0
+        autocompleteReplacementTokenRange = nil
+    }
+
+    private var metadataKeyOptions: [String] {
+        ["due", "defer", "start", "dur", "time", "duration", "remind", "alarm"]
+    }
+
+    private var dateShortcutOptions: [String] {
+        let weekdays = [
+            "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
+        ]
+
+        let natural = [
+            "today", "tdy",
+            "tomorrow", "tmr"
+        ] + weekdays
+            + weekdays.map { "next \($0)" }
+            + [
+                "next weekend",
+                "end of week", "end of month", "end of year",
+                "in 1 day", "in 2 days", "in 3 days", "in 5 days", "in 7 days", "in 14 days",
+                "in 1 week", "in 2 weeks", "in 3 weeks",
+                "in 1 month", "in 2 months", "in 3 months"
+            ]
+
+        let compact = [
+            "nw", "nextweek", "next-week", "nextweekend", "next-weekend",
+            "eow", "endofweek", "eom", "endofmonth", "eoy", "endofyear",
+            "in1d", "in2d", "in3d", "in5d", "in7d", "in10d", "in14d",
+            "in1w", "in2w", "in3w",
+            "in1m", "in2m", "in3m"
+        ]
+
+        return deduplicatedPreservingOrder(natural + compact)
+    }
+
+    private var durationShortcutOptions: [String] {
+        [
+            "5m", "10m", "15m", "20m", "25m", "30m", "45m",
+            "60m", "90m",
+            "1h", "2h", "3h", "4h", "6h", "8h",
+            "1d", "2d"
+        ]
+    }
+
+    private var reminderShortcutOptions: [String] {
+        [
+            "5m", "10m", "15m", "30m", "45m",
+            "1h", "2h", "4h", "8h", "12h",
+            "1d", "2d", "3d", "7d"
+        ]
+    }
+
+    private func resolveMetadataKey(from key: String) -> String? {
+        let normalized = key.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalized.isEmpty else {
+            return nil
+        }
+        return metadataKeyOptions.contains(normalized) ? normalized : nil
+    }
+
+    private func metadataValueOptions(for key: String) -> [String] {
+        switch key {
+        case "due", "defer", "start":
+            return dateShortcutOptions
+        case "dur", "time", "duration":
+            return durationShortcutOptions
+        case "remind", "alarm":
+            return reminderShortcutOptions
+        default:
+            return []
+        }
+    }
+
+    private func filterSuggestions(_ options: [String], query: String) -> [String] {
+        let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalizedQuery.isEmpty else {
+            return options
+        }
+        return options.filter { option in
+            let normalized = option.lowercased()
+            return normalized.hasPrefix(normalizedQuery) || normalized.contains(normalizedQuery)
+        }
+    }
+
+    private func deduplicatedPreservingOrder(_ values: [String]) -> [String] {
+        var seen = Set<String>()
+        var ordered: [String] = []
+        for value in values {
+            let key = value.lowercased()
+            if seen.insert(key).inserted {
+                ordered.append(value)
+            }
+        }
+        return ordered
+    }
+
+    private func trailingDateMetadataContext(in tokens: [String]) -> (key: String, valueQuery: String, tokenRange: Range<Int>)? {
+        guard let startIndex = tokens.lastIndex(where: { token in
+            let normalized = token.lowercased()
+            return token.contains(":")
+                && !normalized.hasPrefix("http://")
+                && !normalized.hasPrefix("https://")
+        }) else {
+            return nil
+        }
+
+        let keyToken = tokens[startIndex]
+        guard let colonIndex = keyToken.firstIndex(of: ":") else {
+            return nil
+        }
+
+        let key = String(keyToken[..<colonIndex]).lowercased()
+        guard key == "due" || key == "defer" || key == "start" else {
+            return nil
+        }
+
+        var valueParts: [String] = []
+        let inlineValue = String(keyToken[keyToken.index(after: colonIndex)...])
+        if !inlineValue.isEmpty {
+            valueParts.append(inlineValue)
+        }
+
+        if startIndex + 1 < tokens.count {
+            for token in tokens[(startIndex + 1)...] {
+                if token.contains(":") || token.hasPrefix("#") || token.hasPrefix("@") || token.hasPrefix("!") {
+                    return nil
+                }
+                valueParts.append(token)
+            }
+        }
+
+        let valueQuery = valueParts.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        return (key, valueQuery, startIndex..<tokens.count)
     }
     
     private func acceptAutocomplete() {
         guard autocompleteSuggestions.indices.contains(autocompleteSelectedIndex) else { return }
         let accepted = autocompleteSuggestions[autocompleteSelectedIndex]
-        
-        // Replace the last typed keyword with the accepted suggestion
-        var components = appState.draftText.components(separatedBy: .whitespaces)
-        guard !components.isEmpty else { return }
-        
-        let prefix: String
-        switch autocompleteType {
-        case .tag: prefix = "#"
-        case .project: prefix = "@"
-        case .metadata(let key, _): prefix = "\(key):"
-        default: prefix = ""
+
+        var tokens = appState.draftText.split(whereSeparator: \.isWhitespace).map(String.init)
+        guard let tokenRange = autocompleteReplacementTokenRange,
+              tokenRange.lowerBound >= 0,
+              tokenRange.upperBound <= tokens.count else {
+            closeAutocomplete()
+            return
         }
-        
-        components[components.count - 1] = "\(prefix)\(accepted) "
-        appState.draftText = components.joined(separator: " ")
+
+        let replacement: String
+        let shouldAppendTrailingSpace: Bool
+        switch autocompleteType {
+        case .tag:
+            replacement = "#\(accepted)"
+            shouldAppendTrailingSpace = true
+        case .project:
+            replacement = "@\(accepted)"
+            shouldAppendTrailingSpace = true
+        case .priority:
+            replacement = "!\(accepted)"
+            shouldAppendTrailingSpace = true
+        case .metadataKey:
+            replacement = "\(accepted):"
+            shouldAppendTrailingSpace = false
+        case .metadata(let key, _):
+            replacement = "\(key):\(accepted)"
+            shouldAppendTrailingSpace = true
+        case .none:
+            return
+        }
+
+        tokens.replaceSubrange(tokenRange, with: [replacement])
+        let updatedText = tokens.joined(separator: " ")
+        appState.draftText = shouldAppendTrailingSpace ? (updatedText + " ") : updatedText
         closeAutocomplete()
     }
 

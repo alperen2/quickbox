@@ -5,6 +5,7 @@ enum AutocompleteType {
     case tag(query: String)
     case project(query: String)
     case priority(query: String)
+    case metadataKey(query: String)
     case metadata(key: String, query: String)
 }
 
@@ -124,6 +125,7 @@ struct AutocompleteMenu: View {
         case .tag: Image(systemName: "number")
         case .project: Image(systemName: "folder.fill")
         case .priority: Image(systemName: "exclamationmark")
+        case .metadataKey: Image(systemName: "slider.horizontal.3")
         case .metadata(let key, _): Image(systemName: iconForMetadataKey(key))
         case .none: EmptyView()
         }
@@ -134,6 +136,7 @@ struct AutocompleteMenu: View {
         case .tag: return .green.opacity(0.8)
         case .project: return .purple.opacity(0.8)
         case .priority: return .orange.opacity(0.8)
+        case .metadataKey: return .teal.opacity(0.9)
         case .metadata: return .blue.opacity(0.8)
         case .none: return .clear
         }
@@ -157,6 +160,8 @@ struct AutocompleteMenu: View {
             return "Project suggestions"
         case .priority:
             return "Priority suggestions"
+        case .metadataKey:
+            return "Field suggestions"
         case .metadata(let key, _):
             return "\(key.uppercased()) suggestions"
         case .none:
@@ -165,32 +170,53 @@ struct AutocompleteMenu: View {
     }
     
     private func preview(for mode: AutocompleteType, item: String) -> String? {
-        guard case .metadata(let key, _) = mode else { return nil }
-        
-        switch key.lowercased() {
-        case "due", "defer", "start":
-            // DeferDateResolver allows reusing the existing smart date logic
-            if let date = DeferDateResolver().resolve(deferDateString: item, from: Date()) {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "d MMM, EEE" // e.g. 2 Mar, Mon
-                return "(\(formatter.string(from: date)))"
+        switch mode {
+        case .priority:
+            switch item {
+            case "1": return "(High)"
+            case "2": return "(Medium)"
+            case "3": return "(Low)"
+            default: return nil
             }
-        case "time", "dur", "duration", "remind", "alarm":
-            var minutesToAdd = 0
-            if item.hasSuffix("m"), let val = Int(item.dropLast()) {
-                minutesToAdd = val
-            } else if item.hasSuffix("h"), let val = Int(item.dropLast()) {
-                minutesToAdd = val * 60
-            } else if item.hasSuffix("d"), let val = Int(item.dropLast()) {
-                minutesToAdd = val * 24 * 60
+
+        case .metadataKey:
+            switch item.lowercased() {
+            case "due": return "(deadline)"
+            case "defer", "start": return "(hide until)"
+            case "dur", "time", "duration": return "(planned time)"
+            case "remind", "alarm": return "(notification)"
+            default: return nil
             }
-            if minutesToAdd > 0, let targetTime = Calendar.current.date(byAdding: .minute, value: minutesToAdd, to: Date()) {
-                let formatter = DateFormatter()
-                formatter.timeStyle = .short
-                return "(\(formatter.string(from: targetTime)))"
+
+        case .metadata(let key, _):
+            switch key.lowercased() {
+            case "due", "defer", "start":
+                // DeferDateResolver allows reusing the existing smart date logic
+                if let date = DeferDateResolver().resolve(deferDateString: item, from: Date()) {
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "d MMM, EEE" // e.g. 2 Mar, Mon
+                    return "(\(formatter.string(from: date)))"
+                }
+            case "time", "dur", "duration", "remind", "alarm":
+                var minutesToAdd = 0
+                if item.hasSuffix("m"), let val = Int(item.dropLast()) {
+                    minutesToAdd = val
+                } else if item.hasSuffix("h"), let val = Int(item.dropLast()) {
+                    minutesToAdd = val * 60
+                } else if item.hasSuffix("d"), let val = Int(item.dropLast()) {
+                    minutesToAdd = val * 24 * 60
+                }
+                if minutesToAdd > 0, let targetTime = Calendar.current.date(byAdding: .minute, value: minutesToAdd, to: Date()) {
+                    let formatter = DateFormatter()
+                    formatter.timeStyle = .short
+                    return "(\(formatter.string(from: targetTime)))"
+                }
+            default: break
             }
-        default: break
+            return nil
+
+        default:
+            return nil
         }
-        return nil
     }
 }

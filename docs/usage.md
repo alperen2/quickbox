@@ -31,14 +31,16 @@ Quickbox uses a powerful, natural language-friendly syntax to organize your thou
 - `#tagname` — Adds a tag to the task for easy filtering and organization.
 
 ### Dates & Time (Key-Value)
-- `due:date` — Sets a deadline. Supports shorthands like `tdy` (today), `tmr` (tomorrow), `nw` (next week), `eow` (end of week), or exact dates like `15jan`.
-- `defer:date` veya `start:date` — Hides the task from your inbox until the specified date arrives. Only appears when you need it!
-- `time:duration` veya `dur:duration` — Sets a planned duration for the task (e.g., `15m`, `2h`, `1d`). Updates the right-side timestamp to show the planned time range.
-- `remind:duration` veya `alarm:duration` — Sets a notification alert.
+- `due:date` — Sets a deadline. Supports natural phrases like `due:next friday`, `due:end of month`, `due:in 2 weeks`, plus shorthands like `tdy`, `tmr`, `nw`, and `eow`.
+- `defer:date` or `start:date` — Hides the task from your inbox until the specified date arrives (examples: `defer:next monday`, `start:in 3 days`).
+- `time:duration` or `dur:duration` — Sets a planned duration (e.g., `15m`, `2h`, `1d`) and updates the right-side planned time range.
+- `remind:duration` or `alarm:duration` — Sets a notification alert.
+
+Natural language date parsing is intentionally limited to `due:`, `defer:`, and `start:` values to keep behavior deterministic and distraction-free.
 
 ### Interactive Features
 When typing `@`, `#`, or keywords like `due:` and `time:`, Quickbox provides an **interactive autocomplete menu**.
-* **Smart Previews:** The menu shows exactly what time or date a shorthand (like `15m` or `eow`) resolves to.
+* **Smart Previews:** The menu shows exactly what time or date a shorthand or phrase (like `eow` or `next friday`) resolves to.
 * **Clickable Pills:** You can click on the generated metadata pills in your task list to quickly edit values or remove them without manual text editing.
 
 ## Menubar utility

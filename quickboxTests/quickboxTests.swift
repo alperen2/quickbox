@@ -282,6 +282,83 @@ struct quickboxTests {
     }
 
     @Test
+    func parserSupportsMultiWordDateMetadataValues() throws {
+        let parser = InboxParser()
+        let lines = [
+            "- [ ] 09:10 Plan launch due:next friday defer:end of month start:in 2 weeks #ops @alpha !1"
+        ]
+
+        let items = parser.parse(lines: lines, sourceID: "today.md")
+        let item = try #require(items.first)
+
+        #expect(item.dueDate == "next friday")
+        #expect(item.metadata["defer"] == "end of month")
+        #expect(item.metadata["start"] == "in 2 weeks")
+        #expect(item.tags == ["ops"])
+        #expect(item.projectName == "alpha")
+        #expect(item.priority == 1)
+    }
+
+    @Test
+    func dueDateResolverSupportsNaturalPhrases() throws {
+        let calendar = Calendar(identifier: .gregorian)
+        var comps = DateComponents()
+        comps.year = 2026
+        comps.month = 3
+        comps.day = 2
+        comps.hour = 10
+        comps.minute = 0
+        let referenceDate = try #require(calendar.date(from: comps))
+
+        let resolver = DueDateResolver()
+
+        let nextWeekend = try #require(resolver.resolve(dueDateString: "next weekend", from: referenceDate))
+        let endOfMonth = try #require(resolver.resolve(dueDateString: "end of month", from: referenceDate))
+        let inTwoWeeks = try #require(resolver.resolve(dueDateString: "in 2 weeks", from: referenceDate))
+
+        let weekendComponents = calendar.dateComponents([.year, .month, .day], from: nextWeekend)
+        #expect(weekendComponents.year == 2026)
+        #expect(weekendComponents.month == 3)
+        #expect(weekendComponents.day == 7)
+
+        let endOfMonthComponents = calendar.dateComponents([.year, .month, .day], from: endOfMonth)
+        #expect(endOfMonthComponents.year == 2026)
+        #expect(endOfMonthComponents.month == 3)
+        #expect(endOfMonthComponents.day == 31)
+
+        let inTwoWeeksComponents = calendar.dateComponents([.year, .month, .day], from: inTwoWeeks)
+        #expect(inTwoWeeksComponents.year == 2026)
+        #expect(inTwoWeeksComponents.month == 3)
+        #expect(inTwoWeeksComponents.day == 16)
+    }
+
+    @Test
+    func dueDateResolverDifferentiatesWeekdayAndNextWeekday() throws {
+        let calendar = Calendar(identifier: .gregorian)
+        var comps = DateComponents()
+        comps.year = 2026
+        comps.month = 3
+        comps.day = 2
+        comps.hour = 10
+        comps.minute = 0
+        let referenceDate = try #require(calendar.date(from: comps))
+
+        let resolver = DueDateResolver()
+        let friday = try #require(resolver.resolve(dueDateString: "friday", from: referenceDate))
+        let nextFriday = try #require(resolver.resolve(dueDateString: "next friday", from: referenceDate))
+
+        let fridayComps = calendar.dateComponents([.year, .month, .day], from: friday)
+        #expect(fridayComps.year == 2026)
+        #expect(fridayComps.month == 3)
+        #expect(fridayComps.day == 6)
+
+        let nextFridayComps = calendar.dateComponents([.year, .month, .day], from: nextFriday)
+        #expect(nextFridayComps.year == 2026)
+        #expect(nextFridayComps.month == 3)
+        #expect(nextFridayComps.day == 13)
+    }
+
+    @Test
     func repositoryToggleDeleteUndoFlow() throws {
         let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
@@ -315,6 +392,29 @@ struct quickboxTests {
         let fileAfterUndo = try String(contentsOf: fileURL)
         #expect(fileAfterUndo.contains("second"))
         #expect(!repository.canUndoDelete)
+    }
+
+    @Test
+    func repositoryEditPreservesMetadataTokens() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let resolver = TestStorageResolver(baseURL: tempFolder)
+        let repository = InboxRepository(storageResolver: resolver)
+
+        let fileURL = tempFolder.appendingPathComponent(todayFileName(for: Date()))
+        try "- [ ] 08:00 first due:next friday start:in 2 days time:30m\n".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let items = try repository.loadToday()
+        let item = try #require(items.first)
+
+        _ = try repository.apply(.edit(item.id, text: "first updated"))
+        let fileAfterEdit = try String(contentsOf: fileURL)
+
+        #expect(fileAfterEdit.contains("due:next friday"))
+        #expect(fileAfterEdit.contains("start:in 2 days"))
+        #expect(fileAfterEdit.contains("time:30m"))
     }
 
     @Test
