@@ -604,6 +604,124 @@ struct quickboxTests {
 
     @MainActor
     @Test
+    func loadCalendarIndicatorsCachesByDayAndRespectsForceReload() async throws {
+        let repository = TestRepository()
+        let calendar = Calendar(identifier: .gregorian)
+        let start = try #require(calendar.date(from: DateComponents(year: 2026, month: 3, day: 2, hour: 10, minute: 0)))
+        let day1 = calendar.startOfDay(for: start)
+        let day2 = try #require(calendar.date(byAdding: .day, value: 1, to: day1))
+        let day3 = try #require(calendar.date(byAdding: .day, value: 2, to: day1))
+        repository.itemsByDate[day1] = [sampleItem(id: "day1", priority: 1)]
+        repository.itemsByDate[day2] = [sampleItem(id: "day2", priority: 2)]
+        repository.itemsByDate[day3] = [sampleItem(id: "day3", priority: 3)]
+
+        let appState = makeAppState(
+            clipboard: { nil },
+            writer: TestWriter(),
+            repository: repository
+        )
+
+        appState.loadCalendarIndicators(from: start, to: day3)
+        try await waitUntil("initial indicator load") { repository.loadCallCount == 3 }
+
+        let cachedLoadCount = repository.loadCallCount
+        appState.loadCalendarIndicators(from: start, to: day3)
+        try await Task.sleep(nanoseconds: 200_000_000)
+        #expect(repository.loadCallCount == cachedLoadCount)
+
+        appState.loadCalendarIndicators(from: start, to: day3, forceReload: true)
+        try await waitUntil("force indicator reload") { repository.loadCallCount == cachedLoadCount + 3 }
+    }
+
+    @MainActor
+    @Test
+    func loadCalendarIndicatorsNormalizesSameDayRange() async throws {
+        let repository = TestRepository()
+        let calendar = Calendar(identifier: .gregorian)
+        let morning = try #require(calendar.date(from: DateComponents(year: 2026, month: 3, day: 2, hour: 9, minute: 0)))
+        let evening = try #require(calendar.date(from: DateComponents(year: 2026, month: 3, day: 2, hour: 22, minute: 30)))
+        let normalized = calendar.startOfDay(for: morning)
+
+        repository.itemsByDate[normalized] = [sampleItem(id: "same-day", priority: 2)]
+        let appState = makeAppState(
+            clipboard: { nil },
+            writer: TestWriter(),
+            repository: repository
+        )
+
+        appState.loadCalendarIndicators(from: morning, to: evening)
+        try await waitUntil("same day indicator load") { repository.loadCallCount == 1 }
+        #expect(appState.calendarDayIndicators[normalized]?.totalCount == 1)
+
+        appState.loadCalendarIndicators(from: morning, to: evening)
+        try await Task.sleep(nanoseconds: 150_000_000)
+        #expect(repository.loadCallCount == 1)
+    }
+
+    @MainActor
+    @Test
+    func mutationUpdatesCalendarIndicatorForSelectedDay() {
+        let repository = TestRepository()
+        repository.items = [sampleItem(id: "a", priority: 1, completed: false)]
+        repository.applyHandler = { mutation, currentItems in
+            switch mutation {
+            case .delete(let id):
+                return currentItems.filter { $0.id != id }
+            case .toggle(let id):
+                return currentItems.map { item in
+                    guard item.id == id else { return item }
+                    return InboxItem(
+                        id: item.id,
+                        text: item.text,
+                        tags: item.tags,
+                        dueDate: item.dueDate,
+                        priority: item.priority,
+                        projectName: item.projectName,
+                        metadata: item.metadata,
+                        time: item.time,
+                        isCompleted: !item.isCompleted,
+                        lineIndex: item.lineIndex,
+                        rawLine: item.rawLine
+                    )
+                }
+            case .edit(let id, let text):
+                return currentItems.map { item in
+                    guard item.id == id else { return item }
+                    return InboxItem(
+                        id: item.id,
+                        text: text,
+                        tags: item.tags,
+                        dueDate: item.dueDate,
+                        priority: item.priority,
+                        projectName: item.projectName,
+                        metadata: item.metadata,
+                        time: item.time,
+                        isCompleted: item.isCompleted,
+                        lineIndex: item.lineIndex,
+                        rawLine: item.rawLine
+                    )
+                }
+            case .undoLastDelete:
+                return currentItems
+            }
+        }
+
+        let appState = makeAppState(
+            clipboard: { nil },
+            writer: TestWriter(),
+            repository: repository
+        )
+
+        appState.prepareSpotlightSession()
+        let selected = Calendar(identifier: .gregorian).startOfDay(for: appState.selectedInboxDate)
+        #expect(appState.calendarDayIndicators[selected]?.totalCount == 1)
+
+        appState.handleSpotlightMutation(.delete("a"))
+        #expect(appState.calendarDayIndicators[selected] == nil)
+    }
+
+    @MainActor
+    @Test
     func formatUpdatesChangePreviewAndValidateInput() {
         let appState = makeAppState(
             clipboard: { nil },
@@ -677,6 +795,37 @@ struct quickboxTests {
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.string(from: date) + ".md"
+    }
+
+    private func sampleItem(id: String, priority: Int? = nil, completed: Bool = false) -> InboxItem {
+        InboxItem(
+            id: id,
+            text: "Task \(id)",
+            dueDate: nil,
+            priority: priority,
+            metadata: [:],
+            time: "10:00",
+            isCompleted: completed,
+            lineIndex: 0,
+            rawLine: "- [ ] 10:00 Task \(id)"
+        )
+    }
+
+    @MainActor
+    private func waitUntil(
+        _ label: String,
+        timeoutNanoseconds: UInt64 = 2_000_000_000,
+        checkEveryNanoseconds: UInt64 = 20_000_000,
+        _ condition: @escaping () -> Bool
+    ) async throws {
+        let start = DispatchTime.now().uptimeNanoseconds
+        while DispatchTime.now().uptimeNanoseconds - start < timeoutNanoseconds {
+            if condition() {
+                return
+            }
+            try await Task.sleep(nanoseconds: checkEveryNanoseconds)
+        }
+        #expect(Bool(false), "Timed out waiting for \(label)")
     }
 
     @MainActor
@@ -755,16 +904,27 @@ private final class TestWriter: InboxWriting {
 private final class TestRepository: InboxRepositorying, @unchecked Sendable {
     var canUndoDelete: Bool = false
     var items: [InboxItem] = []
+    var itemsByDate: [Date: [InboxItem]] = [:]
     var reloadCallCount = 0
     var loadCallCount = 0
     var lastLoadedDate: Date?
+    var applyHandler: ((InboxMutation, [InboxItem]) -> [InboxItem])?
 
     func load(on date: Date) throws -> [InboxItem] {
         loadCallCount += 1
         lastLoadedDate = date
+        let normalized = Calendar(identifier: .gregorian).startOfDay(for: date)
+        if let datedItems = itemsByDate[normalized] {
+            return datedItems
+        }
         return items
     }
-    func apply(_ mutation: InboxMutation, on date: Date) throws -> [InboxItem] { items }
+    func apply(_ mutation: InboxMutation, on date: Date) throws -> [InboxItem] {
+        if let applyHandler {
+            items = applyHandler(mutation, items)
+        }
+        return items
+    }
     func reload(on date: Date) throws -> [InboxItem] {
         reloadCallCount += 1
         return items

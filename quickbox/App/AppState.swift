@@ -8,6 +8,9 @@ final class AppState: ObservableObject {
     struct CalendarDayIndicator: Equatable, Sendable {
         var priorities: Set<Int>
         var hasUnprioritized: Bool
+        var openCount: Int
+        var completedCount: Int
+        var totalCount: Int
     }
 
     enum SubmitResult {
@@ -37,6 +40,8 @@ final class AppState: ObservableObject {
     private let crashReporter: CrashReporting
     private let clipboardProvider: () -> String?
     private let mutationQueue = DispatchQueue(label: "quickbox.appstate.mutation", qos: .userInitiated)
+    private var calendarIndicatorLoadedDates: Set<Date> = []
+    private var calendarIndicatorLoadingTask: Task<Void, Never>?
 
     var onCaptureRequested: (() -> Void)?
     var onSettingsRequested: (() -> Void)?
@@ -90,6 +95,10 @@ final class AppState: ObservableObject {
         if loadInboxOnInit {
             loadInbox()
         }
+    }
+
+    deinit {
+        calendarIndicatorLoadingTask?.cancel()
     }
 
     var currentStoragePath: String {
@@ -322,30 +331,61 @@ final class AppState: ObservableObject {
         loadInbox()
     }
 
-    func loadCalendarIndicators(from startDate: Date, to endDate: Date) {
+    func loadCalendarIndicators(from startDate: Date, to endDate: Date, forceReload: Bool = false) {
         let start = Self.calendar.startOfDay(for: startDate)
         let end = Self.calendar.startOfDay(for: endDate)
         guard start <= end else {
-            calendarDayIndicators = [:]
+            resetCalendarIndicatorCache()
             return
         }
 
-        let calendar = Self.calendar
-
-        var current = start
-        var indicators: [Date: CalendarDayIndicator] = [:]
-        while current <= end {
-            if let items = try? inboxRepository.load(on: current),
-               let indicator = Self.makeIndicator(from: items) {
-                indicators[current] = indicator
+        let dateRange = contiguousDateRange(from: start, to: end)
+        if forceReload {
+            for date in dateRange {
+                calendarIndicatorLoadedDates.remove(date)
+                calendarDayIndicators.removeValue(forKey: date)
             }
-
-            guard let next = calendar.date(byAdding: .day, value: 1, to: current) else {
-                break
-            }
-            current = calendar.startOfDay(for: next)
         }
-        calendarDayIndicators = indicators
+
+        let missingDates = dateRange.filter { !calendarIndicatorLoadedDates.contains($0) }
+        guard !missingDates.isEmpty else {
+            return
+        }
+
+        calendarIndicatorLoadingTask?.cancel()
+        let repository = inboxRepository
+        calendarIndicatorLoadingTask = Task(priority: .utility) { [weak self] in
+            var fetched: [Date: CalendarDayIndicator?] = [:]
+
+            for date in missingDates {
+                if Task.isCancelled {
+                    return
+                }
+                if let items = try? repository.load(on: date) {
+                    fetched[date] = Self.makeIndicator(from: items)
+                } else {
+                    fetched[date] = nil
+                }
+            }
+
+            if Task.isCancelled {
+                return
+            }
+
+            await MainActor.run {
+                guard let self else {
+                    return
+                }
+                for date in missingDates {
+                    self.calendarIndicatorLoadedDates.insert(date)
+                    if let indicator = fetched[date] ?? nil {
+                        self.calendarDayIndicators[date] = indicator
+                    } else {
+                        self.calendarDayIndicators.removeValue(forKey: date)
+                    }
+                }
+            }
+        }
     }
 
     func updateAfterSaveMode(_ mode: AfterSaveMode) {
@@ -455,6 +495,7 @@ final class AppState: ObservableObject {
 
         applyLaunchAtLogin(defaults.launchAtLogin)
         selectedInboxDate = Self.calendar.startOfDay(for: Date())
+        resetCalendarIndicatorCache()
         loadInbox()
         settingsMessage = "Settings reset to defaults."
     }
@@ -473,6 +514,7 @@ final class AppState: ObservableObject {
                 preferences.storageBookmarkData = bookmark
                 preferences.fallbackStoragePath = url.path
                 persistPreferences(message: "Storage folder updated.")
+                resetCalendarIndicatorCache()
                 loadInbox()
             } catch {
                 settingsMessage = "Could not store folder access. Please reselect a folder."
@@ -560,6 +602,7 @@ final class AppState: ObservableObject {
 
     private func updateCalendarIndicator(for date: Date, using items: [InboxItem]) {
         let normalized = Self.calendar.startOfDay(for: date)
+        calendarIndicatorLoadedDates.insert(normalized)
         if let indicator = Self.makeIndicator(from: items) {
             calendarDayIndicators[normalized] = indicator
         } else {
@@ -574,14 +617,47 @@ final class AppState: ObservableObject {
 
         var priorities = Set<Int>()
         var hasUnprioritized = false
+        var openCount = 0
+        var completedCount = 0
         for item in items {
             if let priority = item.priority, (1...3).contains(priority) {
                 priorities.insert(priority)
             } else {
                 hasUnprioritized = true
             }
+            if item.isCompleted {
+                completedCount += 1
+            } else {
+                openCount += 1
+            }
         }
-        return CalendarDayIndicator(priorities: priorities, hasUnprioritized: hasUnprioritized)
+        return CalendarDayIndicator(
+            priorities: priorities,
+            hasUnprioritized: hasUnprioritized,
+            openCount: openCount,
+            completedCount: completedCount,
+            totalCount: openCount + completedCount
+        )
+    }
+
+    private func resetCalendarIndicatorCache() {
+        calendarIndicatorLoadingTask?.cancel()
+        calendarIndicatorLoadingTask = nil
+        calendarIndicatorLoadedDates.removeAll()
+        calendarDayIndicators = [:]
+    }
+
+    private func contiguousDateRange(from start: Date, to end: Date) -> [Date] {
+        var dates: [Date] = []
+        var current = start
+        while current <= end {
+            dates.append(current)
+            guard let next = Self.calendar.date(byAdding: .day, value: 1, to: current) else {
+                break
+            }
+            current = Self.calendar.startOfDay(for: next)
+        }
+        return dates
     }
 
     private func applyHotkeyFromPreferences() {
