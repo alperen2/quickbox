@@ -52,14 +52,14 @@ jobs:
 
       - name: Build App Store archive
         env:
-          APPSTORE_AUTH_KEY_PATH: ${{ format('{0}/.appstoreconnect/private_keys/AuthKey_{1}.p8', env.HOME, secrets.APPSTORE_CONNECT_API_KEY_ID) }}
+          APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_AUTH_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_AUTH_KEY_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
         run: |
           SCHEME=quickbox-AppStore \
           ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
           ALLOW_PROVISIONING_UPDATES=1 \
-          APPSTORE_AUTH_KEY_PATH="$APPSTORE_AUTH_KEY_PATH" \
+          APPSTORE_AUTH_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8" \
           APPSTORE_AUTH_KEY_ID="$APPSTORE_AUTH_KEY_ID" \
           APPSTORE_AUTH_KEY_ISSUER_ID="$APPSTORE_AUTH_KEY_ISSUER_ID" \
           scripts/release/build_archive.sh
@@ -67,7 +67,7 @@ jobs:
       - name: Export App Store package
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPSTORE_AUTH_KEY_PATH: ${{ format('{0}/.appstoreconnect/private_keys/AuthKey_{1}.p8', env.HOME, secrets.APPSTORE_CONNECT_API_KEY_ID) }}
+          APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_AUTH_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_AUTH_KEY_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
         run: |
@@ -75,7 +75,7 @@ jobs:
           ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
           EXPORT_PATH=build/release/export-appstore \
           ALLOW_PROVISIONING_UPDATES=1 \
-          APPSTORE_AUTH_KEY_PATH="$APPSTORE_AUTH_KEY_PATH" \
+          APPSTORE_AUTH_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8" \
           APPSTORE_AUTH_KEY_ID="$APPSTORE_AUTH_KEY_ID" \
           APPSTORE_AUTH_KEY_ISSUER_ID="$APPSTORE_AUTH_KEY_ISSUER_ID" \
           scripts/release/export_appstore.sh
