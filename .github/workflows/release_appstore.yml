@@ -46,20 +46,30 @@ jobs:
           APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_CONNECT_API_PRIVATE_KEY: ${{ secrets.APPSTORE_CONNECT_API_PRIVATE_KEY }}
         run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$APPSTORE_CONNECT_API_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8
-          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8
+          AUTH_KEY_DIR="$RUNNER_TEMP/appstoreconnect/private_keys"
+          AUTH_KEY_PATH="$AUTH_KEY_DIR/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8"
+          mkdir -p "$AUTH_KEY_DIR"
+          printf '%s' "$APPSTORE_CONNECT_API_PRIVATE_KEY" > "$AUTH_KEY_PATH"
+          chmod 600 "$AUTH_KEY_PATH"
+          if [[ ! -f "$AUTH_KEY_PATH" ]]; then
+            echo "Authentication key file was not created: $AUTH_KEY_PATH" >&2
+            exit 1
+          fi
+          echo "APPSTORE_AUTH_KEY_PATH=$AUTH_KEY_PATH" >> "$GITHUB_ENV"
 
       - name: Build App Store archive
         env:
-          APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_AUTH_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_AUTH_KEY_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
         run: |
+          if [[ ! -f "$APPSTORE_AUTH_KEY_PATH" ]]; then
+            echo "Missing App Store Connect auth key file: $APPSTORE_AUTH_KEY_PATH" >&2
+            exit 1
+          fi
           SCHEME=quickbox-AppStore \
           ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
           ALLOW_PROVISIONING_UPDATES=1 \
-          APPSTORE_AUTH_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8" \
+          APPSTORE_AUTH_KEY_PATH="$APPSTORE_AUTH_KEY_PATH" \
           APPSTORE_AUTH_KEY_ID="$APPSTORE_AUTH_KEY_ID" \
           APPSTORE_AUTH_KEY_ISSUER_ID="$APPSTORE_AUTH_KEY_ISSUER_ID" \
           scripts/release/build_archive.sh
@@ -67,15 +77,18 @@ jobs:
       - name: Export App Store package
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_AUTH_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
           APPSTORE_AUTH_KEY_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
         run: |
+          if [[ ! -f "$APPSTORE_AUTH_KEY_PATH" ]]; then
+            echo "Missing App Store Connect auth key file: $APPSTORE_AUTH_KEY_PATH" >&2
+            exit 1
+          fi
           TEAM_ID="$TEAM_ID" \
           ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
           EXPORT_PATH=build/release/export-appstore \
           ALLOW_PROVISIONING_UPDATES=1 \
-          APPSTORE_AUTH_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8" \
+          APPSTORE_AUTH_KEY_PATH="$APPSTORE_AUTH_KEY_PATH" \
           APPSTORE_AUTH_KEY_ID="$APPSTORE_AUTH_KEY_ID" \
           APPSTORE_AUTH_KEY_ISSUER_ID="$APPSTORE_AUTH_KEY_ISSUER_ID" \
           scripts/release/export_appstore.sh
