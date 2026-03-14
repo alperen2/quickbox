@@ -48,11 +48,20 @@ jobs:
         run: |
           AUTH_KEY_DIR="$RUNNER_TEMP/appstoreconnect/private_keys"
           AUTH_KEY_PATH="$AUTH_KEY_DIR/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8"
+          DEFAULT_AUTH_KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          DEFAULT_AUTH_KEY_PATH="$DEFAULT_AUTH_KEY_DIR/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8"
           mkdir -p "$AUTH_KEY_DIR"
+          mkdir -p "$DEFAULT_AUTH_KEY_DIR"
           printf '%s' "$APPSTORE_CONNECT_API_PRIVATE_KEY" > "$AUTH_KEY_PATH"
+          cp "$AUTH_KEY_PATH" "$DEFAULT_AUTH_KEY_PATH"
           chmod 600 "$AUTH_KEY_PATH"
+          chmod 600 "$DEFAULT_AUTH_KEY_PATH"
           if [[ ! -f "$AUTH_KEY_PATH" ]]; then
             echo "Authentication key file was not created: $AUTH_KEY_PATH" >&2
+            exit 1
+          fi
+          if [[ ! -f "$DEFAULT_AUTH_KEY_PATH" ]]; then
+            echo "Default authentication key file was not created: $DEFAULT_AUTH_KEY_PATH" >&2
             exit 1
           fi
           echo "APPSTORE_AUTH_KEY_PATH=$AUTH_KEY_PATH" >> "$GITHUB_ENV"
