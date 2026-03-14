@@ -28,9 +28,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		05FFD3BB2F51F4D400E51518 /* quickbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = quickbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		05FFD3C82F51F4D500E51518 /* quickboxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quickboxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		05FFD3D22F51F4D500E51518 /* quickboxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quickboxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+			05FFD3BB2F51F4D400E51518 /* quickbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = quickbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+			05FFD3C82F51F4D500E51518 /* quickboxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quickboxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+			05FFD3D22F51F4D500E51518 /* quickboxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quickboxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+			A10000022F9A000100AA0001 /* quickboxAppStore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = quickboxAppStore.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -67,13 +68,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		05FFD3CF2F51F4D500E51518 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+			05FFD3CF2F51F4D500E51518 /* Frameworks */ = {
+				isa = PBXFrameworksBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
+			A10000032F9A000100AA0001 /* Frameworks */ = {
+				isa = PBXFrameworksBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -87,21 +95,22 @@
 			);
 			sourceTree = "<group>";
 		};
-		05FFD3BC2F51F4D400E51518 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				05FFD3BB2F51F4D400E51518 /* quickbox.app */,
-				05FFD3C82F51F4D500E51518 /* quickboxTests.xctest */,
-				05FFD3D22F51F4D500E51518 /* quickboxUITests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
+			05FFD3BC2F51F4D400E51518 /* Products */ = {
+				isa = PBXGroup;
+				children = (
+					05FFD3BB2F51F4D400E51518 /* quickbox.app */,
+					A10000022F9A000100AA0001 /* quickboxAppStore.app */,
+					05FFD3C82F51F4D500E51518 /* quickboxTests.xctest */,
+					05FFD3D22F51F4D500E51518 /* quickboxUITests.xctest */,
+				);
+				name = Products;
+				sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		05FFD3BA2F51F4D400E51518 /* quickbox */ = {
-			isa = PBXNativeTarget;
+			05FFD3BA2F51F4D400E51518 /* quickbox */ = {
+				isa = PBXNativeTarget;
 			buildConfigurationList = 05FFD3DC2F51F4D500E51518 /* Build configuration list for PBXNativeTarget "quickbox" */;
 			buildPhases = (
 				05FFD3B72F51F4D400E51518 /* Sources */,
@@ -120,11 +129,33 @@
 				9A0A9B3B2F6A100100AA0001 /* Sparkle */,
 			);
 			productName = quickbox;
-			productReference = 05FFD3BB2F51F4D400E51518 /* quickbox.app */;
-			productType = "com.apple.product-type.application";
-		};
-		05FFD3C72F51F4D500E51518 /* quickboxTests */ = {
-			isa = PBXNativeTarget;
+				productReference = 05FFD3BB2F51F4D400E51518 /* quickbox.app */;
+				productType = "com.apple.product-type.application";
+			};
+			A10000062F9A000100AA0001 /* quickboxAppStore */ = {
+				isa = PBXNativeTarget;
+				buildConfigurationList = A10000092F9A000100AA0001 /* Build configuration list for PBXNativeTarget "quickboxAppStore" */;
+				buildPhases = (
+					A10000052F9A000100AA0001 /* Sources */,
+					A10000032F9A000100AA0001 /* Frameworks */,
+					A10000042F9A000100AA0001 /* Resources */,
+				);
+				buildRules = (
+				);
+				dependencies = (
+				);
+				fileSystemSynchronizedGroups = (
+					05FFD3BD2F51F4D400E51518 /* quickbox */,
+				);
+				name = quickboxAppStore;
+				packageProductDependencies = (
+				);
+				productName = quickboxAppStore;
+				productReference = A10000022F9A000100AA0001 /* quickboxAppStore.app */;
+				productType = "com.apple.product-type.application";
+			};
+			05FFD3C72F51F4D500E51518 /* quickboxTests */ = {
+				isa = PBXNativeTarget;
 			buildConfigurationList = 05FFD3DF2F51F4D500E51518 /* Build configuration list for PBXNativeTarget "quickboxTests" */;
 			buildPhases = (
 				05FFD3C42F51F4D500E51518 /* Sources */,
@@ -182,6 +213,9 @@
 					05FFD3BA2F51F4D400E51518 = {
 						CreatedOnToolsVersion = 26.2;
 					};
+					A10000062F9A000100AA0001 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					05FFD3C72F51F4D500E51518 = {
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = 05FFD3BA2F51F4D400E51518;
@@ -208,11 +242,12 @@
 			productRefGroup = 05FFD3BC2F51F4D400E51518 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (
-				05FFD3BA2F51F4D400E51518 /* quickbox */,
-				05FFD3C72F51F4D500E51518 /* quickboxTests */,
-				05FFD3D12F51F4D500E51518 /* quickboxUITests */,
-			);
+				targets = (
+					05FFD3BA2F51F4D400E51518 /* quickbox */,
+					A10000062F9A000100AA0001 /* quickboxAppStore */,
+					05FFD3C72F51F4D500E51518 /* quickboxTests */,
+					05FFD3D12F51F4D500E51518 /* quickboxUITests */,
+				);
 		};
 /* End PBXProject section */
 
@@ -231,13 +266,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		05FFD3D02F51F4D500E51518 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+			05FFD3D02F51F4D500E51518 /* Resources */ = {
+				isa = PBXResourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
+			A10000042F9A000100AA0001 /* Resources */ = {
+				isa = PBXResourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -255,13 +297,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		05FFD3CE2F51F4D500E51518 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
+			05FFD3CE2F51F4D500E51518 /* Sources */ = {
+				isa = PBXSourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
+			A10000052F9A000100AA0001 /* Sources */ = {
+				isa = PBXSourcesBuildPhase;
+				buildActionMask = 2147483647;
+				files = (
+				);
+				runOnlyForDeploymentPostprocessing = 0;
+			};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -401,24 +450,26 @@
 		05FFD3DD2F51F4D500E51518 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+					ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+					ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+					CODE_SIGN_ENTITLEMENTS = quickbox/quickbox.entitlements;
+					CODE_SIGN_STYLE = Automatic;
+					COMBINE_HIDPI_IMAGES = YES;
+					CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_SUPublicEDKey = "$(SPARKLE_PUBLIC_ED_KEY)";
+					ENABLE_USER_SELECTED_FILES = readwrite;
+					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_QBDistributionChannel = direct;
+					INFOPLIST_KEY_NSHumanReadableCopyright = "";
+					INFOPLIST_KEY_SUPublicEDKey = "$(SPARKLE_PUBLIC_ED_KEY)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = "1.0.0-beta.1";
+					MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = alperen.quickbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -432,27 +483,29 @@
 			};
 			name = Debug;
 		};
-		05FFD3DE2F51F4D500E51518 /* Release */ = {
-			isa = XCBuildConfiguration;
+			05FFD3DE2F51F4D500E51518 /* Release */ = {
+				isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
+					ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+					ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+					CODE_SIGN_ENTITLEMENTS = quickbox/quickbox.entitlements;
+					CODE_SIGN_STYLE = Automatic;
+					COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_SUPublicEDKey = "$(SPARKLE_PUBLIC_ED_KEY)";
+					ENABLE_USER_SELECTED_FILES = readwrite;
+					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_QBDistributionChannel = direct;
+					INFOPLIST_KEY_NSHumanReadableCopyright = "";
+					INFOPLIST_KEY_SUPublicEDKey = "$(SPARKLE_PUBLIC_ED_KEY)";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = "1.0.0-beta.1";
+					MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = alperen.quickbox;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -463,11 +516,79 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
+				};
+				name = Release;
 			};
-			name = Release;
-		};
-		05FFD3E02F51F4D500E51518 /* Debug */ = {
-			isa = XCBuildConfiguration;
+			A10000072F9A000100AA0001 /* Debug */ = {
+				isa = XCBuildConfiguration;
+				buildSettings = {
+					ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+					ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+					CODE_SIGN_ENTITLEMENTS = quickbox/quickboxAppStore.entitlements;
+					CODE_SIGN_STYLE = Automatic;
+					COMBINE_HIDPI_IMAGES = YES;
+					CURRENT_PROJECT_VERSION = 1;
+					DEVELOPMENT_TEAM = JB98B7238W;
+					ENABLE_APP_SANDBOX = YES;
+					ENABLE_HARDENED_RUNTIME = YES;
+					ENABLE_PREVIEWS = YES;
+					ENABLE_USER_SELECTED_FILES = readwrite;
+					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_QBDistributionChannel = appStore;
+					INFOPLIST_KEY_NSHumanReadableCopyright = "";
+					LD_RUNPATH_SEARCH_PATHS = (
+						"$(inherited)",
+						"@executable_path/../Frameworks",
+					);
+					MARKETING_VERSION = 1.0.0;
+					PRODUCT_BUNDLE_IDENTIFIER = alperen.quickbox.appstore;
+					PRODUCT_NAME = "$(TARGET_NAME)";
+					REGISTER_APP_GROUPS = YES;
+					STRING_CATALOG_GENERATE_SYMBOLS = YES;
+					SWIFT_APPROACHABLE_CONCURRENCY = YES;
+					SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+					SWIFT_EMIT_LOC_STRINGS = YES;
+					SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+					SWIFT_VERSION = 5.0;
+				};
+				name = Debug;
+			};
+			A10000082F9A000100AA0001 /* Release */ = {
+				isa = XCBuildConfiguration;
+				buildSettings = {
+					ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+					ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+					CODE_SIGN_ENTITLEMENTS = quickbox/quickboxAppStore.entitlements;
+					CODE_SIGN_STYLE = Automatic;
+					COMBINE_HIDPI_IMAGES = YES;
+					CURRENT_PROJECT_VERSION = 1;
+					DEVELOPMENT_TEAM = JB98B7238W;
+					ENABLE_APP_SANDBOX = YES;
+					ENABLE_HARDENED_RUNTIME = YES;
+					ENABLE_PREVIEWS = YES;
+					ENABLE_USER_SELECTED_FILES = readwrite;
+					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_QBDistributionChannel = appStore;
+					INFOPLIST_KEY_NSHumanReadableCopyright = "";
+					LD_RUNPATH_SEARCH_PATHS = (
+						"$(inherited)",
+						"@executable_path/../Frameworks",
+					);
+					MARKETING_VERSION = 1.0.0;
+					PRODUCT_BUNDLE_IDENTIFIER = alperen.quickbox.appstore;
+					PRODUCT_NAME = "$(TARGET_NAME)";
+					REGISTER_APP_GROUPS = YES;
+					STRING_CATALOG_GENERATE_SYMBOLS = YES;
+					SWIFT_APPROACHABLE_CONCURRENCY = YES;
+					SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+					SWIFT_EMIT_LOC_STRINGS = YES;
+					SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+					SWIFT_VERSION = 5.0;
+				};
+				name = Release;
+			};
+			05FFD3E02F51F4D500E51518 /* Debug */ = {
+				isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
@@ -475,7 +596,7 @@
 				DEVELOPMENT_TEAM = JB98B7238W;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "1.0.0-beta.1";
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = alperen.quickboxTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -496,7 +617,7 @@
 				DEVELOPMENT_TEAM = JB98B7238W;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = "1.0.0-beta.1";
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = alperen.quickboxTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -515,7 +636,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = "1.0.0-beta.1";
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = alperen.quickboxUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -534,7 +655,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = "1.0.0-beta.1";
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = alperen.quickboxUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -558,17 +679,26 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		05FFD3DC2F51F4D500E51518 /* Build configuration list for PBXNativeTarget "quickbox" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				05FFD3DD2F51F4D500E51518 /* Debug */,
-				05FFD3DE2F51F4D500E51518 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		05FFD3DF2F51F4D500E51518 /* Build configuration list for PBXNativeTarget "quickboxTests" */ = {
-			isa = XCConfigurationList;
+			05FFD3DC2F51F4D500E51518 /* Build configuration list for PBXNativeTarget "quickbox" */ = {
+				isa = XCConfigurationList;
+				buildConfigurations = (
+					05FFD3DD2F51F4D500E51518 /* Debug */,
+					05FFD3DE2F51F4D500E51518 /* Release */,
+				);
+				defaultConfigurationIsVisible = 0;
+				defaultConfigurationName = Release;
+			};
+			A10000092F9A000100AA0001 /* Build configuration list for PBXNativeTarget "quickboxAppStore" */ = {
+				isa = XCConfigurationList;
+				buildConfigurations = (
+					A10000072F9A000100AA0001 /* Debug */,
+					A10000082F9A000100AA0001 /* Release */,
+				);
+				defaultConfigurationIsVisible = 0;
+				defaultConfigurationName = Release;
+			};
+			05FFD3DF2F51F4D500E51518 /* Build configuration list for PBXNativeTarget "quickboxTests" */ = {
+				isa = XCConfigurationList;
 			buildConfigurations = (
 				05FFD3E02F51F4D500E51518 /* Debug */,
 				05FFD3E12F51F4D500E51518 /* Release */,

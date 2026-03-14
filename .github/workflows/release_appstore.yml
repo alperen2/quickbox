@@ -1,0 +1,87 @@
+name: Release App Store
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'mas-v*'
+
+jobs:
+  release-appstore:
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest-stable'
+
+      - name: Validate App Store secrets
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
+          APPSTORE_CONNECT_API_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
+          APPSTORE_CONNECT_API_PRIVATE_KEY: ${{ secrets.APPSTORE_CONNECT_API_PRIVATE_KEY }}
+        run: |
+          required_vars=(
+            APPLE_TEAM_ID
+            APPSTORE_CONNECT_API_KEY_ID
+            APPSTORE_CONNECT_API_ISSUER_ID
+            APPSTORE_CONNECT_API_PRIVATE_KEY
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            if [[ -z "${!var_name}" ]]; then
+              echo "Missing required secret: $var_name" >&2
+              exit 1
+            fi
+          done
+
+      - name: Build App Store archive
+        run: |
+          SCHEME=quickbox-AppStore \
+          ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
+          scripts/release/build_archive.sh
+
+      - name: Export App Store package
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          TEAM_ID="$TEAM_ID" \
+          ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
+          EXPORT_PATH=build/release/export-appstore \
+          scripts/release/export_appstore.sh
+
+      - name: Prepare App Store Connect API key
+        env:
+          APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
+          APPSTORE_CONNECT_API_PRIVATE_KEY: ${{ secrets.APPSTORE_CONNECT_API_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$APPSTORE_CONNECT_API_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8
+
+      - name: Upload to App Store Connect
+        env:
+          APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
+          APPSTORE_CONNECT_API_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
+        run: |
+          PKG_PATH="$(find build/release/export-appstore -name '*.pkg' | head -n 1)"
+          if [[ -z "$PKG_PATH" ]]; then
+            echo "No .pkg file found in build/release/export-appstore" >&2
+            exit 1
+          fi
+          xcrun altool \
+            --upload-app \
+            --type macos \
+            --file "$PKG_PATH" \
+            --apiKey "$APPSTORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APPSTORE_CONNECT_API_ISSUER_ID"
+
+      - name: Upload App Store artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quickbox-appstore-export
+          path: build/release/export-appstore

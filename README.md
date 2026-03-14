@@ -34,7 +34,7 @@ quickbox intentionally stays in **capture + light triage** territory, not a full
 ### CLI test
 
 ```bash
-xcodebuild test -project quickbox.xcodeproj -scheme quickbox -destination 'platform=macOS' -only-testing:quickboxTests
+xcodebuild test -project quickbox.xcodeproj -scheme quickbox-Direct -destination 'platform=macOS' -only-testing:quickboxTests
 ```
 
 ## Production Release
@@ -43,6 +43,9 @@ Release scripts are under `scripts/release/`. See:
 
 - `docs/release-playbook.md`
 - `docs/release-process.md`
+- `docs/appstore-submission-checklist.md`
+
+Direct releases create a draft GitHub release first. Appcasts are published to GitHub Pages only after that draft is manually published, which keeps Sparkle feeds aligned with public release availability.
 
 ## Documentation
 

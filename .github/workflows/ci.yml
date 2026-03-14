@@ -21,7 +21,7 @@ jobs:
           set -o pipefail
           xcodebuild test \
             -project quickbox.xcodeproj \
-            -scheme quickbox \
+            -scheme quickbox-Direct \
             -destination 'platform=macOS,arch=arm64' \
             -only-testing:quickboxTests \
             CODE_SIGNING_ALLOWED=NO \
@@ -35,6 +35,79 @@ jobs:
             echo "Compiler warnings detected. Failing build."
             exit 1
           fi
+
+  build-appstore:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest-stable'
+
+      - name: Build App Store target (Release)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project quickbox.xcodeproj \
+            -scheme quickbox-AppStore \
+            -configuration Release \
+            -destination 'platform=macOS,arch=arm64' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" | tee xcodebuild-appstore.log
+
+      - name: Upload App Store build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-appstore-log
+          path: xcodebuild-appstore.log
+
+  ui-smoke:
+    needs: unit-tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 'latest-stable'
+
+      - name: Run UI smoke test (retry once)
+        run: |
+          set -o pipefail
+          run_smoke() {
+            xcodebuild test \
+              -project quickbox.xcodeproj \
+              -scheme quickbox-Direct \
+              -destination 'platform=macOS,arch=arm64' \
+              -only-testing:quickboxUITests/testAutocompleteSupportsMouseSelectionForTagAndProject \
+              CODE_SIGNING_ALLOWED=NO \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="" \
+              DEVELOPMENT_TEAM=""
+          }
+
+          run_smoke > ui-smoke-attempt1.log 2>&1 && cp ui-smoke-attempt1.log ui-smoke.log && exit 0
+          run_smoke > ui-smoke-attempt2.log 2>&1 && cp ui-smoke-attempt2.log ui-smoke.log && exit 0
+
+          cat ui-smoke-attempt1.log ui-smoke-attempt2.log > ui-smoke.log
+          exit 1
+
+      - name: Upload UI smoke logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-smoke-logs
+          if-no-files-found: ignore
+          path: |
+            ui-smoke.log
+            ui-smoke-attempt1.log
+            ui-smoke-attempt2.log
 
   docs-build:
     runs-on: ubuntu-latest

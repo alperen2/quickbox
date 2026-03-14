@@ -789,6 +789,41 @@ struct quickboxTests {
         #expect(appState.preferences.betaChannelEnabled == false)
     }
 
+    @MainActor
+    @Test
+    func appStoreChannelDisablesInAppUpdateSurface() {
+        let updateManager = TestUpdateManager()
+        let appState = makeAppState(
+            clipboard: { nil },
+            writer: TestWriter(),
+            repository: TestRepository(),
+            updateManager: updateManager,
+            distributionChannel: .appStore
+        )
+
+        appState.updateAutoUpdate(false)
+        appState.updateBetaChannelEnabled(false)
+        appState.checkForUpdates()
+
+        #expect(appState.supportsInAppUpdates == false)
+        #expect(updateManager.lastSetAutoCheck == nil)
+        #expect(updateManager.lastSetBetaChannel == nil)
+        #expect(appState.settingsMessage == "Updates are managed by the App Store.")
+    }
+
+    @Test
+    func appStoreUpdateManagerThrowsUnavailableError() {
+        let manager = AppStoreUpdateManager()
+        do {
+            try manager.checkForUpdates()
+            #expect(Bool(false), "Expected update check to be unavailable")
+        } catch let error as UpdateError {
+            #expect(error == .updateCheckUnavailable)
+        } catch {
+            #expect(Bool(false), "Unexpected error type: \(error)")
+        }
+    }
+
     private func todayFileName(for date: Date = Date()) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -834,7 +869,8 @@ struct quickboxTests {
         writer: InboxWriting,
         repository: InboxRepositorying,
         updateManager: UpdateManaging? = nil,
-        crashReporter: CrashReporting? = nil
+        crashReporter: CrashReporting? = nil,
+        distributionChannel: DistributionChannel = .direct
     ) -> AppState {
         let suiteName = "quickbox.tests.state.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
@@ -846,6 +882,7 @@ struct quickboxTests {
             inboxWriter: writer,
             inboxRepository: repository,
             updateManager: updateManager,
+            distributionChannel: distributionChannel,
             crashReporter: crashReporter,
             clipboardProvider: clipboard,
             registerHotkeyOnInit: false,

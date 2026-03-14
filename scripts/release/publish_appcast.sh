@@ -7,6 +7,9 @@ DOWNLOAD_URL=${DOWNLOAD_URL:-}
 DMG_PATH=${DMG_PATH:-build/release/quickbox.dmg}
 APPCAST_PATH=${APPCAST_PATH:-build/release/appcast.xml}
 RELEASE_NOTES_URL=${RELEASE_NOTES_URL:-}
+SIGN_UPDATE_BIN=${SIGN_UPDATE_BIN:-}
+SPARKLE_PRIVATE_ED_KEY=${SPARKLE_PRIVATE_ED_KEY:-}
+REQUIRE_SPARKLE_SIGNATURE=${REQUIRE_SPARKLE_SIGNATURE:-0}
 
 if [[ -z "$VERSION" || -z "$BUILD" || -z "$DOWNLOAD_URL" ]]; then
   echo "VERSION, BUILD and DOWNLOAD_URL are required." >&2
@@ -22,8 +25,30 @@ LENGTH=$(stat -f "%z" "$DMG_PATH")
 PUB_DATE=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S GMT")
 SIGNATURE=""
 
-if command -v sign_update >/dev/null 2>&1; then
-  SIGNATURE=$(sign_update "$DMG_PATH" | awk '/sparkle:edSignature/ {print $2}')
+resolve_sign_update() {
+  if [[ -n "$SIGN_UPDATE_BIN" ]]; then
+    if [[ ! -x "$SIGN_UPDATE_BIN" ]]; then
+      echo "SIGN_UPDATE_BIN is not executable: $SIGN_UPDATE_BIN" >&2
+      exit 1
+    fi
+    echo "$SIGN_UPDATE_BIN"
+    return 0
+  fi
+
+  "$(dirname "$0")/find_sign_update.sh"
+}
+
+if sign_update_bin=$(resolve_sign_update 2>/dev/null); then
+  if [[ -n "$SPARKLE_PRIVATE_ED_KEY" ]]; then
+    SIGNATURE=$(printf '%s\n' "$SPARKLE_PRIVATE_ED_KEY" | "$sign_update_bin" --ed-key-file - -p "$DMG_PATH")
+  else
+    SIGNATURE=$("$sign_update_bin" -p "$DMG_PATH")
+  fi
+fi
+
+if [[ "$REQUIRE_SPARKLE_SIGNATURE" == "1" && -z "$SIGNATURE" ]]; then
+  echo "Unable to produce Sparkle signature for $DMG_PATH." >&2
+  exit 1
 fi
 
 mkdir -p "$(dirname "$APPCAST_PATH")"

@@ -40,7 +40,9 @@ struct SettingsView: View {
                 storageCard
                 namingCard
                 captureCard
-                updatesCard
+                if appState.supportsInAppUpdates {
+                    updatesCard
+                }
                 privacyCard
                 resetCard
 

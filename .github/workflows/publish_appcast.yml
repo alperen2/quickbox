@@ -1,0 +1,36 @@
+name: Publish Appcast
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  publish-appcast:
+    if: startsWith(github.event.release.tag_name, 'v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download appcast assets from published release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          mkdir -p build/release/appcast-payload
+          gh release download "$TAG_NAME" \
+            --dir build/release/appcast-payload \
+            --pattern appcast.xml \
+            --pattern appcast-beta.xml
+
+      - name: Deploy appcast feeds to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./build/release/appcast-payload
+          keep_files: true

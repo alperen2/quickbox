@@ -7,7 +7,7 @@ protocol UpdateManaging {
     func setBetaChannel(_ enabled: Bool)
 }
 
-enum UpdateError: LocalizedError {
+enum UpdateError: LocalizedError, Equatable {
     case updateCheckUnavailable
 
     var errorDescription: String? {

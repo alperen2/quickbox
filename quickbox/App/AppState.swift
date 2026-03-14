@@ -30,6 +30,7 @@ final class AppState: ObservableObject {
     @Published var showOnlyOpenTasks: Bool = false
     @Published var isSpotlightModeActive: Bool = false
     @Published private(set) var calendarDayIndicators: [Date: CalendarDayIndicator] = [:]
+    let distributionChannel: DistributionChannel
 
     private let settingsStore: SettingsStore
     private let hotkeyManager: HotkeyManager
@@ -54,6 +55,7 @@ final class AppState: ObservableObject {
         inboxWriter: InboxWriting? = nil,
         inboxRepository: InboxRepositorying? = nil,
         updateManager: UpdateManaging? = nil,
+        distributionChannel: DistributionChannel = .direct,
         crashReporter: CrashReporting? = nil,
         clipboardProvider: @escaping () -> String? = {
             NSPasteboard.general.string(forType: .string)
@@ -64,6 +66,7 @@ final class AppState: ObservableObject {
         self.settingsStore = settingsStore
         self.hotkeyManager = hotkeyManager
         self.clipboardProvider = clipboardProvider
+        self.distributionChannel = distributionChannel
 
         let loadedPreferences = settingsStore.load()
         self.preferences = loadedPreferences
@@ -72,9 +75,9 @@ final class AppState: ObservableObject {
         self.storageAccessManager = storageAccessManager
         self.inboxWriter = inboxWriter ?? InboxWriter(storageResolver: storageAccessManager)
         self.inboxRepository = inboxRepository ?? InboxRepository(storageResolver: storageAccessManager)
-        self.updateManager = updateManager ?? SparkleUpdateManager(
-            autoCheckEnabled: loadedPreferences.autoUpdateEnabled,
-            betaChannelEnabled: loadedPreferences.betaChannelEnabled
+        self.updateManager = updateManager ?? Self.makeUpdateManager(
+            channel: distributionChannel,
+            preferences: loadedPreferences
         )
         self.crashReporter = crashReporter ?? CrashReporter(consentEnabled: loadedPreferences.crashReportingEnabled)
 
@@ -152,6 +155,10 @@ final class AppState: ObservableObject {
         return "- [ ] \(time) Example task"
     }
 
+    var supportsInAppUpdates: Bool {
+        distributionChannel.supportsInAppUpdates
+    }
+
     func submitCapture() -> SubmitResult {
         do {
             try inboxWriter.appendEntry(draftText, now: Date())
@@ -185,7 +192,6 @@ final class AppState: ObservableObject {
                 IndexManager.shared.inject(tags: item.tags, project: item.projectName)
             }
             draftText = ""
-            captureMessage = nil
             refreshSpotlightListAfterMutation()
             return .savedKeepOpen
         } catch {
@@ -193,6 +199,10 @@ final class AppState: ObservableObject {
             recordNonFatal(error, context: ["operation": "submitCaptureFromSpotlight"])
             return .failed
         }
+    }
+
+    func clearCaptureMessage() {
+        captureMessage = nil
     }
 
     func clearCaptureStateForPresentation() {
@@ -406,18 +416,30 @@ final class AppState: ObservableObject {
     }
 
     func updateAutoUpdate(_ enabled: Bool) {
+        guard supportsInAppUpdates else {
+            return
+        }
         preferences.autoUpdateEnabled = enabled
         updateManager.setAutoCheck(enabled)
         persistPreferences(message: "Automatic update check updated.")
     }
 
     func updateBetaChannelEnabled(_ enabled: Bool) {
+        guard supportsInAppUpdates else {
+            return
+        }
         preferences.betaChannelEnabled = enabled
         updateManager.setBetaChannel(enabled)
         persistPreferences(message: "Update channel preference updated.")
     }
 
     func checkForUpdates() {
+        guard supportsInAppUpdates else {
+            let message = "Updates are managed by the App Store."
+            settingsMessage = message
+            inboxMessage = message
+            return
+        }
         do {
             try updateManager.checkForUpdates()
             settingsMessage = "Checking for updates..."
@@ -726,5 +748,17 @@ final class AppState: ObservableObject {
 
     private func preferencesForDiagnostics(_ key: String) -> String {
         Bundle.main.object(forInfoDictionaryKey: key) as? String ?? "unknown"
+    }
+
+    private static func makeUpdateManager(channel: DistributionChannel, preferences: AppPreferences) -> UpdateManaging {
+        switch channel {
+        case .direct:
+            return SparkleUpdateManager(
+                autoCheckEnabled: preferences.autoUpdateEnabled,
+                betaChannelEnabled: preferences.betaChannelEnabled
+            )
+        case .appStore:
+            return AppStoreUpdateManager()
+        }
     }
 }

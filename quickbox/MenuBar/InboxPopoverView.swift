@@ -20,10 +20,12 @@ struct MenuBarDashboardView: View {
             }
             .font(.footnote)
 
-            Button("Check for Updates") {
-                appState.checkForUpdates()
+            if appState.supportsInAppUpdates {
+                Button("Check for Updates") {
+                    appState.checkForUpdates()
+                }
+                .font(.footnote)
             }
-            .font(.footnote)
 
             Divider()
 

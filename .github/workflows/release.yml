@@ -19,8 +19,39 @@ jobs:
         with:
           xcode-version: 'latest-stable'
 
+      - name: Validate direct release secrets
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_NOTARY_PROFILE: ${{ secrets.APPLE_NOTARY_PROFILE }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          SPARKLE_PUBLIC_ED_KEY: ${{ secrets.SPARKLE_PUBLIC_ED_KEY }}
+          SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
+        run: |
+          required_vars=(
+            APPLE_TEAM_ID
+            APPLE_NOTARY_PROFILE
+            APPLE_ID
+            APPLE_APP_SPECIFIC_PASSWORD
+            SPARKLE_PUBLIC_ED_KEY
+            SPARKLE_PRIVATE_ED_KEY
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            if [[ -z "${!var_name}" ]]; then
+              echo "Missing required secret: $var_name" >&2
+              exit 1
+            fi
+          done
+
       - name: Build archive
-        run: scripts/release/build_archive.sh
+        env:
+          SPARKLE_PUBLIC_ED_KEY: ${{ secrets.SPARKLE_PUBLIC_ED_KEY }}
+        run: |
+          SCHEME=quickbox-Direct \
+          REQUIRE_SPARKLE_PUBLIC_ED_KEY=1 \
+          SPARKLE_PUBLIC_ED_KEY="$SPARKLE_PUBLIC_ED_KEY" \
+          scripts/release/build_archive.sh
 
       - name: Export app
         env:
@@ -48,12 +79,14 @@ jobs:
         run: scripts/release/build_dmg.sh
 
       - name: Generate appcast
+        env:
+          SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
           DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/quickbox.dmg"
-          VERSION="$VERSION" BUILD="$BUILD_NUMBER" DOWNLOAD_URL="$DOWNLOAD_URL" APPCAST_PATH="build/release/appcast.xml" scripts/release/publish_appcast.sh
-          VERSION="$VERSION" BUILD="$BUILD_NUMBER" DOWNLOAD_URL="$DOWNLOAD_URL" APPCAST_PATH="build/release/appcast-beta.xml" scripts/release/publish_appcast.sh
+          VERSION="$VERSION" BUILD="$BUILD_NUMBER" DOWNLOAD_URL="$DOWNLOAD_URL" APPCAST_PATH="build/release/appcast.xml" REQUIRE_SPARKLE_SIGNATURE=1 SPARKLE_PRIVATE_ED_KEY="$SPARKLE_PRIVATE_ED_KEY" scripts/release/publish_appcast.sh
+          VERSION="$VERSION" BUILD="$BUILD_NUMBER" DOWNLOAD_URL="$DOWNLOAD_URL" APPCAST_PATH="build/release/appcast-beta.xml" REQUIRE_SPARKLE_SIGNATURE=1 SPARKLE_PRIVATE_ED_KEY="$SPARKLE_PRIVATE_ED_KEY" scripts/release/publish_appcast.sh
 
       - name: Create checksum artifact
         run: ls -la build/release

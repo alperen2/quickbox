@@ -61,6 +61,9 @@ struct CaptureView: View {
     @State private var calendarFocusedDate: Date = Calendar(identifier: .gregorian).startOfDay(for: Date())
     @State private var calendarKeyMonitor: Any?
     @State private var calendarIndicatorRefreshTask: Task<Void, Never>?
+    @State private var draftInsights: [DraftTokenInsight] = []
+    @State private var successToastMessage: String?
+    @State private var successToastTask: Task<Void, Never>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: mode == .spotlight ? Layout.sectionGap : 0) {
@@ -83,6 +86,7 @@ struct CaptureView: View {
                 animateIn = true
             }
             focusedField = .capture
+            analyzeDraftInsights()
             notifyHeightChange()
         }
         .onReceive(IndexManager.shared.tagsPublisher) { tags in
@@ -108,6 +112,10 @@ struct CaptureView: View {
         }
         .onChange(of: appState.draftText) {
             handleTextChange(appState.draftText)
+            analyzeDraftInsights()
+            if appState.captureMessage != nil {
+                appState.clearCaptureMessage()
+            }
         }
         .onChange(of: isCalendarViewActive) {
             notifyHeightChange()
@@ -154,15 +162,16 @@ struct CaptureView: View {
                 closeCalendarView()
             } else if editingItemID != nil {
                 cancelEditing()
-            } else if case .none = autocompleteType {
-                onClose()
-            } else {
+            } else if shouldShowAutocompleteMenu {
                 closeAutocomplete()
+            } else {
+                onClose()
             }
         }
         .onDisappear {
             removeCalendarKeyMonitor()
             calendarIndicatorRefreshTask?.cancel()
+            successToastTask?.cancel()
         }
     }
 
@@ -174,7 +183,7 @@ struct CaptureView: View {
     }
 
     private var captureSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: "square.and.pencil")
                     .font(.system(size: 15, weight: .semibold))
@@ -183,6 +192,7 @@ struct CaptureView: View {
                 CustomTextFieldWithKeyHandling(
                     text: $appState.draftText,
                     prompt: "Capture thought...",
+                    accessibilityIdentifier: "capture-input",
                     onUpArrow: {
                         if !autocompleteSuggestions.isEmpty {
                             autocompleteSelectedIndex = max(0, autocompleteSelectedIndex - 1)
@@ -211,6 +221,13 @@ struct CaptureView: View {
                         }
                         return false
                     },
+                    onEscape: {
+                        if shouldShowAutocompleteMenu {
+                            closeAutocomplete()
+                            return true
+                        }
+                        return false
+                    },
                     onSubmit: {
                         if autocompleteSuggestions.isEmpty {
                             submit()
@@ -224,21 +241,112 @@ struct CaptureView: View {
                 }
             }
             .overlay(alignment: .topLeading) {
-                if !autocompleteSuggestions.isEmpty {
+                if shouldShowAutocompleteMenu {
                     AutocompleteMenu(
                         mode: autocompleteType,
                         suggestions: autocompleteSuggestions,
-                        selectedIndex: autocompleteSelectedIndex
+                        selectedIndex: autocompleteSelectedIndex,
+                        onSelectIndex: { index in
+                            autocompleteSelectedIndex = index
+                        },
+                        onAcceptSuggestion: { index in
+                            acceptAutocomplete(at: index)
+                        }
                     )
                     .offset(x: 28, y: 40) // below input, absolute overlay
                     .zIndex(30)
+                }
+            }
+
+            if shouldShowCaptureHint {
+                Text(captureHintText)
+                    .font(.caption)
+                    .foregroundStyle(Color.white.opacity(0.56))
+                    .padding(.leading, 26)
+                    .accessibilityIdentifier("capture-speed-hint")
+            }
+
+            if !draftInsights.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(Array(draftInsights.enumerated()), id: \.offset) { index, insight in
+                            HStack(spacing: 4) {
+                                Image(systemName: insight.isResolved ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                                    .font(.system(size: 10, weight: .semibold))
+                                Text("\(insight.key):\(insight.rawValue)")
+                                    .font(.caption2.weight(.semibold))
+                                Text(insight.preview)
+                                    .font(.caption2)
+                                    .foregroundStyle(insight.isResolved ? Color.white.opacity(0.62) : Color.orange.opacity(0.85))
+                            }
+                            .foregroundStyle(insight.isResolved ? Color.white.opacity(0.85) : Color.orange.opacity(0.95))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(insight.isResolved ? Color.white.opacity(0.10) : Color.orange.opacity(0.18))
+                            )
+                            .overlay(
+                                Capsule(style: .continuous)
+                                    .stroke(insight.isResolved ? Color.white.opacity(0.12) : Color.orange.opacity(0.28), lineWidth: 0.8)
+                            )
+                            .accessibilityIdentifier("capture-insight-\(index)")
+                        }
+                    }
+                    .padding(.leading, 26)
                 }
             }
         }
         .padding(.horizontal, Layout.cardPaddingHorizontal)
         .padding(.vertical, Layout.cardPaddingVertical)
         .background(cardBackground())
-        .zIndex(autocompleteSuggestions.isEmpty ? 1 : 20)
+        .zIndex(shouldShowAutocompleteMenu ? 20 : 1)
+    }
+
+    private var shouldShowAutocompleteMenu: Bool {
+        if !autocompleteSuggestions.isEmpty {
+            return true
+        }
+
+        switch autocompleteType {
+        case .metadataKey, .metadata:
+            return true
+        case .none, .tag, .project, .priority:
+            return false
+        }
+    }
+
+    private var shouldShowCaptureHint: Bool {
+        focusedField == .capture && !isCalendarViewActive
+    }
+
+    private var captureHintText: String {
+        if shouldShowAutocompleteMenu {
+            return "↑↓ seç • Tab tamamla • Enter kaydet • Esc kapat"
+        }
+        return "@ project • # tag • ! priority • due:"
+    }
+
+    private func analyzeDraftInsights() {
+        draftInsights = CaptureDraftAnalyzer().analyze(appState.draftText, now: Date())
+    }
+
+    private func showSuccessToast(_ message: String) {
+        successToastTask?.cancel()
+        withAnimation(.easeOut(duration: 0.12)) {
+            successToastMessage = message
+        }
+        successToastTask = Task {
+            try? await Task.sleep(nanoseconds: 1_300_000_000)
+            if Task.isCancelled {
+                return
+            }
+            await MainActor.run {
+                withAnimation(.easeOut(duration: 0.18)) {
+                    successToastMessage = nil
+                }
+            }
+        }
     }
     
     // MARK: - Autocomplete Logic
@@ -269,7 +377,6 @@ struct CaptureView: View {
             autocompleteSuggestions = matches
             autocompleteSelectedIndex = 0
             autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
-            if autocompleteSuggestions.isEmpty { closeAutocomplete() }
             return
         }
         
@@ -285,7 +392,6 @@ struct CaptureView: View {
             autocompleteSuggestions = matches
             autocompleteSelectedIndex = 0
             autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
-            if autocompleteSuggestions.isEmpty { closeAutocomplete() }
             return
         }
 
@@ -297,7 +403,6 @@ struct CaptureView: View {
                 : options.filter { $0.hasPrefix(query) }
             autocompleteSelectedIndex = 0
             autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
-            if autocompleteSuggestions.isEmpty { closeAutocomplete() }
             return
         }
 
@@ -308,7 +413,6 @@ struct CaptureView: View {
             autocompleteSuggestions = filterSuggestions(options, query: valueQuery)
             autocompleteSelectedIndex = 0
             autocompleteReplacementTokenRange = dateContext.tokenRange
-            if autocompleteSuggestions.isEmpty { closeAutocomplete() }
             return
         }
 
@@ -324,7 +428,6 @@ struct CaptureView: View {
                     autocompleteSuggestions = filterSuggestions(options, query: valueQuery)
                     autocompleteSelectedIndex = 0
                     autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
-                    if autocompleteSuggestions.isEmpty { closeAutocomplete() }
                     return
                 }
 
@@ -338,7 +441,6 @@ struct CaptureView: View {
                         }
                     autocompleteSelectedIndex = 0
                     autocompleteReplacementTokenRange = (tokens.count - 1)..<tokens.count
-                    if autocompleteSuggestions.isEmpty { closeAutocomplete() }
                     return
                 }
             }
@@ -487,7 +589,13 @@ struct CaptureView: View {
         return (key, valueQuery, startIndex..<tokens.count)
     }
     
-    private func acceptAutocomplete() {
+    private func acceptAutocomplete(at index: Int? = nil) {
+        if let index {
+            guard autocompleteSuggestions.indices.contains(index) else {
+                return
+            }
+            autocompleteSelectedIndex = index
+        }
         guard autocompleteSuggestions.indices.contains(autocompleteSelectedIndex) else { return }
         let accepted = autocompleteSuggestions[autocompleteSelectedIndex]
 
@@ -536,8 +644,14 @@ struct CaptureView: View {
                 spotlightList
             }
 
-            if let message = appState.captureMessage ?? appState.inboxMessage {
-                Text(message)
+            if let successToastMessage {
+                statusToast(message: successToastMessage, isError: false)
+                    .accessibilityIdentifier("capture-success-toast")
+            } else if let captureMessage = appState.captureMessage {
+                statusToast(message: captureMessage, isError: true)
+                    .accessibilityIdentifier("capture-error-message")
+            } else if let inboxMessage = appState.inboxMessage {
+                Text(inboxMessage)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -546,6 +660,27 @@ struct CaptureView: View {
         .padding(.vertical, Layout.cardPaddingVertical)
         .background(cardBackground())
         .zIndex(1)
+    }
+
+    private func statusToast(message: String, isError: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                .font(.system(size: 11, weight: .semibold))
+            Text(message)
+                .font(.caption.weight(.semibold))
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(isError ? Color.orange.opacity(0.95) : Color.green.opacity(0.95))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .fill(isError ? Color.orange.opacity(0.16) : Color.green.opacity(0.16))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
+                .stroke(isError ? Color.orange.opacity(0.30) : Color.green.opacity(0.30), lineWidth: 0.8)
+        )
     }
 
     private func cardBackground() -> some View {
@@ -1018,10 +1153,14 @@ struct CaptureView: View {
         case .savedAndClose:
             onClose()
         case .savedKeepOpen:
+            appState.clearCaptureMessage()
+            showSuccessToast("Saved")
             DispatchQueue.main.async {
                 focusedField = .capture
             }
         case .failed:
+            successToastTask?.cancel()
+            successToastMessage = nil
             break
         }
     }
@@ -1043,7 +1182,7 @@ struct CaptureView: View {
         let separators = CGFloat(max(itemsForSizing.count - 1, 0))
         let separatorsHeight = separators * (Layout.rowSeparatorHeight + (Layout.rowSeparatorVerticalPadding * 2))
         let listHeight = rowsHeight + separatorsHeight
-        let staticHeight: CGFloat = 140
+        let staticHeight: CGFloat = 184
         let totalHeight = staticHeight + max(84, listHeight)
         NotificationCenter.default.post(name: .quickboxCaptureHeightDidChange, object: totalHeight)
     }
