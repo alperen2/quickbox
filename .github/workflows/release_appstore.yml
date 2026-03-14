@@ -9,9 +9,11 @@ on:
 jobs:
   release-appstore:
     runs-on: macos-15
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
@@ -39,21 +41,6 @@ jobs:
             fi
           done
 
-      - name: Build App Store archive
-        run: |
-          SCHEME=quickbox-AppStore \
-          ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
-          scripts/release/build_archive.sh
-
-      - name: Export App Store package
-        env:
-          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          TEAM_ID="$TEAM_ID" \
-          ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
-          EXPORT_PATH=build/release/export-appstore \
-          scripts/release/export_appstore.sh
-
       - name: Prepare App Store Connect API key
         env:
           APPSTORE_CONNECT_API_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
@@ -62,6 +49,36 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           echo "$APPSTORE_CONNECT_API_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${APPSTORE_CONNECT_API_KEY_ID}.p8
+
+      - name: Build App Store archive
+        env:
+          APPSTORE_AUTH_KEY_PATH: ${{ format('{0}/.appstoreconnect/private_keys/AuthKey_{1}.p8', env.HOME, secrets.APPSTORE_CONNECT_API_KEY_ID) }}
+          APPSTORE_AUTH_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
+          APPSTORE_AUTH_KEY_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
+        run: |
+          SCHEME=quickbox-AppStore \
+          ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
+          ALLOW_PROVISIONING_UPDATES=1 \
+          APPSTORE_AUTH_KEY_PATH="$APPSTORE_AUTH_KEY_PATH" \
+          APPSTORE_AUTH_KEY_ID="$APPSTORE_AUTH_KEY_ID" \
+          APPSTORE_AUTH_KEY_ISSUER_ID="$APPSTORE_AUTH_KEY_ISSUER_ID" \
+          scripts/release/build_archive.sh
+
+      - name: Export App Store package
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPSTORE_AUTH_KEY_PATH: ${{ format('{0}/.appstoreconnect/private_keys/AuthKey_{1}.p8', env.HOME, secrets.APPSTORE_CONNECT_API_KEY_ID) }}
+          APPSTORE_AUTH_KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
+          APPSTORE_AUTH_KEY_ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
+        run: |
+          TEAM_ID="$TEAM_ID" \
+          ARCHIVE_PATH=build/release/quickbox-appstore.xcarchive \
+          EXPORT_PATH=build/release/export-appstore \
+          ALLOW_PROVISIONING_UPDATES=1 \
+          APPSTORE_AUTH_KEY_PATH="$APPSTORE_AUTH_KEY_PATH" \
+          APPSTORE_AUTH_KEY_ID="$APPSTORE_AUTH_KEY_ID" \
+          APPSTORE_AUTH_KEY_ISSUER_ID="$APPSTORE_AUTH_KEY_ISSUER_ID" \
+          scripts/release/export_appstore.sh
 
       - name: Upload to App Store Connect
         env:
