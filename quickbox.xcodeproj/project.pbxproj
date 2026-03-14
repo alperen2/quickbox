@@ -455,7 +455,7 @@
 					CODE_SIGN_ENTITLEMENTS = quickbox/quickbox.entitlements;
 					CODE_SIGN_STYLE = Automatic;
 					COMBINE_HIDPI_IMAGES = YES;
-					CURRENT_PROJECT_VERSION = 1;
+					CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -492,7 +492,7 @@
 					CODE_SIGN_ENTITLEMENTS = quickbox/quickbox.entitlements;
 					CODE_SIGN_STYLE = Automatic;
 					COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -529,13 +529,14 @@
 					CODE_SIGN_ENTITLEMENTS = quickbox/quickboxAppStore.entitlements;
 					CODE_SIGN_STYLE = Automatic;
 					COMBINE_HIDPI_IMAGES = YES;
-					CURRENT_PROJECT_VERSION = 1;
+					CURRENT_PROJECT_VERSION = 2;
 					DEVELOPMENT_TEAM = JB98B7238W;
 					ENABLE_APP_SANDBOX = YES;
 					ENABLE_HARDENED_RUNTIME = YES;
 					ENABLE_PREVIEWS = YES;
 					ENABLE_USER_SELECTED_FILES = readwrite;
 					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_CFBundleDisplayName = "Quickbox Capture";
 					INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 					INFOPLIST_KEY_QBDistributionChannel = appStore;
 					INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -564,13 +565,14 @@
 					CODE_SIGN_ENTITLEMENTS = quickbox/quickboxAppStore.entitlements;
 					CODE_SIGN_STYLE = Automatic;
 					COMBINE_HIDPI_IMAGES = YES;
-					CURRENT_PROJECT_VERSION = 1;
+					CURRENT_PROJECT_VERSION = 2;
 					DEVELOPMENT_TEAM = JB98B7238W;
 					ENABLE_APP_SANDBOX = YES;
 					ENABLE_HARDENED_RUNTIME = YES;
 					ENABLE_PREVIEWS = YES;
 					ENABLE_USER_SELECTED_FILES = readwrite;
 					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_CFBundleDisplayName = "Quickbox Capture";
 					INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 					INFOPLIST_KEY_QBDistributionChannel = appStore;
 					INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -596,7 +598,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
@@ -617,7 +619,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
@@ -637,7 +639,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0.0;
@@ -656,7 +658,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = JB98B7238W;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0.0;
