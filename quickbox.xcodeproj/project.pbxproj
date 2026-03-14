@@ -462,6 +462,7 @@
 				ENABLE_PREVIEWS = YES;
 					ENABLE_USER_SELECTED_FILES = readwrite;
 					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 					INFOPLIST_KEY_QBDistributionChannel = direct;
 					INFOPLIST_KEY_NSHumanReadableCopyright = "";
 					INFOPLIST_KEY_SUPublicEDKey = "$(SPARKLE_PUBLIC_ED_KEY)";
@@ -498,6 +499,7 @@
 				ENABLE_PREVIEWS = YES;
 					ENABLE_USER_SELECTED_FILES = readwrite;
 					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 					INFOPLIST_KEY_QBDistributionChannel = direct;
 					INFOPLIST_KEY_NSHumanReadableCopyright = "";
 					INFOPLIST_KEY_SUPublicEDKey = "$(SPARKLE_PUBLIC_ED_KEY)";
@@ -534,6 +536,7 @@
 					ENABLE_PREVIEWS = YES;
 					ENABLE_USER_SELECTED_FILES = readwrite;
 					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 					INFOPLIST_KEY_QBDistributionChannel = appStore;
 					INFOPLIST_KEY_NSHumanReadableCopyright = "";
 					LD_RUNPATH_SEARCH_PATHS = (
@@ -568,6 +571,7 @@
 					ENABLE_PREVIEWS = YES;
 					ENABLE_USER_SELECTED_FILES = readwrite;
 					GENERATE_INFOPLIST_FILE = YES;
+					INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 					INFOPLIST_KEY_QBDistributionChannel = appStore;
 					INFOPLIST_KEY_NSHumanReadableCopyright = "";
 					LD_RUNPATH_SEARCH_PATHS = (
