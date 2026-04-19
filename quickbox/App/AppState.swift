@@ -30,14 +30,12 @@ final class AppState: ObservableObject {
     @Published var showOnlyOpenTasks: Bool = false
     @Published var isSpotlightModeActive: Bool = false
     @Published private(set) var calendarDayIndicators: [Date: CalendarDayIndicator] = [:]
-    let distributionChannel: DistributionChannel
 
     private let settingsStore: SettingsStore
     private let hotkeyManager: HotkeyManager
     private let storageAccessManager: StorageAccessManager
     private let inboxWriter: InboxWriting
     private let inboxRepository: InboxRepositorying
-    private let updateManager: UpdateManaging
     private let crashReporter: CrashReporting
     private let clipboardProvider: () -> String?
     private let mutationQueue = DispatchQueue(label: "quickbox.appstate.mutation", qos: .userInitiated)
@@ -54,8 +52,6 @@ final class AppState: ObservableObject {
         storageAccessManager: StorageAccessManager? = nil,
         inboxWriter: InboxWriting? = nil,
         inboxRepository: InboxRepositorying? = nil,
-        updateManager: UpdateManaging? = nil,
-        distributionChannel: DistributionChannel = .direct,
         crashReporter: CrashReporting? = nil,
         clipboardProvider: @escaping () -> String? = {
             NSPasteboard.general.string(forType: .string)
@@ -66,7 +62,6 @@ final class AppState: ObservableObject {
         self.settingsStore = settingsStore
         self.hotkeyManager = hotkeyManager
         self.clipboardProvider = clipboardProvider
-        self.distributionChannel = distributionChannel
 
         let loadedPreferences = settingsStore.load()
         self.preferences = loadedPreferences
@@ -75,10 +70,6 @@ final class AppState: ObservableObject {
         self.storageAccessManager = storageAccessManager
         self.inboxWriter = inboxWriter ?? InboxWriter(storageResolver: storageAccessManager)
         self.inboxRepository = inboxRepository ?? InboxRepository(storageResolver: storageAccessManager)
-        self.updateManager = updateManager ?? Self.makeUpdateManager(
-            channel: distributionChannel,
-            preferences: loadedPreferences
-        )
         self.crashReporter = crashReporter ?? CrashReporter(consentEnabled: loadedPreferences.crashReportingEnabled)
 
         hotkeyManager.onHotKey = { [weak self] in
@@ -92,7 +83,6 @@ final class AppState: ObservableObject {
             if preferences.launchAtLogin {
                 applyLaunchAtLogin(true)
             }
-            self.updateManager.start()
         }
 
         if loadInboxOnInit {
@@ -153,10 +143,6 @@ final class AppState: ObservableObject {
     var settingsPreviewLine: String {
         let time = FormatSettings.timeText(for: Date(), preferences: preferences)
         return "- [ ] \(time) Example task"
-    }
-
-    var supportsInAppUpdates: Bool {
-        distributionChannel.supportsInAppUpdates
     }
 
     func submitCapture() -> SubmitResult {
@@ -415,42 +401,6 @@ final class AppState: ObservableObject {
         persistPreferences(message: "Crash reporting preference updated.")
     }
 
-    func updateAutoUpdate(_ enabled: Bool) {
-        guard supportsInAppUpdates else {
-            return
-        }
-        preferences.autoUpdateEnabled = enabled
-        updateManager.setAutoCheck(enabled)
-        persistPreferences(message: "Automatic update check updated.")
-    }
-
-    func updateBetaChannelEnabled(_ enabled: Bool) {
-        guard supportsInAppUpdates else {
-            return
-        }
-        preferences.betaChannelEnabled = enabled
-        updateManager.setBetaChannel(enabled)
-        persistPreferences(message: "Update channel preference updated.")
-    }
-
-    func checkForUpdates() {
-        guard supportsInAppUpdates else {
-            let message = "Updates are managed by the App Store."
-            settingsMessage = message
-            inboxMessage = message
-            return
-        }
-        do {
-            try updateManager.checkForUpdates()
-            settingsMessage = "Checking for updates..."
-            inboxMessage = "Checking for updates..."
-        } catch {
-            settingsMessage = error.localizedDescription
-            inboxMessage = error.localizedDescription
-            recordNonFatal(error, context: ["operation": "checkForUpdates"])
-        }
-    }
-
     func updateShortcut(_ rawValue: String) {
         guard let combo = HotKeyCombo.parse(rawValue) else {
             settingsMessage = "Shortcut format invalid. Example: control+option+space"
@@ -503,8 +453,6 @@ final class AppState: ObservableObject {
         storageAccessManager.preferences = defaults
         settingsStore.save(defaults)
         crashReporter.setConsent(defaults.crashReportingEnabled)
-        updateManager.setAutoCheck(defaults.autoUpdateEnabled)
-        updateManager.setBetaChannel(defaults.betaChannelEnabled)
 
         do {
             let combo = HotKeyCombo.parse(defaults.shortcutKey) ?? .default
@@ -748,17 +696,5 @@ final class AppState: ObservableObject {
 
     private func preferencesForDiagnostics(_ key: String) -> String {
         Bundle.main.object(forInfoDictionaryKey: key) as? String ?? "unknown"
-    }
-
-    private static func makeUpdateManager(channel: DistributionChannel, preferences: AppPreferences) -> UpdateManaging {
-        switch channel {
-        case .direct:
-            return SparkleUpdateManager(
-                autoCheckEnabled: preferences.autoUpdateEnabled,
-                betaChannelEnabled: preferences.betaChannelEnabled
-            )
-        case .appStore:
-            return AppStoreUpdateManager()
-        }
     }
 }

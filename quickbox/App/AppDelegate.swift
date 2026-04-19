@@ -1,13 +1,14 @@
 import AppKit
+import Combine
 import SwiftUI
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var menuBarController: MenuBarController?
     private var captureWindowController: CaptureWindowController?
     private var settingsWindowController: SettingsWindowController?
     private var uiTestWindowController: NSWindowController?
 
-    private var appState: AppState?
+    @Published private(set) var appState: AppState?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let isUITesting = ProcessInfo.processInfo.arguments.contains("--ui-testing")
@@ -16,7 +17,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let state = AppState(
             settingsStore: SettingsStore(),
             hotkeyManager: HotkeyManager(),
-            distributionChannel: .current,
             registerHotkeyOnInit: !isUITesting
         )
         self.appState = state

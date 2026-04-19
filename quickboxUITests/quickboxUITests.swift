@@ -64,6 +64,17 @@ final class quickboxUITests: XCTestCase {
     }
 
     @MainActor
+    func testStandardSettingsWindowShowsSettingsContent() throws {
+        let app = launchHostApp()
+        XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 5))
+
+        app.typeKey(",", modifierFlags: .command)
+
+        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["Global capture hotkey"].waitForExistence(timeout: 3))
+    }
+
+    @MainActor
     private func launchHostApp() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments += ["--ui-testing", "--ui-test-host-window"]

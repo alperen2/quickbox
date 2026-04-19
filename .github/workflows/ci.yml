@@ -21,7 +21,7 @@ jobs:
           set -o pipefail
           xcodebuild test \
             -project quickbox.xcodeproj \
-            -scheme quickbox-Direct \
+            -scheme quickbox-AppStore \
             -destination 'platform=macOS,arch=arm64' \
             -only-testing:quickboxTests \
             CODE_SIGNING_ALLOWED=NO \
@@ -83,7 +83,7 @@ jobs:
           run_smoke() {
             xcodebuild test \
               -project quickbox.xcodeproj \
-              -scheme quickbox-Direct \
+              -scheme quickbox-AppStore \
               -destination 'platform=macOS,arch=arm64' \
               -only-testing:quickboxUITests/testAutocompleteSupportsMouseSelectionForTagAndProject \
               CODE_SIGNING_ALLOWED=NO \

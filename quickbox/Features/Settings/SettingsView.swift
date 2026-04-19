@@ -40,9 +40,6 @@ struct SettingsView: View {
                 storageCard
                 namingCard
                 captureCard
-                if appState.supportsInAppUpdates {
-                    updatesCard
-                }
                 privacyCard
                 resetCard
 
@@ -232,26 +229,6 @@ struct SettingsView: View {
         SettingsCard(title: "Reset", subtitle: "Restore all settings to defaults") {
             Button("Reset to defaults", role: .destructive) {
                 resetToDefaults()
-            }
-        }
-    }
-
-    private var updatesCard: some View {
-        SettingsCard(title: "Updates", subtitle: "Public beta update channel") {
-            VStack(alignment: .leading, spacing: 10) {
-                Toggle("Automatically check for updates", isOn: Binding(
-                    get: { appState.preferences.autoUpdateEnabled },
-                    set: { appState.updateAutoUpdate($0) }
-                ))
-
-                Toggle("Use beta update channel", isOn: Binding(
-                    get: { appState.preferences.betaChannelEnabled },
-                    set: { appState.updateBetaChannelEnabled($0) }
-                ))
-
-                Button("Check for Updates") {
-                    appState.checkForUpdates()
-                }
             }
         }
     }

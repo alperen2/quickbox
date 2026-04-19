@@ -26,8 +26,6 @@ struct AppPreferences: Codable {
     var timeFormat: String
     var fileNamePrefix: String
     var crashReportingEnabled: Bool
-    var autoUpdateEnabled: Bool
-    var betaChannelEnabled: Bool
 
     static let defaultShortcut = "command+shift+space"
     static let defaultFolderName = "Quickbox"
@@ -48,9 +46,7 @@ struct AppPreferences: Codable {
             fileDateFormat: defaultFileDateFormat,
             timeFormat: defaultTimeFormat,
             fileNamePrefix: "",
-            crashReportingEnabled: false,
-            autoUpdateEnabled: true,
-            betaChannelEnabled: true
+            crashReportingEnabled: false
         )
     }
 
@@ -64,8 +60,6 @@ struct AppPreferences: Codable {
         case timeFormat
         case fileNamePrefix
         case crashReportingEnabled
-        case autoUpdateEnabled
-        case betaChannelEnabled
     }
 
     init(from decoder: Decoder) throws {
@@ -80,8 +74,6 @@ struct AppPreferences: Codable {
         timeFormat = try container.decodeIfPresent(String.self, forKey: .timeFormat) ?? defaults.timeFormat
         fileNamePrefix = try container.decodeIfPresent(String.self, forKey: .fileNamePrefix) ?? defaults.fileNamePrefix
         crashReportingEnabled = try container.decodeIfPresent(Bool.self, forKey: .crashReportingEnabled) ?? defaults.crashReportingEnabled
-        autoUpdateEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoUpdateEnabled) ?? defaults.autoUpdateEnabled
-        betaChannelEnabled = try container.decodeIfPresent(Bool.self, forKey: .betaChannelEnabled) ?? defaults.betaChannelEnabled
     }
 
     init(
@@ -93,9 +85,7 @@ struct AppPreferences: Codable {
         fileDateFormat: String,
         timeFormat: String,
         fileNamePrefix: String,
-        crashReportingEnabled: Bool,
-        autoUpdateEnabled: Bool,
-        betaChannelEnabled: Bool
+        crashReportingEnabled: Bool
     ) {
         self.shortcutKey = shortcutKey
         self.afterSaveMode = afterSaveMode
@@ -106,7 +96,5 @@ struct AppPreferences: Codable {
         self.timeFormat = timeFormat
         self.fileNamePrefix = fileNamePrefix
         self.crashReportingEnabled = crashReportingEnabled
-        self.autoUpdateEnabled = autoUpdateEnabled
-        self.betaChannelEnabled = betaChannelEnabled
     }
 }

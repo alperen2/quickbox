@@ -6,7 +6,12 @@ struct quickboxApp: App {
 
     var body: some Scene {
         Settings {
-            EmptyView()
+            if let appState = appDelegate.appState {
+                SettingsView(appState: appState)
+            } else {
+                ProgressView("Loading Settings...")
+                    .frame(width: 640, height: 520)
+            }
         }
     }
 }

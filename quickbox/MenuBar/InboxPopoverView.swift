@@ -20,13 +20,6 @@ struct MenuBarDashboardView: View {
             }
             .font(.footnote)
 
-            if appState.supportsInAppUpdates {
-                Button("Check for Updates") {
-                    appState.checkForUpdates()
-                }
-                .font(.footnote)
-            }
-
             Divider()
 
             HStack {

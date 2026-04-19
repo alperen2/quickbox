@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCHEME=${SCHEME:-quickbox-Direct}
+SCHEME=${SCHEME:-quickbox-AppStore}
 PROJECT=${PROJECT:-quickbox.xcodeproj}
 CONFIGURATION=${CONFIGURATION:-Release}
 ARCHIVE_PATH=${ARCHIVE_PATH:-build/release/quickbox.xcarchive}
-REQUIRE_SPARKLE_PUBLIC_ED_KEY=${REQUIRE_SPARKLE_PUBLIC_ED_KEY:-0}
 ALLOW_PROVISIONING_UPDATES=${ALLOW_PROVISIONING_UPDATES:-0}
 APPSTORE_AUTH_KEY_PATH=${APPSTORE_AUTH_KEY_PATH:-}
 APPSTORE_AUTH_KEY_ID=${APPSTORE_AUTH_KEY_ID:-}
@@ -21,15 +20,6 @@ xcodebuild_args=(
   -destination "generic/platform=macOS"
   -archivePath "$ARCHIVE_PATH"
 )
-
-if [[ "$SCHEME" == "quickbox-Direct" ]]; then
-  if [[ -n "${SPARKLE_PUBLIC_ED_KEY:-}" ]]; then
-    xcodebuild_args+=("SPARKLE_PUBLIC_ED_KEY=$SPARKLE_PUBLIC_ED_KEY")
-  elif [[ "$REQUIRE_SPARKLE_PUBLIC_ED_KEY" == "1" ]]; then
-    echo "SPARKLE_PUBLIC_ED_KEY is required for quickbox-Direct archives." >&2
-    exit 1
-  fi
-fi
 
 if [[ -n "${MARKETING_VERSION:-}" ]]; then
   xcodebuild_args+=("MARKETING_VERSION=$MARKETING_VERSION")

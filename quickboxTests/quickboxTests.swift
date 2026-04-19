@@ -112,9 +112,7 @@ struct quickboxTests {
             fileDateFormat: "dd-MM-yyyy",
             timeFormat: "hh:mm a",
             fileNamePrefix: "qb-",
-            crashReportingEnabled: true,
-            autoUpdateEnabled: false,
-            betaChannelEnabled: true
+            crashReportingEnabled: true
         )
 
         store.save(expected)
@@ -129,8 +127,6 @@ struct quickboxTests {
         #expect(loaded.timeFormat == expected.timeFormat)
         #expect(loaded.fileNamePrefix == expected.fileNamePrefix)
         #expect(loaded.crashReportingEnabled == expected.crashReportingEnabled)
-        #expect(loaded.autoUpdateEnabled == expected.autoUpdateEnabled)
-        #expect(loaded.betaChannelEnabled == expected.betaChannelEnabled)
     }
 
     @Test
@@ -159,9 +155,7 @@ struct quickboxTests {
             fileDateFormat: AppPreferences.defaultFileDateFormat,
             timeFormat: AppPreferences.defaultTimeFormat,
             fileNamePrefix: "",
-            crashReportingEnabled: false,
-            autoUpdateEnabled: true,
-            betaChannelEnabled: true
+            crashReportingEnabled: false
         )
 
         let resolver = StorageAccessManager(preferences: preferences)
@@ -760,68 +754,23 @@ struct quickboxTests {
 
         let decoded = try JSONDecoder().decode(AppPreferences.self, from: legacyJSON)
         #expect(decoded.crashReportingEnabled == false)
-        #expect(decoded.autoUpdateEnabled == true)
-        #expect(decoded.betaChannelEnabled == true)
     }
 
     @MainActor
     @Test
-    func diagnosticsAndUpdatePreferencesPropagateToManagers() {
-        let updateManager = TestUpdateManager()
+    func diagnosticsPreferencePropagatesToCrashReporter() {
         let crashReporter = TestCrashReporter()
         let appState = makeAppState(
             clipboard: { nil },
             writer: TestWriter(),
             repository: TestRepository(),
-            updateManager: updateManager,
             crashReporter: crashReporter
         )
 
-        appState.updateAutoUpdate(false)
         appState.updateCrashReportingConsent(true)
-        appState.updateBetaChannelEnabled(false)
 
-        #expect(updateManager.lastSetAutoCheck == false)
-        #expect(updateManager.lastSetBetaChannel == false)
         #expect(crashReporter.lastConsentValue == true)
-        #expect(appState.preferences.autoUpdateEnabled == false)
         #expect(appState.preferences.crashReportingEnabled == true)
-        #expect(appState.preferences.betaChannelEnabled == false)
-    }
-
-    @MainActor
-    @Test
-    func appStoreChannelDisablesInAppUpdateSurface() {
-        let updateManager = TestUpdateManager()
-        let appState = makeAppState(
-            clipboard: { nil },
-            writer: TestWriter(),
-            repository: TestRepository(),
-            updateManager: updateManager,
-            distributionChannel: .appStore
-        )
-
-        appState.updateAutoUpdate(false)
-        appState.updateBetaChannelEnabled(false)
-        appState.checkForUpdates()
-
-        #expect(appState.supportsInAppUpdates == false)
-        #expect(updateManager.lastSetAutoCheck == nil)
-        #expect(updateManager.lastSetBetaChannel == nil)
-        #expect(appState.settingsMessage == "Updates are managed by the App Store.")
-    }
-
-    @Test
-    func appStoreUpdateManagerThrowsUnavailableError() {
-        let manager = AppStoreUpdateManager()
-        do {
-            try manager.checkForUpdates()
-            #expect(Bool(false), "Expected update check to be unavailable")
-        } catch let error as UpdateError {
-            #expect(error == .updateCheckUnavailable)
-        } catch {
-            #expect(Bool(false), "Unexpected error type: \(error)")
-        }
     }
 
     private func todayFileName(for date: Date = Date()) -> String {
@@ -868,9 +817,7 @@ struct quickboxTests {
         clipboard: @escaping () -> String?,
         writer: InboxWriting,
         repository: InboxRepositorying,
-        updateManager: UpdateManaging? = nil,
-        crashReporter: CrashReporting? = nil,
-        distributionChannel: DistributionChannel = .direct
+        crashReporter: CrashReporting? = nil
     ) -> AppState {
         let suiteName = "quickbox.tests.state.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
@@ -881,8 +828,6 @@ struct quickboxTests {
             hotkeyManager: HotkeyManager(),
             inboxWriter: writer,
             inboxRepository: repository,
-            updateManager: updateManager,
-            distributionChannel: distributionChannel,
             crashReporter: crashReporter,
             clipboardProvider: clipboard,
             registerHotkeyOnInit: false,
@@ -971,29 +916,6 @@ private final class TestRepository: InboxRepositorying, @unchecked Sendable {
     func reload() throws -> [InboxItem] {
         reloadCallCount += 1
         return items
-    }
-}
-
-private final class TestUpdateManager: UpdateManaging {
-    private(set) var didStart = false
-    private(set) var didCheckUpdates = false
-    private(set) var lastSetAutoCheck: Bool?
-    private(set) var lastSetBetaChannel: Bool?
-
-    func start() {
-        didStart = true
-    }
-
-    func checkForUpdates() throws {
-        didCheckUpdates = true
-    }
-
-    func setAutoCheck(_ enabled: Bool) {
-        lastSetAutoCheck = enabled
-    }
-
-    func setBetaChannel(_ enabled: Bool) {
-        lastSetBetaChannel = enabled
     }
 }
 

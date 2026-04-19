@@ -49,5 +49,4 @@ Use menu actions for:
 
 - Open Today File
 - Open Inbox Folder
-- Check for Updates
 - Settings

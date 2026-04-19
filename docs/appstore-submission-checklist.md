@@ -14,7 +14,6 @@
 - `export_appstore.sh` generates a signed `.pkg`.
 - App Store Connect validation passes without icon, entitlement, or signing errors.
 - App uses App Sandbox with user-selected folder read/write access.
-- In-app update UI is not visible in App Store build.
 
 ## Screenshots and Review Notes
 
