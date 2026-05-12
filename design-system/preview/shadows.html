@@ -1,0 +1,13 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Shadows</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+ html,body{margin:0;height:100%;background:var(--window-bg);font-family:var(--font-sans);}
+ .wrap{display:flex;gap:28px;padding:28px;align-items:center;justify-content:center;height:100%;box-sizing:border-box;}
+ .tile{width:110px;height:80px;background:#fff;border-radius:10px;display:flex;align-items:flex-end;padding:8px 10px;font-size:10px;font-family:var(--font-mono);color:var(--label-tertiary);}
+</style></head><body>
+<div class="wrap">
+  <div class="tile" style="box-shadow:var(--elev-1)">elev-1 · popover</div>
+  <div class="tile" style="box-shadow:var(--elev-2)">elev-2 · sheet</div>
+  <div class="tile" style="box-shadow:var(--elev-3)">elev-3 · window</div>
+</div></body></html>

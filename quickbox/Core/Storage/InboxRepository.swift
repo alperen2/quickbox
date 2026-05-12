@@ -333,7 +333,7 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
     private func mappedStorageError(_ error: Error) -> Error {
         if let storageError = error as? StorageAccessError {
             switch storageError {
-            case .invalidBookmark, .cannotAccessSecurityScope:
+            case .invalidBookmark, .cannotAccessSecurityScope, .userSelectedFolderRequired:
                 return InboxRepositoryError.storageUnavailable
             }
         }

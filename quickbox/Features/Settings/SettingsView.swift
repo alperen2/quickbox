@@ -2,6 +2,12 @@ import AppKit
 import SwiftUI
 
 struct SettingsView: View {
+    private enum Style {
+        static let windowBackground = Color(nsColor: .windowBackgroundColor)
+        static let fill = Color(nsColor: .labelColor).opacity(0.05)
+        static let controlRadius: CGFloat = 6
+    }
+
     @ObservedObject var appState: AppState
 
     @State private var currentCombo: HotKeyCombo
@@ -35,6 +41,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Settings")
                     .font(.title2.weight(.semibold))
+                    .foregroundStyle(.primary)
 
                 shortcutCard
                 storageCard
@@ -52,6 +59,7 @@ struct SettingsView: View {
             }
             .padding(20)
         }
+        .background(Style.windowBackground)
         .frame(width: 640, height: 520)
         .onDisappear {
             stopShortcutRecording()
@@ -70,14 +78,16 @@ struct SettingsView: View {
                 }
 
                 HStack(spacing: 8) {
-                    Button(isRecordingShortcut ? "Press keys..." : "Record Shortcut") {
+                    Button(isRecordingShortcut ? "Press keys…" : "Record shortcut") {
                         toggleShortcutRecording()
                     }
+                    .controlSize(.small)
 
                     if isRecordingShortcut {
                         Button("Cancel") {
                             stopShortcutRecording()
                         }
+                        .controlSize(.small)
                     }
                 }
 
@@ -97,19 +107,20 @@ struct SettingsView: View {
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.secondary.opacity(0.1))
+                        RoundedRectangle(cornerRadius: Style.controlRadius, style: .continuous)
+                            .fill(Style.fill)
                     )
 
-                Button("Choose Folder") {
+                Button("Choose folder") {
                     appState.chooseStorageFolder()
                 }
+                .controlSize(.small)
             }
         }
     }
 
     private var namingCard: some View {
-        SettingsCard(title: "File & Time", subtitle: "Control naming and timestamp formatting") {
+        SettingsCard(title: "File and time", subtitle: "Control naming and timestamp formatting") {
             VStack(alignment: .leading, spacing: 12) {
                 SettingRow(label: "File prefix") {
                     TextField("Optional", text: $prefixDraft)
@@ -149,6 +160,7 @@ struct SettingsView: View {
                         Button("Apply") {
                             appState.updateFileDateFormat(customDateFormat)
                         }
+                        .controlSize(.small)
                     }
                 }
 
@@ -178,6 +190,7 @@ struct SettingsView: View {
                         Button("Apply") {
                             appState.updateTimeFormat(customTimeFormat)
                         }
+                        .controlSize(.small)
                     }
                 }
 
@@ -190,8 +203,8 @@ struct SettingsView: View {
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.secondary.opacity(0.1))
+                    RoundedRectangle(cornerRadius: Style.controlRadius, style: .continuous)
+                        .fill(Style.fill)
                 )
             }
         }
@@ -230,11 +243,12 @@ struct SettingsView: View {
             Button("Reset to defaults", role: .destructive) {
                 resetToDefaults()
             }
+            .controlSize(.small)
         }
     }
 
     private var privacyCard: some View {
-        SettingsCard(title: "Privacy & Diagnostics", subtitle: "Crash-only diagnostics, disabled by default") {
+        SettingsCard(title: "Privacy and diagnostics", subtitle: "Crash-only diagnostics, disabled by default") {
             Toggle("Share anonymous crash reports", isOn: Binding(
                 get: { appState.preferences.crashReportingEnabled },
                 set: { appState.updateCrashReportingConsent($0) }
@@ -324,11 +338,11 @@ private struct SettingsCard<Content: View>: View {
         }
         .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(nsColor: .windowBackgroundColor))
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color(nsColor: .separatorColor).opacity(0.7), lineWidth: 0.5)
                 )
         )
     }
@@ -342,6 +356,7 @@ private struct SettingRow<Content: View>: View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text(label)
                 .foregroundStyle(.secondary)
+                .font(.callout)
                 .frame(width: 120, alignment: .leading)
             content
                 .frame(maxWidth: .infinity, alignment: .leading)

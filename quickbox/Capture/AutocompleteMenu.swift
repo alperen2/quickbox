@@ -18,6 +18,8 @@ struct AutocompleteMenu: View {
 
     private let menuWidth: CGFloat = 380
     private let menuMaxHeight: CGFloat = 248
+    private let panelFill = Color(red: 38 / 255, green: 38 / 255, blue: 42 / 255).opacity(0.78)
+    private let dividerColor = Color.white.opacity(0.08)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -27,7 +29,7 @@ struct AutocompleteMenu: View {
                 .padding(.bottom, 6)
 
             Divider()
-                .overlay(Color.white.opacity(0.12))
+                .overlay(dividerColor)
 
             ScrollViewReader { proxy in
                 ScrollView(showsIndicators: true) {
@@ -51,7 +53,7 @@ struct AutocompleteMenu: View {
             }
 
             Divider()
-                .overlay(Color.white.opacity(0.12))
+                .overlay(dividerColor)
 
             footer
                 .padding(.horizontal, 10)
@@ -60,22 +62,17 @@ struct AutocompleteMenu: View {
         .frame(width: menuWidth, alignment: .leading)
         .padding(6)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.black.opacity(0.75))
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(panelFill)
                 .background(
                     .ultraThinMaterial,
-                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
                 )
-                .shadow(color: Color.black.opacity(0.45), radius: 18, x: 0, y: 11)
-                .shadow(color: Color.black.opacity(0.24), radius: 4, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.35), radius: 24, x: 0, y: 8)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 0.9)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.black.opacity(0.52), lineWidth: 1.2)
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.white.opacity(0.12), lineWidth: 0.8)
         )
         .compositingGroup()
         .transition(.opacity.combined(with: .scale(scale: 0.98, anchor: .topLeading)))
@@ -126,7 +123,7 @@ struct AutocompleteMenu: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .fill(index == selectedIndex ? Color.accentColor.opacity(0.96) : Color.clear)
                         )
                         .contentShape(Rectangle())
@@ -151,7 +148,7 @@ struct AutocompleteMenu: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Color.white.opacity(0.56))
-            Text("Öneri yok. Yazmaya devam et veya Enter ile kaydet.")
+            Text("No suggestions. Keep typing or press Enter to save.")
                 .font(.caption)
                 .foregroundStyle(Color.white.opacity(0.62))
             Spacer(minLength: 0)
@@ -181,7 +178,7 @@ struct AutocompleteMenu: View {
             Image(systemName: "keyboard")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(Color.white.opacity(0.56))
-            Text(suggestions.isEmpty ? "Enter: kaydet • Esc: kapat" : "↑↓: seç • Tab: tamamla • Enter: tamamla/kaydet • Esc: kapat")
+            Text(suggestions.isEmpty ? "Enter: save • Esc: close" : "↑↓: choose • Tab: complete • Enter: complete/save • Esc: close")
                 .font(.caption2)
                 .foregroundStyle(Color.white.opacity(0.56))
             Spacer(minLength: 0)
@@ -233,7 +230,7 @@ struct AutocompleteMenu: View {
         case .metadataKey:
             return "Field suggestions"
         case .metadata(let key, _):
-            return "\(key.uppercased()) suggestions"
+            return "\(key): suggestions"
         case .none:
             return "Suggestions"
         }

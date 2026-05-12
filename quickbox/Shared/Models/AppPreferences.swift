@@ -31,17 +31,14 @@ struct AppPreferences: Codable {
     static let defaultFolderName = "Quickbox"
     static let defaultFileDateFormat = "yyyy-MM-dd"
     static let defaultTimeFormat = "HH:mm"
+    static let defaultFallbackStoragePath = "~/Documents/Quickbox"
 
     static var `default`: AppPreferences {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?
-            .appendingPathComponent(defaultFolderName, isDirectory: true)
-            .path ?? ("~/Documents/" + defaultFolderName)
-
         return AppPreferences(
             shortcutKey: defaultShortcut,
             afterSaveMode: .close,
             storageBookmarkData: nil,
-            fallbackStoragePath: documentsPath,
+            fallbackStoragePath: defaultFallbackStoragePath,
             launchAtLogin: false,
             fileDateFormat: defaultFileDateFormat,
             timeFormat: defaultTimeFormat,

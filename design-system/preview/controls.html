@@ -1,0 +1,43 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Controls</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+ html,body{margin:0;height:100%;background:#1c1c1e;font-family:var(--font-sans);color:#fff;}
+ .wrap{display:flex;flex-direction:column;gap:18px;padding:22px 24px;height:100%;box-sizing:border-box;justify-content:center;}
+ .head{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:rgba(255,255,255,.45);font-weight:700;}
+ .lbl{font-size:11px;color:rgba(255,255,255,.55);margin-bottom:5px;}
+ .row{display:flex;gap:28px;align-items:flex-end;}
+
+ .field{
+   background:transparent;color:#fff;
+   height:26px;padding:0 2px;
+   display:flex;align-items:center;font-size:14px;min-width:200px;
+   border-bottom:1px solid rgba(255,255,255,.35);
+ }
+ .btn{
+   background:transparent;color:#fff;
+   border-radius:5px;height:26px;padding:0 12px;
+   display:inline-flex;align-items:center;font-size:13px;font-weight:500;
+   box-shadow:inset 0 0 0 1px #fff;
+ }
+ .seg{display:inline-flex;gap:16px;font-size:13px;}
+ .seg div{color:rgba(255,255,255,.5);padding-bottom:3px;}
+ .seg .on{color:#fff;border-bottom:1.5px solid #fff;font-weight:500;}
+</style></head><body>
+<div class="wrap">
+  <div class="head">Flat &amp; borderless — keyboard-first</div>
+  <div>
+    <div class="lbl">Text field</div>
+    <div class="field">alex@example.com</div>
+  </div>
+  <div class="row">
+    <div>
+      <div class="lbl">Button</div>
+      <div class="btn">Add task</div>
+    </div>
+    <div>
+      <div class="lbl">Segmented</div>
+      <div class="seg"><div class="on">Today</div><div>Week</div><div>All</div></div>
+    </div>
+  </div>
+</div></body></html>

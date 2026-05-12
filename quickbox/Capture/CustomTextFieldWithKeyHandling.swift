@@ -18,12 +18,13 @@ struct CustomTextFieldWithKeyHandling: NSViewRepresentable {
         let textField = CustomNSTextField()
         textField.delegate = context.coordinator
         textField.placeholderString = prompt
+        textField.applyPlaceholder(prompt)
         textField.stringValue = text
         textField.isBordered = false
         textField.isBezeled = false
         textField.drawsBackground = false
         textField.focusRingType = .none
-        textField.font = .systemFont(ofSize: 30, weight: .regular)
+        textField.font = .systemFont(ofSize: 18, weight: .regular)
         textField.textColor = NSColor.white.withAlphaComponent(0.95)
         textField.allowsEditingTextAttributes = true
         textField.importsGraphics = false
@@ -49,6 +50,7 @@ struct CustomTextFieldWithKeyHandling: NSViewRepresentable {
         nsView.onTab = onTab
         nsView.onEscape = onEscape
         nsView.setAccessibilityIdentifier(accessibilityIdentifier)
+        nsView.applyPlaceholder(prompt)
         nsView.applySyntaxHighlighting()
     }
 
@@ -123,6 +125,16 @@ class CustomNSTextField: NSTextField {
     var onTab: (() -> Bool)?
     var onEscape: (() -> Bool)?
 
+    func applyPlaceholder(_ prompt: String) {
+        placeholderAttributedString = NSAttributedString(
+            string: prompt,
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 18, weight: .regular),
+                .foregroundColor: NSColor.white.withAlphaComponent(0.60)
+            ]
+        )
+    }
+
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if event.type == .keyDown {
             if event.keyCode == 125 { // Down Arrow
@@ -148,7 +160,7 @@ class CustomNSTextField: NSTextField {
             attributed.addAttribute(.foregroundColor, value: fullTokenColor(forMetadataKey: metadata.key), range: metadata.fullRange)
             attributed.addAttribute(.foregroundColor, value: valueColor(forMetadataKey: metadata.key), range: metadata.valueRange)
             attributed.addAttribute(.foregroundColor, value: keyColor(forMetadataKey: metadata.key), range: metadata.keyRange)
-            attributed.addAttribute(.font, value: NSFont.systemFont(ofSize: 30, weight: keyFontWeight), range: metadata.keyRange)
+            attributed.addAttribute(.font, value: NSFont.systemFont(ofSize: 18, weight: keyFontWeight), range: metadata.keyRange)
         }
 
         if let textView = currentEditor() as? NSTextView, let storage = textView.textStorage {
@@ -163,7 +175,7 @@ class CustomNSTextField: NSTextField {
 
     private var baseAttributes: [NSAttributedString.Key: Any] {
         [
-            .font: NSFont.systemFont(ofSize: 30, weight: .regular),
+            .font: NSFont.systemFont(ofSize: 18, weight: .regular),
             .foregroundColor: NSColor.white.withAlphaComponent(0.95)
         ]
     }

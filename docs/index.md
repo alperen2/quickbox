@@ -12,12 +12,15 @@ hero:
     - theme: alt
       text: Usage
       link: /usage
+    - theme: alt
+      text: Support
+      link: /support
 
 features:
   - title: Minimal by design
     details: quickbox stays focused on fast capture and light triage instead of becoming a full task manager.
   - title: Local-first
-    details: Your notes stay on your machine. No network dependency for daily use.
+    details: Your notes stay in the folder you choose. No network dependency for daily use.
   - title: Production-ready baseline
     details: CI, release scripts, docs deployment, and OSS contribution workflow are included.
 ---

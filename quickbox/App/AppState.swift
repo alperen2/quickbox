@@ -146,6 +146,10 @@ final class AppState: ObservableObject {
     }
 
     func submitCapture() -> SubmitResult {
+        guard canAttemptStorageWrite() else {
+            return .failed
+        }
+
         do {
             try inboxWriter.appendEntry(draftText, now: Date())
             
@@ -170,6 +174,10 @@ final class AppState: ObservableObject {
     }
 
     func submitCaptureFromSpotlight() -> SubmitResult {
+        guard canAttemptStorageWrite() else {
+            return .failed
+        }
+
         do {
             try inboxWriter.appendEntry(draftText, now: Date())
             let parser = InboxParser()
@@ -235,6 +243,13 @@ final class AppState: ObservableObject {
     }
 
     func loadInbox() {
+        guard !storageAccessManager.needsUserSelectedFolder else {
+            inboxItems = []
+            canUndoDelete = false
+            inboxMessage = "Choose a storage folder to start saving notes."
+            return
+        }
+
         do {
             let items = try inboxRepository.load(on: selectedInboxDate)
             inboxItems = sorted(items)
@@ -248,6 +263,7 @@ final class AppState: ObservableObject {
             
             // Build autocomplete index in the background
             if let folderURL = try? storageAccessManager.resolvedBaseURL() {
+                defer { storageAccessManager.stopAccess(for: folderURL) }
                 IndexManager.shared.buildIndex(in: folderURL)
             }
             
@@ -258,6 +274,15 @@ final class AppState: ObservableObject {
     }
 
     func reloadInbox(silent: Bool = false) {
+        guard !storageAccessManager.needsUserSelectedFolder else {
+            inboxItems = []
+            canUndoDelete = false
+            if !silent {
+                inboxMessage = "Choose a storage folder to start saving notes."
+            }
+            return
+        }
+
         do {
             let items = try inboxRepository.reload(on: selectedInboxDate)
             inboxItems = sorted(items)
@@ -470,13 +495,15 @@ final class AppState: ObservableObject {
         settingsMessage = "Settings reset to defaults."
     }
 
-    func chooseStorageFolder() {
+    @discardableResult
+    func chooseStorageFolder() -> Bool {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = true
-        panel.prompt = "Use Folder"
+        panel.prompt = "Use folder"
+        panel.message = "Choose where quickbox should save your markdown files."
 
         if panel.runModal() == .OK, let url = panel.url {
             do {
@@ -486,11 +513,14 @@ final class AppState: ObservableObject {
                 persistPreferences(message: "Storage folder updated.")
                 resetCalendarIndicatorCache()
                 loadInbox()
+                return true
             } catch {
                 settingsMessage = "Could not store folder access. Please reselect a folder."
                 recordNonFatal(error, context: ["operation": "chooseStorageFolder"])
             }
         }
+
+        return false
     }
 
     func openTodayFile() {
@@ -663,6 +693,25 @@ final class AppState: ObservableObject {
         storageAccessManager.preferences = preferences
         settingsStore.save(preferences)
         settingsMessage = message
+    }
+
+    private func canAttemptStorageWrite() -> Bool {
+        let trimmed = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            captureMessage = InboxWriterError.emptyEntry.localizedDescription
+            return false
+        }
+
+        guard storageAccessManager.needsUserSelectedFolder else {
+            return true
+        }
+
+        if chooseStorageFolder() {
+            return true
+        }
+
+        captureMessage = "Choose a storage folder before saving."
+        return false
     }
 
     private static let calendar = Calendar(identifier: .gregorian)

@@ -8,6 +8,7 @@ protocol StorageResolving {
 enum StorageAccessError: LocalizedError, Equatable {
     case invalidBookmark
     case cannotAccessSecurityScope
+    case userSelectedFolderRequired
 
     var errorDescription: String? {
         switch self {
@@ -15,6 +16,8 @@ enum StorageAccessError: LocalizedError, Equatable {
             return "The selected folder bookmark is invalid. Please reselect a folder in Settings."
         case .cannotAccessSecurityScope:
             return "The selected folder cannot be accessed. Please reselect a folder in Settings."
+        case .userSelectedFolderRequired:
+            return "Choose a storage folder before saving."
         }
     }
 }
@@ -24,6 +27,10 @@ final class StorageAccessManager: StorageResolving {
 
     init(preferences: AppPreferences) {
         self.preferences = preferences
+    }
+
+    var needsUserSelectedFolder: Bool {
+        requiresSecurityScopedStorage && preferences.storageBookmarkData == nil
     }
 
     func resolvedBaseURL() throws -> URL {
@@ -47,7 +54,12 @@ final class StorageAccessManager: StorageResolving {
             }
         }
 
-        return URL(fileURLWithPath: preferences.fallbackStoragePath, isDirectory: true)
+        if requiresSecurityScopedStorage {
+            throw StorageAccessError.userSelectedFolderRequired
+        }
+
+        let expandedPath = (preferences.fallbackStoragePath as NSString).expandingTildeInPath
+        return URL(fileURLWithPath: expandedPath, isDirectory: true)
     }
 
     func stopAccess(for url: URL) {
@@ -60,5 +72,9 @@ final class StorageAccessManager: StorageResolving {
 
     func makeBookmarkData(for url: URL) throws -> Data {
         try url.bookmarkData(options: [.withSecurityScope], includingResourceValuesForKeys: nil, relativeTo: nil)
+    }
+
+    private var requiresSecurityScopedStorage: Bool {
+        Bundle.main.bundleIdentifier == "alperen.quickbox.appstore"
     }
 }

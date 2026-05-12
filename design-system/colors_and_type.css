@@ -1,0 +1,319 @@
+/* ============================================================
+   quickbox design tokens — colors, type, radii, shadows, spacing
+   Built on top of the macOS 26 (Tahoe) system language.
+   Use these variables; don't reach for raw hex values in components.
+   ============================================================ */
+
+/* Self-host fallbacks via Google Fonts (SF Pro → Inter, SF Pro Rounded → Nunito). */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  /* ---------- Font families ---------- */
+  --font-sans: "SF Pro Text", "SF Pro", "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --font-display: "SF Pro Display", "SF Pro", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-rounded: "SF Pro Rounded", "Nunito", "SF Pro", -apple-system, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* ---------- Label colors (text) — derived from black, light mode ---------- */
+  --label:              rgba(0, 0, 0, 0.85);        /* Primary   */
+  --label-secondary:    rgba(0, 0, 0, 0.50);        /* Secondary */
+  --label-tertiary:     rgba(0, 0, 0, 0.25);        /* Tertiary  */
+  --label-quaternary:   rgba(0, 0, 0, 0.10);        /* Quaternary */
+  --label-inverse:      rgba(255, 255, 255, 0.95);
+
+  /* ---------- Fill colors (backgrounds for controls) ---------- */
+  --fill-primary:       rgba(0, 0, 0, 0.10);
+  --fill-secondary:     rgba(0, 0, 0, 0.08);
+  --fill-tertiary:      rgba(0, 0, 0, 0.05);
+  --fill-quaternary:    rgba(0, 0, 0, 0.03);
+  --fill-quinary:       rgba(0, 0, 0, 0.02);
+
+  /* ---------- Window + content surfaces ---------- */
+  --window-bg:          rgb(245, 245, 245);
+  --window-bg-alt:      rgb(236, 235, 235);
+  --content-bg:         rgb(255, 255, 255);
+  --sidebar-bg:         rgba(245, 245, 245, 0.85);
+  --divider:            rgba(0, 0, 0, 0.08);
+  --hairline:           rgba(0, 0, 0, 0.23);
+  --hairline-soft:      rgba(0, 0, 0, 0.12);
+
+  /* ---------- System accent colors (macOS 26) ---------- */
+  --red:     rgb(255, 56, 60);
+  --orange:  rgb(255, 149, 0);
+  --yellow:  rgb(255, 204, 0);
+  --green:   rgb(40, 205, 65);
+  --mint:    rgb(0, 199, 190);
+  --teal:    rgb(89, 173, 196);
+  --cyan:    rgb(85, 190, 240);
+  --blue:    rgb(0, 122, 255);
+  --blue-alt: rgb(13, 111, 255);
+  --indigo:  rgb(88, 86, 214);
+  --purple:  rgb(175, 82, 222);
+  --pink:    rgb(255, 45, 85);
+  --brown:   rgb(162, 132, 94);
+  --gray:    rgb(142, 142, 147);
+
+  /* Vibrant variants (on-color) */
+  --red-vibrant:    rgb(255, 66, 69);
+  --blue-vibrant:   rgb(0, 136, 255);
+  --green-vibrant:  rgb(60, 225, 85);
+
+  /* ---------- quickbox brand ---------- */
+  /* Deliberately low-contrast, calm. quickbox should recede, not demand attention. */
+  --brand:            rgb(24, 24, 27);       /* near-black charcoal */
+  --brand-hover:      rgb(39, 39, 42);
+  --brand-press:      rgb(9, 9, 11);
+  --brand-tint:       rgba(24, 24, 27, 0.06);
+  --brand-on:         rgb(255, 255, 255);
+
+  /* ---------- Semantic / functional ---------- */
+  --destructive:      var(--red);
+  --success:          var(--green);
+  --warning:          var(--orange);
+  --info:             var(--blue);
+  --selection:        rgba(0, 122, 255, 0.18);
+  --selection-strong: var(--blue);
+  --focus-ring:       rgba(0, 122, 255, 0.5);
+
+  /* ---------- Materials (Liquid Glass) ---------- */
+  --glass-thin-bg:     rgba(255, 255, 255, 0.72);
+  --glass-regular-bg:  rgba(245, 245, 245, 0.85);
+  --glass-thick-bg:    rgba(255, 255, 255, 0.55);
+  --glass-blur-thin:   saturate(180%) blur(30px);
+  --glass-blur-reg:    saturate(180%) blur(30px);
+  --glass-blur-thick:  saturate(200%) blur(40px);
+  --glass-highlight:   inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  --glass-hairline:    inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
+
+  /* ---------- Radii ---------- */
+  --radius-xs:    3px;   /* tiny chips */
+  --radius-sm:    5px;   /* text fields */
+  --radius-md:    6px;   /* push buttons, menu items, rows */
+  --radius-lg:    10px;  /* cards */
+  --radius-xl:    16px;  /* windows, sheets */
+  --radius-2xl:   22px;  /* large panels */
+  --radius-3xl:   26px;  /* utility windows, Tahoe soft style */
+  --radius-pill:  9999px;
+
+  /* ---------- Shadows / elevation ---------- */
+  --elev-0: none;
+  --elev-1:
+    0 0 0 0.5px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.14);
+  --elev-2:
+    0 0 0 0.5px rgba(0, 0, 0, 0.15),
+    0 24px 56px rgba(0, 0, 0, 0.28);
+  --elev-3:
+    0 0 0 0.5px rgba(0, 0, 0, 0.23),
+    0 16px 48px rgba(0, 0, 0, 0.35);
+
+  /* Inner shadows used on recessed controls (search field, disclosure) */
+  --inner-recess:
+    inset 0 0.5px 0 0 rgba(0, 0, 0, 0.08),
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+
+  /* ---------- Spacing — 4/8pt grid ---------- */
+  --space-1:  2px;
+  --space-2:  4px;
+  --space-3:  8px;
+  --space-4:  12px;
+  --space-5:  16px;
+  --space-6:  20px;
+  --space-7:  24px;
+  --space-8:  32px;
+  --space-9:  48px;
+  --space-10: 64px;
+
+  /* ---------- Motion ---------- */
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out:      cubic-bezier(0, 0, 0.2, 1);
+  --dur-fast:      120ms;
+  --dur-med:       200ms;
+  --dur-slow:      400ms;
+
+  /* ---------- Type scale (Apple HIG text styles) ---------- */
+  /* Each style = size / line-height / weight / letter-spacing */
+  --t-largetitle-size:  26px;
+  --t-largetitle-line:  32px;
+  --t-largetitle-wt:    700;
+  --t-largetitle-ls:   -0.32px;
+
+  --t-title1-size:      22px;
+  --t-title1-line:      26px;
+  --t-title1-wt:        700;
+  --t-title1-ls:       -0.26px;
+
+  --t-title2-size:      17px;
+  --t-title2-line:      22px;
+  --t-title2-wt:        600;
+  --t-title2-ls:       -0.17px;
+
+  --t-title3-size:      15px;
+  --t-title3-line:      20px;
+  --t-title3-wt:        600;
+  --t-title3-ls:       -0.1px;
+
+  --t-headline-size:    13px;
+  --t-headline-line:    16px;
+  --t-headline-wt:      600;
+  --t-headline-ls:      0;
+
+  --t-body-size:        13px;
+  --t-body-line:        16px;
+  --t-body-wt:          400;
+  --t-body-ls:          0;
+
+  --t-callout-size:     12px;
+  --t-callout-line:     16px;
+  --t-callout-wt:       400;
+  --t-callout-ls:       0;
+
+  --t-subheadline-size: 11px;
+  --t-subheadline-line: 14px;
+  --t-subheadline-wt:   400;
+  --t-subheadline-ls:   0.06px;
+
+  --t-footnote-size:    10px;
+  --t-footnote-line:    13px;
+  --t-footnote-wt:      400;
+  --t-footnote-ls:      0.12px;
+
+  --t-caption1-size:    10px;
+  --t-caption1-line:    13px;
+  --t-caption1-wt:      500;
+  --t-caption1-ls:      0.12px;
+
+  --t-caption2-size:    10px;
+  --t-caption2-line:    13px;
+  --t-caption2-wt:      700;
+  --t-caption2-ls:      0.12px;
+}
+
+/* ---------- Dark mode ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --label:              rgba(255, 255, 255, 0.92);
+    --label-secondary:    rgba(255, 255, 255, 0.55);
+    --label-tertiary:     rgba(255, 255, 255, 0.25);
+    --label-quaternary:   rgba(255, 255, 255, 0.10);
+    --label-inverse:      rgba(0, 0, 0, 0.9);
+
+    --fill-primary:       rgba(255, 255, 255, 0.10);
+    --fill-secondary:     rgba(255, 255, 255, 0.08);
+    --fill-tertiary:      rgba(255, 255, 255, 0.05);
+    --fill-quaternary:    rgba(255, 255, 255, 0.03);
+    --fill-quinary:       rgba(255, 255, 255, 0.02);
+
+    --window-bg:          rgb(30, 30, 32);
+    --window-bg-alt:      rgb(42, 42, 45);
+    --content-bg:         rgb(38, 38, 40);
+    --sidebar-bg:         rgba(36, 36, 38, 0.75);
+    --divider:            rgba(255, 255, 255, 0.10);
+    --hairline:           rgba(0, 0, 0, 0.6);
+    --hairline-soft:      rgba(255, 255, 255, 0.12);
+
+    --glass-thin-bg:      rgba(30, 30, 32, 0.72);
+    --glass-regular-bg:   rgba(36, 36, 38, 0.78);
+    --glass-thick-bg:     rgba(30, 30, 32, 0.55);
+    --glass-highlight:    inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --glass-hairline:     inset 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+
+    --brand:              rgb(244, 244, 245);
+    --brand-hover:        rgb(228, 228, 231);
+    --brand-press:        rgb(212, 212, 216);
+    --brand-tint:         rgba(255, 255, 255, 0.08);
+    --brand-on:           rgb(9, 9, 11);
+    --selection:          rgba(0, 122, 255, 0.35);
+  }
+}
+
+/* ============================================================
+   Semantic element styles — use h1/h2/body classes or tags.
+   ============================================================ */
+
+html { color-scheme: light dark; }
+body {
+  font-family: var(--font-sans);
+  color: var(--label);
+  background: var(--window-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: var(--t-body-size);
+  line-height: var(--t-body-line);
+  letter-spacing: var(--t-body-ls);
+}
+
+h1, .qb-largetitle {
+  font-family: var(--font-display);
+  font-size: var(--t-largetitle-size);
+  line-height: var(--t-largetitle-line);
+  font-weight: var(--t-largetitle-wt);
+  letter-spacing: var(--t-largetitle-ls);
+  margin: 0;
+}
+h2, .qb-title1 {
+  font-family: var(--font-display);
+  font-size: var(--t-title1-size);
+  line-height: var(--t-title1-line);
+  font-weight: var(--t-title1-wt);
+  letter-spacing: var(--t-title1-ls);
+  margin: 0;
+}
+h3, .qb-title2 {
+  font-size: var(--t-title2-size);
+  line-height: var(--t-title2-line);
+  font-weight: var(--t-title2-wt);
+  letter-spacing: var(--t-title2-ls);
+  margin: 0;
+}
+h4, .qb-title3 {
+  font-size: var(--t-title3-size);
+  line-height: var(--t-title3-line);
+  font-weight: var(--t-title3-wt);
+  margin: 0;
+}
+.qb-headline   { font-size: 13px; line-height: 16px; font-weight: 600; }
+.qb-body       { font-size: 13px; line-height: 16px; font-weight: 400; }
+.qb-callout    { font-size: 12px; line-height: 16px; font-weight: 400; }
+.qb-subheadline{ font-size: 11px; line-height: 14px; font-weight: 400; letter-spacing: 0.06px; }
+.qb-footnote   { font-size: 10px; line-height: 13px; font-weight: 400; letter-spacing: 0.12px; color: var(--label-secondary); }
+.qb-caption1   { font-size: 10px; line-height: 13px; font-weight: 500; letter-spacing: 0.12px; color: var(--label-secondary); }
+.qb-caption2   { font-size: 10px; line-height: 13px; font-weight: 700; letter-spacing: 0.12px; color: var(--label-tertiary); text-transform: uppercase; }
+
+code, .qb-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--fill-tertiary);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+}
+
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- Utility classes ---------- */
+.qb-glass-thin {
+  background: var(--glass-thin-bg);
+  backdrop-filter: var(--glass-blur-thin);
+  -webkit-backdrop-filter: var(--glass-blur-thin);
+  box-shadow: var(--glass-highlight), var(--glass-hairline);
+}
+.qb-glass-regular {
+  background: var(--glass-regular-bg);
+  backdrop-filter: var(--glass-blur-reg);
+  -webkit-backdrop-filter: var(--glass-blur-reg);
+  box-shadow: var(--glass-highlight), var(--glass-hairline);
+}
+.qb-glass-thick {
+  background: var(--glass-thick-bg);
+  backdrop-filter: var(--glass-blur-thick);
+  -webkit-backdrop-filter: var(--glass-blur-thick);
+  box-shadow: var(--glass-highlight), var(--glass-hairline);
+}
+
+/* ---------- Focus ring ---------- */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1.5px;
+  border-radius: inherit;
+}

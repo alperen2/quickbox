@@ -19,24 +19,46 @@ struct CaptureView: View {
     }
 
     private enum Layout {
-        static let sectionGap: CGFloat = 14
+        static let sectionGap: CGFloat = 12
         static let outerPadding: CGFloat = 10
-        static let cardCornerRadius: CGFloat = 18
-        static let cardPaddingHorizontal: CGFloat = 16
-        static let cardPaddingVertical: CGFloat = 14
+        static let cardCornerRadius: CGFloat = 14
+        static let todayCornerRadius: CGFloat = 12
+        static let controlCornerRadius: CGFloat = 6
+        static let rowCornerRadius: CGFloat = 6
+        static let panelVisualWidth: CGFloat = 560
+        static let captureRowTopPadding: CGFloat = 14
+        static let captureRowBottomPadding: CGFloat = 10
+        static let captureHorizontalPadding: CGFloat = 14
+        static let captureHintLeadingPadding: CGFloat = 42
+        static let captureHintBottomPadding: CGFloat = 12
+        static let todayHeaderHorizontalPadding: CGFloat = 12
+        static let todayHeaderVerticalPadding: CGFloat = 10
+        static let todayListHorizontalPadding: CGFloat = 14
+        static let todayListTopPadding: CGFloat = 10
+        static let todayListBottomPadding: CGFloat = 14
         static let rowHorizontalPadding: CGFloat = 12
         static let rowSpacing: CGFloat = 10
         static let leadingIconWidth: CGFloat = 16
         static let trailingIconWidth: CGFloat = 44
         static let actionButtonWidth: CGFloat = 30
         static let actionGap: CGFloat = 6
-        static let minimumRowHeight: CGFloat = 58
+        static let minimumRowHeight: CGFloat = 46
         static let rowVerticalPadding: CGFloat = 6
-        static let rowSeparatorHeight: CGFloat = 1
+        static let rowSeparatorHeight: CGFloat = 0.5
         static let rowSeparatorVerticalPadding: CGFloat = 0
-        static let textFont = NSFont.systemFont(ofSize: 14, weight: .medium)
+        static let textFont = NSFont.systemFont(ofSize: 13, weight: .medium)
         static let textLineHeight = ceil(textFont.ascender - textFont.descender + textFont.leading)
         static let maxTextLines: CGFloat = 3
+    }
+
+    private enum Style {
+        static let label = Color.white.opacity(0.95)
+        static let secondaryLabel = Color.white.opacity(0.58)
+        static let tertiaryLabel = Color.white.opacity(0.36)
+        static let fill = Color.white.opacity(0.10)
+        static let fillMuted = Color.white.opacity(0.06)
+        static let divider = Color.white.opacity(0.08)
+        static let panelFill = Color(red: 38 / 255, green: 38 / 255, blue: 42 / 255).opacity(0.72)
     }
 
     @ObservedObject var appState: AppState
@@ -82,7 +104,7 @@ struct CaptureView: View {
         .opacity(animateIn ? 1.0 : 0.0)
         .onAppear {
             animateIn = false
-            withAnimation(.spring(response: 0.18, dampingFraction: 0.9)) {
+            withAnimation(.easeOut(duration: 0.12)) {
                 animateIn = true
             }
             focusedField = .capture
@@ -152,7 +174,7 @@ struct CaptureView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .quickboxCapturePresented)) { _ in
             animateIn = false
-            withAnimation(.spring(response: 0.18, dampingFraction: 0.9)) {
+            withAnimation(.easeOut(duration: 0.12)) {
                 animateIn = true
             }
             notifyHeightChange()
@@ -177,21 +199,26 @@ struct CaptureView: View {
 
     private var panelWidth: CGFloat {
         if mode == .spotlight {
-            return isCalendarViewActive ? 760 : 620
+            return isCalendarViewActive ? 780 : 580
         }
-        return 520
+        return 580
     }
 
     private var captureSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "square.and.pencil")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Color.white.opacity(0.66))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.75))
+                    .frame(width: 22, height: 22)
+                    .background(
+                        RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                            .fill(Style.fillMuted)
+                    )
 
                 CustomTextFieldWithKeyHandling(
                     text: $appState.draftText,
-                    prompt: "Capture thought...",
+                    prompt: "Capture thought…",
                     accessibilityIdentifier: "capture-input",
                     onUpArrow: {
                         if !autocompleteSuggestions.isEmpty {
@@ -240,6 +267,9 @@ struct CaptureView: View {
                     calendarModeButton
                 }
             }
+            .padding(.top, Layout.captureRowTopPadding)
+            .padding(.horizontal, Layout.captureHorizontalPadding)
+            .padding(.bottom, Layout.captureRowBottomPadding)
             .overlay(alignment: .topLeading) {
                 if shouldShowAutocompleteMenu {
                     AutocompleteMenu(
@@ -259,10 +289,10 @@ struct CaptureView: View {
             }
 
             if shouldShowCaptureHint {
-                Text(captureHintText)
-                    .font(.caption)
-                    .foregroundStyle(Color.white.opacity(0.56))
-                    .padding(.leading, 26)
+                captureHints
+                    .padding(.leading, Layout.captureHintLeadingPadding)
+                    .padding(.trailing, 16)
+                    .padding(.bottom, Layout.captureHintBottomPadding)
                     .accessibilityIdentifier("capture-speed-hint")
             }
 
@@ -277,14 +307,14 @@ struct CaptureView: View {
                                     .font(.caption2.weight(.semibold))
                                 Text(insight.preview)
                                     .font(.caption2)
-                                    .foregroundStyle(insight.isResolved ? Color.white.opacity(0.62) : Color.orange.opacity(0.85))
+                                    .foregroundStyle(insight.isResolved ? Style.secondaryLabel : Color.orange.opacity(0.85))
                             }
                             .foregroundStyle(insight.isResolved ? Color.white.opacity(0.85) : Color.orange.opacity(0.95))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(
                                 Capsule(style: .continuous)
-                                    .fill(insight.isResolved ? Color.white.opacity(0.10) : Color.orange.opacity(0.18))
+                                    .fill(insight.isResolved ? Style.fill : Color.orange.opacity(0.18))
                             )
                             .overlay(
                                 Capsule(style: .continuous)
@@ -297,9 +327,8 @@ struct CaptureView: View {
                 }
             }
         }
-        .padding(.horizontal, Layout.cardPaddingHorizontal)
-        .padding(.vertical, Layout.cardPaddingVertical)
-        .background(cardBackground())
+        .frame(width: Layout.panelVisualWidth, alignment: .leading)
+        .background(panelBackground(cornerRadius: Layout.cardCornerRadius))
         .zIndex(shouldShowAutocompleteMenu ? 20 : 1)
     }
 
@@ -320,11 +349,43 @@ struct CaptureView: View {
         focusedField == .capture && !isCalendarViewActive
     }
 
-    private var captureHintText: String {
-        if shouldShowAutocompleteMenu {
-            return "↑↓ seç • Tab tamamla • Enter kaydet • Esc kapat"
+    private var captureHints: some View {
+        Group {
+            if shouldShowAutocompleteMenu {
+                Text("↑↓ choose • Tab complete • Enter save • Esc close")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Style.tertiaryLabel)
+            } else {
+                HStack(spacing: 6) {
+                    hintToken("@", "project")
+                    hintSeparator
+                    hintToken("#", "tag")
+                    hintSeparator
+                    hintToken("!", "priority")
+                    hintSeparator
+                    Text("due:")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Style.secondaryLabel)
+                }
+            }
         }
-        return "@ project • # tag • ! priority • due:"
+    }
+
+    private func hintToken(_ token: String, _ label: String) -> some View {
+        HStack(spacing: 4) {
+            Text(token)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Style.secondaryLabel)
+            Text(label)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Style.tertiaryLabel)
+        }
+    }
+
+    private var hintSeparator: some View {
+        Text("•")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(Style.tertiaryLabel)
     }
 
     private func analyzeDraftInsights() {
@@ -635,31 +696,63 @@ struct CaptureView: View {
         closeAutocomplete()
     }
 
+    @ViewBuilder
     private var spotlightSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if isCalendarViewActive {
+        if isCalendarViewActive {
+            VStack(alignment: .leading, spacing: 10) {
                 spotlightCalendar
-            } else {
-                spotlightHeader
-                spotlightList
-            }
 
-            if let successToastMessage {
-                statusToast(message: successToastMessage, isError: false)
-                    .accessibilityIdentifier("capture-success-toast")
-            } else if let captureMessage = appState.captureMessage {
-                statusToast(message: captureMessage, isError: true)
-                    .accessibilityIdentifier("capture-error-message")
-            } else if let inboxMessage = appState.inboxMessage {
-                Text(inboxMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                spotlightMessage
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(width: panelWidth - (Layout.outerPadding * 2), alignment: .leading)
+            .background(panelBackground(cornerRadius: Layout.todayCornerRadius))
+            .zIndex(1)
+        } else {
+            VStack(alignment: .leading, spacing: 0) {
+                spotlightHeader
+                    .padding(.horizontal, Layout.todayHeaderHorizontalPadding)
+                    .padding(.vertical, Layout.todayHeaderVerticalPadding)
+                    .overlay(alignment: .bottom) {
+                        Rectangle()
+                            .fill(Style.divider)
+                            .frame(height: 0.5)
+                    }
+
+                spotlightList
+                    .padding(.horizontal, Layout.todayListHorizontalPadding)
+                    .padding(.top, Layout.todayListTopPadding)
+                    .padding(.bottom, Layout.todayListBottomPadding)
+
+                spotlightMessage
+            }
+            .frame(width: Layout.panelVisualWidth, alignment: .leading)
+            .background(panelBackground(cornerRadius: Layout.todayCornerRadius))
+            .zIndex(1)
         }
-        .padding(.horizontal, Layout.cardPaddingHorizontal)
-        .padding(.vertical, Layout.cardPaddingVertical)
-        .background(cardBackground())
-        .zIndex(1)
+    }
+
+    @ViewBuilder
+    private var spotlightMessage: some View {
+        if let successToastMessage {
+            statusToast(message: successToastMessage, isError: false)
+                .padding(.horizontal, Layout.todayListHorizontalPadding)
+                .padding(.bottom, Layout.todayListBottomPadding)
+                .accessibilityIdentifier("capture-success-toast")
+        } else if let captureMessage = appState.captureMessage {
+            statusToast(message: captureMessage, isError: true)
+                .padding(.horizontal, Layout.todayListHorizontalPadding)
+                .padding(.bottom, Layout.todayListBottomPadding)
+                .accessibilityIdentifier("capture-error-message")
+        } else if let inboxMessage = appState.inboxMessage,
+                  !appState.visibleInboxItems.isEmpty {
+            Text(inboxMessage)
+                .font(.footnote)
+                .foregroundStyle(Style.secondaryLabel)
+                .padding(.horizontal, Layout.todayListHorizontalPadding)
+                .padding(.bottom, Layout.todayListBottomPadding)
+        }
     }
 
     private func statusToast(message: String, isError: Bool) -> some View {
@@ -674,47 +767,47 @@ struct CaptureView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
         .background(
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
+            RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
                 .fill(isError ? Color.orange.opacity(0.16) : Color.green.opacity(0.16))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 9, style: .continuous)
+            RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
                 .stroke(isError ? Color.orange.opacity(0.30) : Color.green.opacity(0.30), lineWidth: 0.8)
         )
     }
 
-    private func cardBackground() -> some View {
-        RoundedRectangle(cornerRadius: Layout.cardCornerRadius, style: .continuous)
-            .fill(Color.black.opacity(0.34))
+    private func panelBackground(cornerRadius: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(Style.panelFill)
             .background(
                 .ultraThinMaterial,
-                in: RoundedRectangle(cornerRadius: Layout.cardCornerRadius, style: .continuous)
+                in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: Layout.cardCornerRadius, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 0.8)
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(Style.divider, lineWidth: 0.8)
             )
-            .shadow(color: .black.opacity(0.18), radius: 12, x: 0, y: 6)
+            .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 8)
     }
 
     private var calendarModeButton: some View {
         Button {
             closeAutocomplete()
-            withAnimation(.spring(response: 0.18, dampingFraction: 0.9)) {
+            withAnimation(.easeInOut(duration: 0.18)) {
                 isCalendarViewActive.toggle()
             }
         } label: {
-            Image(systemName: isCalendarViewActive ? "calendar.circle.fill" : "calendar.circle")
-                .font(.system(size: 23, weight: .medium))
-                .foregroundStyle(isCalendarViewActive ? Color.white.opacity(0.95) : Color.white.opacity(0.78))
-                .frame(width: 32, height: 32)
+            Image(systemName: isCalendarViewActive ? "calendar.badge.checkmark" : "calendar")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(isCalendarViewActive ? Style.label : Style.secondaryLabel)
+                .frame(width: 28, height: 28)
                 .background(
-                    Circle()
-                        .fill(isCalendarViewActive ? Color.white.opacity(0.18) : Color.white.opacity(0.10))
+                    RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                        .fill(isCalendarViewActive ? Color.white.opacity(0.16) : Style.fillMuted)
                 )
                 .overlay(
-                    Circle()
-                        .stroke(Color.white.opacity(isCalendarViewActive ? 0.34 : 0.14), lineWidth: 0.9)
+                    RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                        .stroke(Color.white.opacity(isCalendarViewActive ? 0.26 : 0.12), lineWidth: 0.8)
                 )
         }
         .buttonStyle(.plain)
@@ -724,39 +817,47 @@ struct CaptureView: View {
 
     private var spotlightHeader: some View {
         HStack {
-            navButton(systemName: "chevron.left") {
-                appState.navigateInboxDayBackward()
-            }
+            HStack(spacing: 2) {
+                todayHeaderButton(systemName: "chevron.left") {
+                    appState.navigateInboxDayBackward()
+                }
 
-            Text(appState.selectedInboxDateLabel)
-                .font(.subheadline.weight(.semibold))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(Color.white.opacity(0.12))
-                )
+                Text(appState.selectedInboxDateLabel)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Style.label)
+                    .padding(.horizontal, 4)
 
-            navButton(systemName: "chevron.right") {
-                appState.navigateInboxDayForward()
+                todayHeaderButton(systemName: "chevron.right") {
+                    appState.navigateInboxDayForward()
+                }
+                .disabled(!appState.canNavigateForwardInboxDate)
             }
-            .disabled(!appState.canNavigateForwardInboxDate)
+            .padding(2)
+            .background(
+                RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                    .fill(Style.fillMuted)
+            )
 
             Spacer()
 
             Button {
                 appState.showOnlyOpenTasks.toggle()
             } label: {
-                Label("Open only", systemImage: appState.showOnlyOpenTasks ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(appState.showOnlyOpenTasks ? Color.white.opacity(0.95) : Color.white.opacity(0.68))
+                Label {
+                    Text("Open only")
+                        .font(.system(size: 11, weight: .semibold))
+                } icon: {
+                    Image(systemName: appState.showOnlyOpenTasks ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                        .font(.system(size: 10, weight: .semibold))
+                }
+                .foregroundStyle(appState.showOnlyOpenTasks ? Style.label : Style.secondaryLabel)
             }
             .buttonStyle(.plain)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
             .background(
-                Capsule(style: .continuous)
-                    .fill(appState.showOnlyOpenTasks ? Color.white.opacity(0.16) : Color.white.opacity(0.08))
+                RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                    .fill(appState.showOnlyOpenTasks ? Color.white.opacity(0.15) : Style.fill)
             )
 
             if appState.canUndoDelete {
@@ -764,17 +865,32 @@ struct CaptureView: View {
                     appState.handleSpotlightMutation(.undoLastDelete)
                 } label: {
                     Label("Undo", systemImage: "arrow.uturn.backward")
-                        .font(.footnote.weight(.semibold))
+                        .font(.system(size: 11, weight: .semibold))
                 }
                 .buttonStyle(.plain)
-                .padding(.horizontal, 9)
-                .padding(.vertical, 5)
+                .foregroundStyle(Style.label)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
                 .background(
-                    Capsule(style: .continuous)
-                        .fill(Color.white.opacity(0.10))
+                    RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                        .fill(Style.fill)
                 )
             }
         }
+    }
+
+    private func todayHeaderButton(systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Style.secondaryLabel)
+                .frame(width: 22, height: 20)
+                .background(
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
+                        .fill(Color.clear)
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private var spotlightCalendar: some View {
@@ -785,35 +901,35 @@ struct CaptureView: View {
                         .font(.system(size: 12, weight: .semibold))
                         .frame(width: 20, height: 20)
                         .background(
-                            Circle()
-                                .fill(Color.white.opacity(0.10))
+                            RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                                .fill(Style.fill)
                         )
                     Text("Calendar")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.white.opacity(0.9))
+                        .foregroundStyle(Style.label)
                     Text(appState.selectedInboxDateLabel)
                         .font(.footnote.weight(.medium))
-                        .foregroundStyle(Color.white.opacity(0.7))
+                        .foregroundStyle(Style.secondaryLabel)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
                         .background(
                             Capsule(style: .continuous)
-                                .fill(Color.white.opacity(0.08))
+                                .fill(Style.fillMuted)
                         )
                     Spacer()
                     Button {
                         closeCalendarView()
                     } label: {
-                        Label("Done", systemImage: "checkmark")
+                        Label("Close", systemImage: "xmark")
                             .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color.white.opacity(0.9))
+                            .foregroundStyle(Style.label)
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(
                         Capsule(style: .continuous)
-                            .fill(Color.white.opacity(0.10))
+                            .fill(Style.fill)
                     )
                 }
 
@@ -881,7 +997,7 @@ struct CaptureView: View {
                 }
                 .padding(10)
                 .background(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(Color.white.opacity(0.05))
                 )
             }
@@ -898,13 +1014,13 @@ struct CaptureView: View {
         let selectedDayItems = appState.visibleInboxItems
 
         return VStack(alignment: .leading, spacing: 10) {
-            Text("Selected Day")
+            Text("Selected day")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color.white.opacity(0.9))
+                .foregroundStyle(Style.label)
 
             Text(appState.selectedInboxDateLabel)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Color.white.opacity(0.95))
+                .foregroundStyle(Style.label)
 
             calendarSidebarButton("Yesterday", systemName: "arrow.left") {
                 shiftInboxDate(days: -1)
@@ -912,13 +1028,13 @@ struct CaptureView: View {
             calendarSidebarButton("Tomorrow", systemName: "arrow.right") {
                 shiftInboxDate(days: 1)
             }
-            calendarSidebarButton("This Week", systemName: "calendar") {
+            calendarSidebarButton("This week", systemName: "calendar") {
                 setCalendarFocus(Date())
                 appState.selectInboxDate(Date())
             }
 
             Divider()
-                .overlay(Color.white.opacity(0.08))
+                .overlay(Style.divider)
 
             Text("Progress")
                 .font(.footnote.weight(.semibold))
@@ -946,7 +1062,7 @@ struct CaptureView: View {
             .font(.caption)
 
             Divider()
-                .overlay(Color.white.opacity(0.08))
+                .overlay(Style.divider)
 
             HStack {
                 Text("Tasks")
@@ -984,8 +1100,8 @@ struct CaptureView: View {
         .padding(12)
         .frame(width: 272, alignment: .topLeading)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.white.opacity(0.06))
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Style.fillMuted)
         )
     }
 
@@ -1038,7 +1154,7 @@ struct CaptureView: View {
             return isToday ? Color.white.opacity(0.16) : Color.white.opacity(0.025)
         }()
         let todayStrokeColor = isToday && !isSelected ? Color.white.opacity(0.25) : Color.clear
-        let focusStrokeColor = isFocused ? Color.white.opacity(0.76) : Color.clear
+        let focusStrokeColor = isFocused ? Color.accentColor.opacity(0.85) : Color.clear
 
         return Button {
             setCalendarFocus(date)
@@ -1075,15 +1191,15 @@ struct CaptureView: View {
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, minHeight: 40)
             .background(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: Layout.rowCornerRadius, style: .continuous)
                     .fill(backgroundColor)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: Layout.rowCornerRadius, style: .continuous)
                     .stroke(todayStrokeColor, lineWidth: 0.8)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 9, style: .continuous)
+                RoundedRectangle(cornerRadius: Layout.rowCornerRadius, style: .continuous)
                     .stroke(focusStrokeColor, lineWidth: 1.2)
                     .padding(0.5)
             )
@@ -1121,22 +1237,28 @@ struct CaptureView: View {
             if appState.visibleInboxItems.isEmpty {
                 Text(appState.inboxMessage ?? "No notes for today yet.")
                     .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Style.secondaryLabel)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 10)
-            } else {
+            } else if shouldScrollSpotlightList {
                 ScrollView {
-                    let items = Array(appState.visibleInboxItems.enumerated())
-                    LazyVStack(spacing: 0) {
-                        ForEach(items, id: \.element.id) { index, item in
-                            taskRow(item)
-                            if index < items.count - 1 {
-                                taskSeparator
-                            }
-                        }
-                    }
+                    spotlightListContent
                 }
-                .frame(maxHeight: listMaxHeight)
+                .frame(height: listMaxHeight)
+            } else {
+                spotlightListContent
+            }
+        }
+    }
+
+    private var spotlightListContent: some View {
+        let items = Array(appState.visibleInboxItems.enumerated())
+        return LazyVStack(spacing: 0) {
+            ForEach(items, id: \.element.id) { index, item in
+                taskRow(item)
+                if index < items.count - 1 {
+                    taskSeparator
+                }
             }
         }
     }
@@ -1188,14 +1310,21 @@ struct CaptureView: View {
     }
 
     private var listMaxHeight: CGFloat {
+        min(spotlightListMeasuredHeight, 430)
+    }
+
+    private var shouldScrollSpotlightList: Bool {
+        spotlightListMeasuredHeight > 430
+    }
+
+    private var spotlightListMeasuredHeight: CGFloat {
         let itemsForSizing = Array(appState.visibleInboxItems.prefix(8))
         let rowsHeight = itemsForSizing.reduce(CGFloat.zero) { partial, item in
             partial + estimatedRowHeight(for: item)
         }
         let separators = CGFloat(max(itemsForSizing.count - 1, 0))
         let separatorsHeight = separators * (Layout.rowSeparatorHeight + (Layout.rowSeparatorVerticalPadding * 2))
-        let measured = rowsHeight + separatorsHeight
-        return min(max(120, measured), 430)
+        return rowsHeight + separatorsHeight
     }
 
     private func estimatedRowHeight(for item: InboxItem) -> CGFloat {
@@ -1234,10 +1363,11 @@ struct CaptureView: View {
         Button(action: action) {
             Image(systemName: systemName)
                 .font(.system(size: 12, weight: .semibold))
-                .frame(width: 20, height: 20)
+                .foregroundStyle(Style.secondaryLabel)
+                .frame(width: 22, height: 22)
                 .background(
-                    Circle()
-                        .fill(Color.white.opacity(0.10))
+                    RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                        .fill(Style.fillMuted)
                 )
         }
         .buttonStyle(.plain)
@@ -1252,7 +1382,7 @@ struct CaptureView: View {
                 .padding(.vertical, 5)
                 .background(
                     Capsule(style: .continuous)
-                        .fill(Color.white.opacity(0.09))
+                        .fill(Style.fillMuted)
                 )
         }
         .buttonStyle(.plain)
@@ -1271,8 +1401,8 @@ struct CaptureView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 6)
             .background(
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.white.opacity(0.08))
+                RoundedRectangle(cornerRadius: Layout.rowCornerRadius, style: .continuous)
+                    .fill(Style.fillMuted)
             )
         }
         .buttonStyle(.plain)
@@ -1313,8 +1443,8 @@ struct CaptureView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.white.opacity(0.06))
+            RoundedRectangle(cornerRadius: Layout.rowCornerRadius, style: .continuous)
+                .fill(Style.fillMuted)
         )
     }
 
@@ -1339,8 +1469,8 @@ struct CaptureView: View {
                     if isEditing {
                         TextField("Edit task", text: $editingDraftText)
                             .textFieldStyle(.plain)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.primary)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Style.label)
                             .focused($focusedField, equals: .rowEditor)
                             .onSubmit {
                                 saveEditing(item)
@@ -1351,14 +1481,14 @@ struct CaptureView: View {
                                 if item.metadata["defer"] != nil || item.metadata["start"] != nil {
                                     Image(systemName: "tray.and.arrow.down.fill")
                                         .font(.system(size: 11))
-                                        .foregroundStyle(.blue.opacity(0.8))
-                                        .help("Deferred Arrival")
+                                        .foregroundStyle(Color.blue.opacity(0.8))
+                                        .help("Deferred arrival")
                                 }
                                 
                                 Text(item.text)
-                                    .font(.system(size: 14, weight: .medium))
+                                    .font(.system(size: 13, weight: .medium))
                                     .strikethrough(item.isCompleted)
-                                    .foregroundStyle(item.isCompleted ? .secondary : .primary)
+                                    .foregroundStyle(item.isCompleted ? Style.tertiaryLabel : Style.label)
                                     .lineLimit(2)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -1373,8 +1503,8 @@ struct CaptureView: View {
                                         .font(.system(size: 11, weight: .bold))
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
-                                        .background(Color.white.opacity(0.12))
-                                        .cornerRadius(4)
+                                        .background(Style.fill)
+                                        .cornerRadius(5)
                                         .foregroundStyle(Color.white.opacity(0.85))
                                     }
                                     
@@ -1384,7 +1514,7 @@ struct CaptureView: View {
                                             .padding(.horizontal, 6)
                                             .padding(.vertical, 2)
                                             .background(Color.blue.opacity(0.2))
-                                            .cornerRadius(4)
+                                            .cornerRadius(5)
                                             .foregroundStyle(.blue)
                                     }
                                     
@@ -1406,7 +1536,7 @@ struct CaptureView: View {
                                                 } else if key == "defer" || key == "due" || key == "start" {
                                                     Button("Today") { updateMetadata(item: item, key: key, newValue: "tdy") }
                                                     Button("Tomorrow") { updateMetadata(item: item, key: key, newValue: "tmr") }
-                                                    Button("Next Week") { updateMetadata(item: item, key: key, newValue: "nw") }
+                                                    Button("Next week") { updateMetadata(item: item, key: key, newValue: "nw") }
                                                     Divider()
                                                     Button("Remove") { updateMetadata(item: item, key: key, newValue: nil) }
                                                 }
@@ -1419,7 +1549,7 @@ struct CaptureView: View {
                                                 .padding(.horizontal, 6)
                                                 .padding(.vertical, 2)
                                                 .background(colorForMetadataKey(key).opacity(0.2))
-                                                .cornerRadius(4)
+                                                .cornerRadius(5)
                                                 .foregroundStyle(colorForMetadataKey(key))
                                             }
                                             .menuStyle(.borderlessButton)
@@ -1435,7 +1565,7 @@ struct CaptureView: View {
 
                     Text(plannedTimeDisplay(for: item))
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Style.secondaryLabel)
                         .frame(minWidth: 36, alignment: .trailing)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1513,8 +1643,8 @@ struct CaptureView: View {
                 .foregroundStyle(tint)
                 .frame(width: 28, height: 28)
                 .background(
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(Color.white.opacity(0.14))
+                    RoundedRectangle(cornerRadius: Layout.controlCornerRadius, style: .continuous)
+                        .fill(Color.white.opacity(0.12))
                 )
         }
         .buttonStyle(.plain)
@@ -1559,7 +1689,7 @@ struct CaptureView: View {
     }
 
     private func closeCalendarView() {
-        withAnimation(.spring(response: 0.18, dampingFraction: 0.9)) {
+        withAnimation(.easeInOut(duration: 0.18)) {
             isCalendarViewActive = false
         }
     }

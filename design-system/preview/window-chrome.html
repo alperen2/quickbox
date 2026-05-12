@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Traffic lights</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+ html,body{margin:0;height:100%;background:var(--window-bg);font-family:var(--font-sans);}
+ .wrap{display:flex;flex-direction:column;gap:14px;padding:24px;justify-content:center;height:100%;box-sizing:border-box;}
+ .bar{height:32px;background:var(--glass-regular-bg);backdrop-filter:blur(30px) saturate(180%);border-radius:12px 12px 0 0;display:flex;align-items:center;padding:0 12px;gap:8px;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.12);}
+ .dot{width:12px;height:12px;border-radius:50%;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.12);}
+ .r{background:#ff5f57;}.y{background:#febc2e;}.g{background:#28c840;}
+ .title{font-size:13px;font-weight:600;color:var(--label);margin-left:16px;}
+ .tag{font-size:10px;color:var(--label-tertiary);font-family:var(--font-mono);margin-left:auto;}
+</style></head><body>
+<div class="wrap">
+  <div class="bar">
+    <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="title">quickbox</span>
+    <span class="tag">titlebar · 32px · glass-regular</span>
+  </div>
+  <div class="bar">
+    <span class="dot" style="background:#d2d2d2;"></span><span class="dot" style="background:#d2d2d2;"></span><span class="dot" style="background:#d2d2d2;"></span>
+    <span class="title" style="color:var(--label-tertiary)">quickbox (inactive)</span>
+  </div>
+</div></body></html>

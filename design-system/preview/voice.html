@@ -1,0 +1,24 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Voice</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+ html,body{margin:0;height:100%;background:var(--window-bg);font-family:var(--font-sans);}
+ .wrap{padding:16px 20px;display:flex;flex-direction:column;gap:10px;height:100%;box-sizing:border-box;justify-content:center;}
+ .hero{font-size:18px;font-weight:600;letter-spacing:-.3px;color:var(--label);line-height:22px;}
+ .hero em{font-style:normal;color:var(--label);background:var(--fill-secondary);padding:1px 6px;border-radius:5px;}
+ .sub{font-size:12px;color:var(--label-secondary);line-height:16px;}
+ .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
+ .c{background:#fff;border-radius:8px;padding:7px 10px;box-shadow:0 0 0 .5px rgba(0,0,0,.1);font-size:12px;line-height:15px;}
+ .c .tag{font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;display:block;margin-bottom:2px;}
+ .c.dont .tag{color:var(--red);} .c.do .tag{color:var(--green);}
+</style></head><body>
+<div class="wrap">
+  <div class="hero">quickbox is <em>short</em>, <em>calm</em>, and <em>keyboard-first</em>.</div>
+  <div class="sub">Every word in the UI is chosen to not interrupt. Verbs for actions, sentence case, no hype, no emoji.</div>
+  <div class="grid">
+    <div class="c dont"><span class="tag">Don't</span>🎉 Task added!</div>
+    <div class="c do"><span class="tag">Do</span>Added to Today.</div>
+    <div class="c dont"><span class="tag">Don't</span>Submit Task</div>
+    <div class="c do"><span class="tag">Do</span>Add</div>
+  </div>
+</div></body></html>

@@ -7,6 +7,7 @@ export default {
   themeConfig: {
     nav: [
       { text: "Guide", link: "/getting-started" },
+      { text: "Support", link: "/support" },
       { text: "Privacy", link: "/privacy" },
       { text: "Contributing", link: "/contributing" },
       { text: "GitHub", link: "https://github.com/alperen2/quickbox" }
@@ -19,6 +20,7 @@ export default {
           { text: "Usage", link: "/usage" },
           { text: "Settings", link: "/settings" },
           { text: "FAQ", link: "/faq" },
+          { text: "Support", link: "/support" },
           { text: "Privacy", link: "/privacy" },
           { text: "Contributing", link: "/contributing" }
         ]

@@ -1,0 +1,19 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Label colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+ html,body{margin:0;height:100%;background:#18181B;font-family:var(--font-sans);}
+ .col{display:flex;flex-direction:column;gap:8px;padding:20px 22px;height:100%;box-sizing:border-box;justify-content:center;}
+ .head{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:2px;}
+ .row{display:flex;align-items:baseline;gap:14px;}
+ .dot{width:12px;height:12px;border-radius:3px;display:inline-block;box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25);}
+ .tok{font-size:10px;color:rgba(255,255,255,.35);font-family:var(--font-mono);margin-left:auto;}
+ .lbl{font-size:13px;letter-spacing:-.1px;}
+</style></head><body>
+<div class="col">
+  <div class="head">Labels on dark surface</div>
+  <div class="row"><span class="dot" style="background:rgba(255,255,255,.92)"></span><span class="lbl" style="color:rgba(255,255,255,.92)">Primary</span><span class="tok">--label-inv · 92%</span></div>
+  <div class="row"><span class="dot" style="background:rgba(255,255,255,.60)"></span><span class="lbl" style="color:rgba(255,255,255,.60)">Secondary</span><span class="tok">--label-inv-secondary · 60%</span></div>
+  <div class="row"><span class="dot" style="background:rgba(255,255,255,.38)"></span><span class="lbl" style="color:rgba(255,255,255,.38)">Tertiary</span><span class="tok">--label-inv-tertiary · 38%</span></div>
+  <div class="row"><span class="dot" style="background:rgba(255,255,255,.20)"></span><span class="lbl" style="color:rgba(255,255,255,.26)">Quaternary</span><span class="tok">--label-inv-quaternary · 20%</span></div>
+</div></body></html>

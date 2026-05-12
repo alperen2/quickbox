@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Brand color</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+ html,body{margin:0;height:100%;background:var(--window-bg);font-family:var(--font-sans);}
+ .wrap{display:flex;flex-direction:column;gap:8px;padding:16px 18px;height:100%;box-sizing:border-box;}
+ .lede{font-size:11px;color:var(--label-secondary);line-height:14px;}
+ .row{display:flex;gap:8px;flex:1;}
+ .sw{flex:1;border-radius:8px;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.1);}
+ .sw b{font-size:12px;font-weight:600;}
+ .sw span{font-size:10px;font-family:var(--font-mono);opacity:.7;}
+ .dark{color:#fff;}
+ .light{color:var(--label);}
+</style></head><body>
+<div class="wrap">
+  <div class="lede">Brand is intentionally quiet — charcoal, not a shout. The product should recede so the task you're capturing stays in focus.</div>
+  <div class="row">
+    <div class="sw dark" style="background:#18181B"><b>brand</b><span>#18181B</span></div>
+    <div class="sw dark" style="background:#27272A"><b>brand-hover</b><span>#27272A</span></div>
+    <div class="sw dark" style="background:#09090B"><b>brand-press</b><span>#09090B</span></div>
+    <div class="sw light" style="background:rgba(24,24,27,0.06)"><b>brand-tint</b><span>6% α</span></div>
+  </div>
+</div></body></html>

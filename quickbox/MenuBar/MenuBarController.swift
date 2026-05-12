@@ -13,7 +13,13 @@ final class MenuBarController: NSObject {
         popover.contentViewController = popoverContentViewController
 
         if let button = statusItem.button {
-            button.title = "QB"
+            if let image = NSImage(systemSymbolName: "shippingbox.fill", accessibilityDescription: "quickbox") {
+                image.isTemplate = true
+                button.image = image
+                button.imagePosition = .imageOnly
+            } else {
+                button.title = "QB"
+            }
             button.toolTip = "quickbox"
             button.target = self
             button.action = #selector(togglePopover)

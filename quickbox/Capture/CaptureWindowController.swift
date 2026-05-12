@@ -8,7 +8,7 @@ private final class FocusableCapturePanel: NSPanel {
 
 final class CaptureWindowController: NSObject, NSWindowDelegate {
     private enum Constants {
-        static let panelWidth: CGFloat = 620
+        static let panelWidth: CGFloat = 580
         static let minPanelHeight: CGFloat = 240
         static let maxPanelHeight: CGFloat = 620
         static let savedRelativeXKey = "quickbox.capturePanel.relativeX"

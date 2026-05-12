@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Iconography</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+ html,body{margin:0;height:100%;background:var(--window-bg);font-family:var(--font-sans);}
+ .wrap{display:flex;flex-wrap:wrap;gap:18px;padding:22px;align-items:center;justify-content:center;height:100%;box-sizing:border-box;}
+ .ic{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--label);font-size:10px;}
+ .ic svg{stroke-width:1.5;}
+ .ic b{font-family:var(--font-mono);color:var(--label-tertiary);}
+</style></head><body>
+<div class="wrap">
+  <div class="ic"><i data-lucide="inbox" width="24" height="24"></i><b>inbox</b></div>
+  <div class="ic"><i data-lucide="send" width="24" height="24"></i><b>send</b></div>
+  <div class="ic"><i data-lucide="folder" width="24" height="24"></i><b>folder</b></div>
+  <div class="ic"><i data-lucide="upload-cloud" width="24" height="24"></i><b>upload</b></div>
+  <div class="ic"><i data-lucide="link" width="24" height="24"></i><b>link</b></div>
+  <div class="ic"><i data-lucide="lock" width="24" height="24"></i><b>lock</b></div>
+  <div class="ic"><i data-lucide="search" width="24" height="24"></i><b>search</b></div>
+  <div class="ic"><i data-lucide="settings" width="24" height="24"></i><b>settings</b></div>
+  <div class="ic"><i data-lucide="trash-2" width="24" height="24"></i><b>trash</b></div>
+  <div class="ic"><i data-lucide="user" width="24" height="24"></i><b>user</b></div>
+  <div class="ic"><i data-lucide="bell" width="24" height="24"></i><b>bell</b></div>
+  <div class="ic"><i data-lucide="check" width="24" height="24"></i><b>check</b></div>
+</div>
+<script>lucide.createIcons();</script>
+</body></html>

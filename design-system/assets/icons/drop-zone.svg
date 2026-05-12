@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" width="160" height="120" fill="none">
+  <rect x="4" y="4" width="152" height="112" rx="14" stroke="rgba(0,0,0,.35)" stroke-width="2" stroke-dasharray="6 5"></rect>
+  <g stroke="rgba(0,0,0,.45)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M80 44v28"></path>
+    <path d="M68 60l12-12 12 12"></path>
+  </g>
+</svg>
