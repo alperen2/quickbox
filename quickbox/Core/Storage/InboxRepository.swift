@@ -42,6 +42,7 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
     private let parser = InboxParser()
 
     private var lastDeleted: DeletedLine?
+    private var migratedFolderPaths = Set<String>()
 
     init(storageResolver: StorageResolving, fileManager: FileManager = .default) {
         self.storageResolver = storageResolver
@@ -52,41 +53,9 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
         do {
             return try InboxStorageQueue.shared.sync {
                 try withResolvedFolder { folderURL in
-                    var allItems: [InboxItem] = []
+                    let allItems = try collectItems(on: date, in: folderURL)
                     
-                    let formattedRouteDate = self.fileName(for: date).replacingOccurrences(of: ".md", with: "")
-                    let dateTag = "date:\(formattedRouteDate)"
-                    
-                    // 1. Load the default daily log file
-                    let defaultFileURL = try fileURL(for: date, in: folderURL)
-                    if fileManager.fileExists(atPath: defaultFileURL.path) {
-                        let lines = try readLines(fileURL: defaultFileURL)
-                        let items = parser.parse(lines: lines, sourceID: defaultFileURL.lastPathComponent)
-                        allItems.append(contentsOf: items)
-                    }
-                    
-                    // 2. Scan all other .md files for routed project tasks with the date tag
-                    let contents = try fileManager.contentsOfDirectory(at: folderURL, includingPropertiesForKeys: nil)
-                    let otherMarkdowns = contents.filter { $0.pathExtension == "md" && $0.lastPathComponent != defaultFileURL.lastPathComponent }
-                    
-                    for mdFileURL in otherMarkdowns {
-                        let lines = try readLines(fileURL: mdFileURL)
-                        // Only parse lines that actually contain the date tag to save performance
-                        let matchingLines = lines.enumerated().filter { $0.element.contains(dateTag) }
-                        
-                        // We still need to pass the real line index from the file to the parser to allow correct edits
-                        // However, InboxParser expects an array of strings, where index == lineIndex.
-                        // To bypass this, we can parse all lines but only keep the ones we matched.
-                        if !matchingLines.isEmpty {
-                            let items = parser.parse(lines: lines, sourceID: mdFileURL.lastPathComponent)
-                            let filteredItems = items.filter { item in
-                                matchingLines.contains { $0.offset == item.lineIndex }
-                            }
-                            allItems.append(contentsOf: filteredItems)
-                        }
-                    }
-                    
-                    // 3. Filter out deferred tasks
+                    // Filter out deferred tasks
                     // A task with a future `defer:` date shouldn't show up until that date arrives.
                     let deferResolver = DeferDateResolver()
                     let activeItems = allItems.filter { item in
@@ -192,12 +161,6 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                                 components.append("\(key):\(value)")
                             }
                         }
-                        
-                        // Keep the date metadata tag if it exists in the raw line (even if parser stripped it)
-                        let datePattern = /date:([0-9]{4}-[0-9]{2}-[0-9]{2})/
-                        if let dateMatch = item.rawLine.firstMatch(of: datePattern) {
-                            components.append("date:\(dateMatch.1)")
-                        }
 
                         let finalString = components.joined(separator: " ")
                         let status = item.isCompleted ? "x" : " "
@@ -216,54 +179,7 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                     try writeLines(lines, to: fileURL)
                     
                     // Return the fully refreshed view for this date across ALL files so UI updates correctly
-                    // 1. Get items from the file we just edited
-                    let persistedLines = try readLines(fileURL: fileURL)
-                    let itemsThisFile = parser.parse(lines: persistedLines, sourceID: sourceID)
-                    
-                    // 2. Load the rest of the items for this date to reconstruct the full Inbox view
-                    var allItems: [InboxItem] = []
-                    
-                    let formattedRouteDate = self.fileName(for: date).replacingOccurrences(of: ".md", with: "")
-                    let dateTag = "date:\(formattedRouteDate)"
-                    
-                    let contents = try fileManager.contentsOfDirectory(at: folderURL, includingPropertiesForKeys: nil)
-                    let allMarkdowns = contents.filter { $0.pathExtension == "md" }
-                    
-                    let defaultFileURL = try self.fileURL(for: date, in: folderURL)
-                    let editedFileName = fileURL.lastPathComponent
-                    let defaultFileName = defaultFileURL.lastPathComponent
-                    
-                    for mdFileURL in allMarkdowns {
-                        let markdownFileName = mdFileURL.lastPathComponent
-                        // URL equality can fail for the same temp file when paths differ as /var vs /private/var.
-                        if markdownFileName == editedFileName {
-                            // We just edited this one, use the fresh parse
-                            if markdownFileName == defaultFileName {
-                                allItems.append(contentsOf: itemsThisFile)
-                            } else {
-                                // Filter by date tag if it's a project
-                                let filtered = itemsThisFile.filter { $0.rawLine.contains(dateTag) }
-                                allItems.append(contentsOf: filtered)
-                            }
-                        } else {
-                            let otherLines = try readLines(fileURL: mdFileURL)
-                            if markdownFileName == defaultFileName {
-                                let otherItems = parser.parse(lines: otherLines, sourceID: mdFileURL.lastPathComponent)
-                                allItems.append(contentsOf: otherItems)
-                            } else {
-                                let matchingLines = otherLines.enumerated().filter { $0.element.contains(dateTag) }
-                                if !matchingLines.isEmpty {
-                                    let otherItems = parser.parse(lines: otherLines, sourceID: mdFileURL.lastPathComponent)
-                                    let filteredItems = otherItems.filter { item in
-                                        matchingLines.contains { $0.offset == item.lineIndex }
-                                    }
-                                    allItems.append(contentsOf: filteredItems)
-                                }
-                            }
-                        }
-                    }
-
-                    return allItems.sorted { $0.time < $1.time }
+                    return try collectItems(on: date, in: folderURL)
                 }
             }
         } catch {
@@ -273,6 +189,34 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
 
     func apply(_ mutation: InboxMutation) throws -> [InboxItem] {
         try apply(mutation, on: Date())
+    }
+
+    /// Gathers every item that belongs to `date`: the daily inbox file and each project's dated file.
+    private func collectItems(on date: Date, in folderURL: URL) throws -> [InboxItem] {
+        let layout = StorageLayout(preferences: currentPreferences(), fileManager: fileManager)
+        let dailyFileName = try fileURL(for: date, in: folderURL).lastPathComponent
+        try migrateLegacyProjectsIfNeeded(in: folderURL)
+
+        var allItems = try parseItems(relativePath: dailyFileName, in: folderURL)
+        for projectURL in try layout.projectDirectories(in: folderURL) {
+            let relativePath = layout.relativePath(for: date, project: projectURL.lastPathComponent)
+            allItems.append(contentsOf: try parseItems(relativePath: relativePath, in: folderURL))
+        }
+
+        return allItems.sorted { $0.time < $1.time }
+    }
+
+    /// Runs once per storage folder per session; the migration itself is idempotent.
+    private func migrateLegacyProjectsIfNeeded(in folderURL: URL) throws {
+        let folderPath = folderURL.standardizedFileURL.path
+        guard !migratedFolderPaths.contains(folderPath) else { return }
+        try LegacyProjectMigrator(fileManager: fileManager).migrate(in: folderURL)
+        migratedFolderPaths.insert(folderPath)
+    }
+
+    private func parseItems(relativePath: String, in folderURL: URL) throws -> [InboxItem] {
+        let lines = try readLines(fileURL: folderURL.appendingPathComponent(relativePath))
+        return parser.parse(lines: lines, sourceID: relativePath)
     }
 
     private func fileURL(for date: Date, in folderURL: URL) throws -> URL {

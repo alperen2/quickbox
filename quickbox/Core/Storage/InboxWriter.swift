@@ -53,25 +53,20 @@ final class InboxWriter: InboxWriting {
 
                 try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true, attributes: nil)
 
-                // Determine target file URL
-                let targetFileName: String
-                let isProjectRoute = item.projectName != nil
-                
                 let targetDate: Date
                 if let dueStr = item.dueDate, let resolvedDue = DueDateResolver().resolve(dueDateString: dueStr, from: now) {
                     targetDate = resolvedDue
                 } else {
                     targetDate = now
                 }
-                
-                if let project = item.projectName {
-                    targetFileName = "\(project).md"
-                } else {
-                    targetFileName = FormatSettings.fileName(for: targetDate, preferences: preferences)
-                }
-                
-                let fileURL = folderURL.appendingPathComponent(targetFileName)
-                let line = formattedLine(for: item, captureDate: now, routeDate: targetDate, isProjectRoute: isProjectRoute)
+
+                // Project entries go to `<Project>/<date>.md`, others to `<date>.md`
+                let layout = StorageLayout(preferences: preferences, fileManager: fileManager)
+                let relativePath = layout.relativePath(for: targetDate, project: item.projectName)
+                let fileURL = folderURL.appendingPathComponent(relativePath)
+                try fileManager.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+
+                let line = formattedLine(for: item, captureDate: now)
                 let entryText = normalizedEntry(for: fileURL, line: line)
                 let data = Data(entryText.utf8)
 
@@ -99,7 +94,7 @@ final class InboxWriter: InboxWriting {
     }
 
     // Reconstructs the line ensuring correct formatting
-    func formattedLine(for item: InboxItem, captureDate: Date, routeDate: Date, isProjectRoute: Bool) -> String {
+    func formattedLine(for item: InboxItem, captureDate: Date) -> String {
         let oneLine = item.text
             .replacingOccurrences(of: "\r\n", with: " ")
             .replacingOccurrences(of: "\n", with: " ")
@@ -132,13 +127,7 @@ final class InboxWriter: InboxWriting {
                  components.append("\(key):\(value)")
              }
         }
-        
-        // Always append the date tag if it's sent to a project file rather than the daily log
-        if isProjectRoute {
-            let formattedRouteDate = FormatSettings.fileName(for: routeDate, preferences: currentPreferences()).replacingOccurrences(of: ".md", with: "")
-            components.append("date:\(formattedRouteDate)")
-        }
-        
+
         let finalString = components.joined(separator: " ")
         let time = FormatSettings.timeText(for: captureDate, preferences: currentPreferences())
         return "- [ ] \(time) \(finalString)"
