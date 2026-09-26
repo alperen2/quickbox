@@ -215,6 +215,7 @@ struct AutocompleteMenu: View {
         case "dur", "time", "duration": return "clock"
         case "defer", "start": return "hourglass.bottomhalf.filled"
         case "remind", "alarm": return "bell.fill"
+        case TaskHandoffKey.assignee: return "person.fill"
         default: return "tag"
         }
     }
@@ -252,6 +253,7 @@ struct AutocompleteMenu: View {
             case "defer", "start": return "(hide until)"
             case "dur", "time", "duration": return "(planned time)"
             case "remind", "alarm": return "(notification)"
+            case TaskHandoffKey.assignee: return "(who acts)"
             default: return nil
             }
 

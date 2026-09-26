@@ -518,7 +518,7 @@ struct CaptureView: View {
     }
 
     private var metadataKeyOptions: [String] {
-        ["due", "defer", "start", "dur", "time", "duration", "remind", "alarm"]
+        ["due", "defer", "start", "dur", "time", "duration", "remind", "alarm", TaskHandoffKey.assignee]
     }
 
     private var dateShortcutOptions: [String] {
@@ -583,6 +583,8 @@ struct CaptureView: View {
             return durationShortcutOptions
         case "remind", "alarm":
             return reminderShortcutOptions
+        case TaskHandoffKey.assignee:
+            return TaskAssignee.suggestions
         default:
             return []
         }
@@ -1902,6 +1904,10 @@ struct CaptureView: View {
         case "dur", "time", "duration": return "clock"
         case "defer", "start": return "hourglass.bottomhalf.filled"
         case "remind", "alarm": return "bell.fill"
+        case TaskHandoffKey.assignee: return "person.fill"
+        case TaskHandoffKey.author: return "pencil"
+        case TaskHandoffKey.origin: return "arrow.turn.down.right"
+        case TaskHandoffKey.reference: return "doc.text"
         default: return "tag"
         }
     }
@@ -1911,6 +1917,7 @@ struct CaptureView: View {
         case "dur", "time", "duration": return .gray
         case "defer", "start": return .blue
         case "remind", "alarm": return .orange
+        case TaskHandoffKey.assignee, TaskHandoffKey.author, TaskHandoffKey.origin, TaskHandoffKey.reference: return .teal
         default: return .purple
         }
     }
