@@ -1,7 +1,9 @@
 import Foundation
 
-struct DueDateResolver {
-    func resolve(dueDateString: String, from refDate: Date = Date()) -> Date? {
+public struct DueDateResolver {
+    public init() {}
+
+    public func resolve(dueDateString: String, from refDate: Date = Date()) -> Date? {
         let str = normalized(dueDateString)
         let calendar = Calendar.current
         let timeComps = calendar.dateComponents([.hour, .minute, .second], from: refDate)

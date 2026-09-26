@@ -1,10 +1,9 @@
 import Foundation
 import Testing
-@testable import quickbox
+@testable import QuickboxCore
 
 /// Runs the language-neutral golden cases in `fixtures/task-lines.json`.
 /// Any other parser implementation must pass the same file, which keeps them from drifting apart.
-@MainActor
 struct TaskLineFixtureTests {
 
     @Test(arguments: try loadCases())
@@ -15,11 +14,15 @@ struct TaskLineFixtureTests {
         #expect(actual == fixture.expected, "\(fixture.name)")
     }
 
-    nonisolated static func loadCases() throws -> [TaskLineFixture] {
-        let fixtureURL = URL(fileURLWithPath: #filePath)
+    static func loadCases() throws -> [TaskLineFixture] {
+        // Packages/QuickboxCore/Tests/QuickboxCoreTests/<this file> -> repository root
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-            .appendingPathComponent("fixtures/task-lines.json")
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let fixtureURL = repositoryRoot.appendingPathComponent("fixtures/task-lines.json")
         let data = try Data(contentsOf: fixtureURL)
         return try JSONDecoder().decode(FixtureFile.self, from: data).cases
     }
@@ -51,7 +54,7 @@ struct ExpectedItem: Decodable, Equatable, Sendable {
 }
 
 extension ExpectedItem {
-    @MainActor init(_ item: InboxItem) {
+    init(_ item: InboxItem) {
         self.init(
             lineIndex: item.lineIndex,
             completed: item.isCompleted,

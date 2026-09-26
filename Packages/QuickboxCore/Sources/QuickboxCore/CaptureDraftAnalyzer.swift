@@ -1,13 +1,15 @@
 import Foundation
 
-struct DraftTokenInsight: Equatable, Sendable {
-    let key: String
-    let rawValue: String
-    let preview: String
-    let isResolved: Bool
+public struct DraftTokenInsight: Equatable, Sendable {
+    public let key: String
+    public let rawValue: String
+    public let preview: String
+    public let isResolved: Bool
 }
 
-struct CaptureDraftAnalyzer {
+public struct CaptureDraftAnalyzer {
+    public init() {}
+
     private static let dateMetadataKeys: Set<String> = ["due", "defer", "start"]
     private static let durationMetadataKeys: Set<String> = ["dur", "time", "duration", "remind", "alarm"]
     private static let metadataKeyPattern = /^[a-zA-Z0-9_\-]+$/
@@ -30,7 +32,7 @@ struct CaptureDraftAnalyzer {
 
     private let dueResolver = DueDateResolver()
 
-    func analyze(_ text: String, now: Date = Date()) -> [DraftTokenInsight] {
+    public func analyze(_ text: String, now: Date = Date()) -> [DraftTokenInsight] {
         let tokens = text.split(whereSeparator: \.isWhitespace).map(String.init)
         guard !tokens.isEmpty else {
             return []

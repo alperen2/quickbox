@@ -18,7 +18,11 @@ xcodebuild test -project quickbox.xcodeproj -scheme quickbox-AppStore \
 
 # Single test (Swift Testing: Target/Suite/function)
 xcodebuild test -project quickbox.xcodeproj -scheme quickbox-AppStore -destination 'platform=macOS' \
-  -only-testing:quickboxTests/CaptureDraftAnalyzerTests/<testName>
+  -only-testing:quickboxTests/quickboxTests/<testName>
+
+# QuickboxCore package tests (parser, analyzer, dates, golden fixtures). Fast, no Xcode project needed
+swift test --package-path Packages/QuickboxCore
+swift test --package-path Packages/QuickboxCore --filter InboxParserTests
 
 # UI smoke test run in CI
   -only-testing:quickboxUITests/testAutocompleteSupportsMouseSelectionForTagAndProject
@@ -27,7 +31,7 @@ xcodebuild test -project quickbox.xcodeproj -scheme quickbox-AppStore -destinati
 npm install && npm run docs:dev   # docs:build is checked in CI
 ```
 
-CI (`.github/workflows/ci.yml`) **fails on any Swift compiler warning** (it greps the unit test log for `.swift:N:N: warning:`), so keep builds warning-free. Release scripts live in `scripts/release/` (archive → export `.pkg` → upload); see `docs/release-playbook.md`.
+CI (`.github/workflows/ci.yml`) **fails on any Swift compiler warning** (it greps the unit test and `swift test` logs for `.swift:N:N: warning:`), so keep builds warning-free. Release scripts live in `scripts/release/` (archive → export `.pkg` → upload); see `docs/release-playbook.md`.
 
 Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 
@@ -36,6 +40,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - `quickbox` (bundle `alperen.quickbox`, direct distribution) and `quickboxAppStore` (bundle `alperen.quickbox.appstore`, product name "Quickbox Capture") compile **the same `quickbox/` folder** (file-system synchronized groups, so new files are picked up automatically). Each has its own entitlements file.
 - There are no compile-time flags that tell the two apart. Runtime branching uses the bundle ID. For example, `StorageAccessManager` requires a security-scoped bookmark folder only in the App Store build; the direct build falls back to `fallbackStoragePath`.
 - App targets use `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` with Swift 5 language mode. Test targets don't use that setting, and they host `quickbox.app`.
+- Both app targets link the local SwiftPM package **`Packages/QuickboxCore`**, which holds platform-independent logic: `InboxItem`, `InboxParser`, `CaptureDraftAnalyzer`, the date resolvers, `TaskIdentifier`, and `TaskHandoff`. It is meant to be shared with future iOS and cloud clients, so keep it free of UI, file I/O, and app types (`AppPreferences`, `FormatSettings`). Its API is `public`, and app files need `import QuickboxCore`. It uses Swift 5 language mode with `BareSlashRegexLiterals`. Its types are nonisolated, not MainActor. The package is wired into `project.pbxproj` by hand (`XCLocalSwiftPackageReference`).
 - Build/version numbers are set per target in `project.pbxproj` (`CURRENT_PROJECT_VERSION`, `MARKETING_VERSION`).
 
 ## Architecture
@@ -44,10 +49,10 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 
 **`AppState`** (`@MainActor ObservableObject`) is the single view model for every surface: draft text, the selected inbox date, items, calendar indicators, and preferences. Dependencies are injected through protocols (`InboxWriting`, `InboxRepositorying`, `CrashReporting`, `StorageResolving`), with defaults created in `init`. Tests pass `registerHotkeyOnInit: false` / `loadInboxOnInit: false` along with fakes.
 
-**Storage pipeline (`Core/Storage`):** there is no database. The Markdown files are the source of truth.
+**Storage pipeline (`Core/Storage` + `QuickboxCore`):** there is no database. The Markdown files are the source of truth.
 - Line format: `- [ ] HH:mm text !1 @Project #tag due:YYYY-MM-DD key:value date:YYYY-MM-DD id:xxxxxxxx` (parsed by the `InboxParser.taskPattern` regex). New lines get a stable `id:` (`TaskIdentifier`), which is exposed as `InboxItem.taskID`, not as metadata. Item IDs are `"<file>#id:<taskID>"`, so mutations survive lines shifting. Legacy lines without `id:` fall back to `"<file>#<lineIndex>#<rawLine>"`. Any code that rebuilds a line (writer, repository edit) must carry `id:` over.
 - Human↔agent handoff uses ordinary metadata keys defined in `TaskHandoff.swift`: `for:` (me/agent/name), `by:` (author, absent = user), `from:` (origin task id), `ref:` (related note path).
-- `fixtures/task-lines.json` holds language-neutral golden parser cases, run by `TaskLineFixtureTests`. When you change the syntax, add a case there. Any future non-Swift parser (the cloud server) must pass the same file.
+- `fixtures/task-lines.json` holds language-neutral golden parser cases, run by `TaskLineFixtureTests` (in the package). When you change the syntax, add a case there. Any future non-Swift parser (the cloud server) must pass the same file.
 - **Routing:** `InboxWriter.appendEntry` parses the draft. A task with `@Project` is appended to `<Project>.md` along with a hidden `date:` tag. Other tasks go to the daily file (named via `FormatSettings`, default `YYYY-MM-DD.md`) for the resolved `due:` date, or for today.
 - **Reading:** for a given day, `InboxRepository.load(on:)` reads that day's file and also scans every other `.md` file for lines carrying the matching `date:` tag. It hides items whose `defer:` date is in the future.
 - Natural-language dates are resolved **only** inside `due:`, `defer:`, and `start:` values (`DueDateResolver`; `DeferDateResolver` delegates to it). `CaptureDraftAnalyzer` generates live token previews for the capture UI using the same token rules as the parser. Keep the parser, analyzer, and writer consistent when you change the syntax.

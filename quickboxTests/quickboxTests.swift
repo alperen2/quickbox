@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import QuickboxCore
 @testable import quickbox
 
 @MainActor
@@ -260,100 +261,6 @@ struct quickboxTests {
     }
 
     @Test
-    func parserReturnsOnlyValidTaskLines() {
-        let parser = InboxParser()
-        let lines = [
-            "- [ ] 09:10 plan sprint",
-            "random line",
-            "- [x] 09:20 done item"
-        ]
-
-        let items = parser.parse(lines: lines, sourceID: "today.md")
-        #expect(items.count == 2)
-        #expect(items[0].isCompleted == false)
-        #expect(items[1].isCompleted == true)
-        #expect(items[0].lineIndex == 0)
-        #expect(items[1].lineIndex == 2)
-    }
-
-    @Test
-    func parserSupportsMultiWordDateMetadataValues() throws {
-        let parser = InboxParser()
-        let lines = [
-            "- [ ] 09:10 Plan launch due:next friday defer:end of month start:in 2 weeks #ops @alpha !1"
-        ]
-
-        let items = parser.parse(lines: lines, sourceID: "today.md")
-        let item = try #require(items.first)
-
-        #expect(item.dueDate == "next friday")
-        #expect(item.metadata["defer"] == "end of month")
-        #expect(item.metadata["start"] == "in 2 weeks")
-        #expect(item.tags == ["ops"])
-        #expect(item.projectName == "alpha")
-        #expect(item.priority == 1)
-    }
-
-    @Test
-    func dueDateResolverSupportsNaturalPhrases() throws {
-        let calendar = Calendar(identifier: .gregorian)
-        var comps = DateComponents()
-        comps.year = 2026
-        comps.month = 3
-        comps.day = 2
-        comps.hour = 10
-        comps.minute = 0
-        let referenceDate = try #require(calendar.date(from: comps))
-
-        let resolver = DueDateResolver()
-
-        let nextWeekend = try #require(resolver.resolve(dueDateString: "next weekend", from: referenceDate))
-        let endOfMonth = try #require(resolver.resolve(dueDateString: "end of month", from: referenceDate))
-        let inTwoWeeks = try #require(resolver.resolve(dueDateString: "in 2 weeks", from: referenceDate))
-
-        let weekendComponents = calendar.dateComponents([.year, .month, .day], from: nextWeekend)
-        #expect(weekendComponents.year == 2026)
-        #expect(weekendComponents.month == 3)
-        #expect(weekendComponents.day == 7)
-
-        let endOfMonthComponents = calendar.dateComponents([.year, .month, .day], from: endOfMonth)
-        #expect(endOfMonthComponents.year == 2026)
-        #expect(endOfMonthComponents.month == 3)
-        #expect(endOfMonthComponents.day == 31)
-
-        let inTwoWeeksComponents = calendar.dateComponents([.year, .month, .day], from: inTwoWeeks)
-        #expect(inTwoWeeksComponents.year == 2026)
-        #expect(inTwoWeeksComponents.month == 3)
-        #expect(inTwoWeeksComponents.day == 16)
-    }
-
-    @Test
-    func dueDateResolverDifferentiatesWeekdayAndNextWeekday() throws {
-        let calendar = Calendar(identifier: .gregorian)
-        var comps = DateComponents()
-        comps.year = 2026
-        comps.month = 3
-        comps.day = 2
-        comps.hour = 10
-        comps.minute = 0
-        let referenceDate = try #require(calendar.date(from: comps))
-
-        let resolver = DueDateResolver()
-        let friday = try #require(resolver.resolve(dueDateString: "friday", from: referenceDate))
-        let nextFriday = try #require(resolver.resolve(dueDateString: "next friday", from: referenceDate))
-
-        let fridayComps = calendar.dateComponents([.year, .month, .day], from: friday)
-        #expect(fridayComps.year == 2026)
-        #expect(fridayComps.month == 3)
-        #expect(fridayComps.day == 6)
-
-        let nextFridayComps = calendar.dateComponents([.year, .month, .day], from: nextFriday)
-        #expect(nextFridayComps.year == 2026)
-        #expect(nextFridayComps.month == 3)
-        #expect(nextFridayComps.day == 13)
-    }
-
-    @Test
     func repositoryToggleDeleteUndoFlow() throws {
         let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
@@ -437,48 +344,6 @@ struct quickboxTests {
 
         let content = try String(contentsOf: tempFolder.appendingPathComponent("Marketing.md"))
         #expect(content == "- [ ] 10:30 Publish post @Marketing date:2026-02-27 id:post42\n")
-    }
-
-    @Test
-    func generatedTaskIDsUseLowercaseAlphanumerics() {
-        let id = TaskIdentifier.generate()
-        #expect(id.count == TaskIdentifier.length)
-        #expect(id.allSatisfy { $0.isLowercase || $0.isNumber })
-        #expect(TaskIdentifier.isValid(id))
-    }
-
-    @Test
-    func parserExposesTaskIDSeparatelyFromMetadata() throws {
-        let items = InboxParser().parse(lines: ["- [ ] 08:00 Draft post #social time:30m id:k3f9x2ab"], sourceID: "2026-02-27.md")
-        let item = try #require(items.first)
-
-        #expect(item.taskID == "k3f9x2ab")
-        #expect(item.metadata == ["time": "30m"])
-        #expect(item.text == "Draft post")
-        #expect(item.id == "2026-02-27.md#id:k3f9x2ab")
-    }
-
-    @Test
-    func parserIdentityIsStableWhenLinesShift() {
-        let parser = InboxParser()
-        let line = "- [ ] 08:00 Draft post id:k3f9x2ab"
-        let before = parser.parse(lines: [line], sourceID: "a.md")
-        let after = parser.parse(lines: ["- [ ] 07:00 inserted by another device", line], sourceID: "a.md")
-
-        #expect(before.first?.id == after.last?.id)
-    }
-
-    @Test
-    func parserOnlyTrustsFirstOccurrenceOfDuplicatedTaskID() {
-        let items = InboxParser().parse(
-            lines: ["- [ ] 08:00 original id:dup00001", "- [ ] 09:00 pasted copy id:dup00001"],
-            sourceID: "a.md"
-        )
-
-        #expect(items.count == 2)
-        #expect(items[0].taskID == "dup00001")
-        #expect(items[1].taskID == nil)
-        #expect(items[0].id != items[1].id)
     }
 
     @Test

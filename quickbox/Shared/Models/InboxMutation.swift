@@ -1,19 +1,5 @@
 import Foundation
-
-struct InboxItem: Identifiable, Equatable, Sendable {
-    let id: String
-    let text: String
-    var tags: [String] = []
-    var dueDate: String? = nil
-    var priority: Int? = nil
-    var projectName: String? = nil
-    var metadata: [String: String] = [:] // Holds dynamic key:value pairs like time:30m
-    var taskID: String? = nil // Stable `id:` token; nil for legacy lines written before ids existed
-    let time: String
-    let isCompleted: Bool
-    let lineIndex: Int
-    let rawLine: String
-}
+import QuickboxCore
 
 enum InboxMutation: Sendable {
     case toggle(String)

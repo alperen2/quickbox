@@ -1,4 +1,5 @@
 import Foundation
+import QuickboxCore
 
 enum InboxRepositoryError: LocalizedError, Equatable {
     case itemNotFound

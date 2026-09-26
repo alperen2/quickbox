@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import QuickboxCore
 
 extension Notification.Name {
     static let quickboxFocusCapture = Notification.Name("quickbox.focusCapture")

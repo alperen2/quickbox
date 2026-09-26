@@ -1,6 +1,8 @@
 import Foundation
 
-struct InboxParser {
+public struct InboxParser {
+    public init() {}
+
     private static let taskPattern = /^- \[(?<done>[ xX])\] (?<time>\d{2}:\d{2}) (?<text>.+)$/
     private static let dateMetadataKeys: Set<String> = ["due", "defer", "start"]
     private static let metadataKeyPattern = /^[a-zA-Z0-9_\-]+$/
@@ -21,7 +23,7 @@ struct InboxParser {
         "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"
     ]
 
-    func parse(lines: [String], sourceID: String) -> [InboxItem] {
+    public func parse(lines: [String], sourceID: String) -> [InboxItem] {
         var seenTaskIDs = Set<String>()
 
         return lines.enumerated().compactMap { index, line in

@@ -7,20 +7,20 @@ import Foundation
 ///
 /// They are ordinary `key:value` tokens, so the parser needs no special casing and
 /// existing files stay valid. Keep this list in sync with `fixtures/task-lines.json`.
-nonisolated enum TaskHandoffKey {
+public enum TaskHandoffKey {
     /// Who should act on the task: `me`, `agent`, or a specific agent name.
-    static let assignee = "for"
+    public static let assignee = "for"
     /// Who wrote the line. Absent means the user wrote it.
-    static let author = "by"
+    public static let author = "by"
     /// `id:` of the task this one was spawned from.
-    static let origin = "from"
+    public static let origin = "from"
     /// Path of a related note inside the storage folder, e.g. an agent's draft.
-    static let reference = "ref"
+    public static let reference = "ref"
 }
 
-nonisolated enum TaskAssignee {
-    static let me = "me"
-    static let agent = "agent"
+public enum TaskAssignee {
+    public static let me = "me"
+    public static let agent = "agent"
 
-    static let suggestions = [me, agent]
+    public static let suggestions = [me, agent]
 }

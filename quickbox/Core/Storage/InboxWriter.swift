@@ -1,4 +1,5 @@
 import Foundation
+import QuickboxCore
 
 protocol InboxWriting {
     func appendEntry(_ text: String, now: Date) throws

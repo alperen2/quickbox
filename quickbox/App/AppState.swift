@@ -2,6 +2,7 @@ import AppKit
 import Combine
 import Foundation
 import ServiceManagement
+import QuickboxCore
 
 @MainActor
 final class AppState: ObservableObject {
