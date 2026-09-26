@@ -8,6 +8,7 @@ struct InboxItem: Identifiable, Equatable, Sendable {
     var priority: Int? = nil
     var projectName: String? = nil
     var metadata: [String: String] = [:] // Holds dynamic key:value pairs like time:30m
+    var taskID: String? = nil // Stable `id:` token; nil for legacy lines written before ids existed
     let time: String
     let isCompleted: Bool
     let lineIndex: Int

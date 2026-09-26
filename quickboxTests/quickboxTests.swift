@@ -73,7 +73,8 @@ struct quickboxTests {
         prefs.fallbackStoragePath = tempFolder.path
 
         let resolver = StorageAccessManager(preferences: prefs)
-        let writer = InboxWriter(storageResolver: resolver)
+        var generatedIDs = ["aaaa1111", "bbbb2222"].makeIterator()
+        let writer = InboxWriter(storageResolver: resolver, makeTaskID: { generatedIDs.next()! })
 
         var components = DateComponents()
         components.year = 2026
@@ -91,7 +92,7 @@ struct quickboxTests {
 
         let fileURL = tempFolder.appendingPathComponent("2026-02-27.md")
         let content = try String(contentsOf: fileURL)
-        #expect(content == "- [ ] 10:30 First\n- [ ] 10:31 Second\n")
+        #expect(content == "- [ ] 10:30 First id:aaaa1111\n- [ ] 10:31 Second id:bbbb2222\n")
     }
 
     @Test
@@ -409,6 +410,118 @@ struct quickboxTests {
         #expect(fileAfterEdit.contains("due:next friday"))
         #expect(fileAfterEdit.contains("start:in 2 days"))
         #expect(fileAfterEdit.contains("time:30m"))
+    }
+
+    @Test
+    func appendKeepsExplicitTaskIDInsteadOfGeneratingOne() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        var prefs = AppPreferences.default
+        prefs.storageBookmarkData = nil
+        prefs.fallbackStoragePath = tempFolder.path
+        let writer = InboxWriter(
+            storageResolver: StorageAccessManager(preferences: prefs),
+            makeTaskID: { Issue.record("An explicit id must not be replaced"); return "unused" }
+        )
+
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 2
+        components.day = 27
+        components.hour = 10
+        components.minute = 30
+        let date = Calendar(identifier: .gregorian).date(from: components)!
+
+        try writer.appendEntry("Publish post id:post42 @Marketing", now: date)
+
+        let content = try String(contentsOf: tempFolder.appendingPathComponent("Marketing.md"))
+        #expect(content == "- [ ] 10:30 Publish post @Marketing date:2026-02-27 id:post42\n")
+    }
+
+    @Test
+    func generatedTaskIDsUseLowercaseAlphanumerics() {
+        let id = TaskIdentifier.generate()
+        #expect(id.count == TaskIdentifier.length)
+        #expect(id.allSatisfy { $0.isLowercase || $0.isNumber })
+        #expect(TaskIdentifier.isValid(id))
+    }
+
+    @Test
+    func parserExposesTaskIDSeparatelyFromMetadata() throws {
+        let items = InboxParser().parse(lines: ["- [ ] 08:00 Draft post #social time:30m id:k3f9x2ab"], sourceID: "2026-02-27.md")
+        let item = try #require(items.first)
+
+        #expect(item.taskID == "k3f9x2ab")
+        #expect(item.metadata == ["time": "30m"])
+        #expect(item.text == "Draft post")
+        #expect(item.id == "2026-02-27.md#id:k3f9x2ab")
+    }
+
+    @Test
+    func parserIdentityIsStableWhenLinesShift() {
+        let parser = InboxParser()
+        let line = "- [ ] 08:00 Draft post id:k3f9x2ab"
+        let before = parser.parse(lines: [line], sourceID: "a.md")
+        let after = parser.parse(lines: ["- [ ] 07:00 inserted by another device", line], sourceID: "a.md")
+
+        #expect(before.first?.id == after.last?.id)
+    }
+
+    @Test
+    func parserOnlyTrustsFirstOccurrenceOfDuplicatedTaskID() {
+        let items = InboxParser().parse(
+            lines: ["- [ ] 08:00 original id:dup00001", "- [ ] 09:00 pasted copy id:dup00001"],
+            sourceID: "a.md"
+        )
+
+        #expect(items.count == 2)
+        #expect(items[0].taskID == "dup00001")
+        #expect(items[1].taskID == nil)
+        #expect(items[0].id != items[1].id)
+    }
+
+    @Test
+    func repositoryMutatesByTaskIDAfterFileChangedUnderneath() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        let fileURL = tempFolder.appendingPathComponent(todayFileName(for: Date()))
+        try "- [ ] 08:00 first id:first001\n- [ ] 09:00 second id:second02\n".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let items = try repository.loadToday()
+        let second = try #require(items.first(where: { $0.taskID == "second02" }))
+
+        // Simulate another writer (sync, agent) inserting a line above the item after it was loaded.
+        try "- [ ] 07:00 from agent id:agent003\n- [ ] 08:00 first id:first001\n- [ ] 09:00 second id:second02\n"
+            .write(to: fileURL, atomically: true, encoding: .utf8)
+
+        _ = try repository.apply(.toggle(second.id))
+
+        let content = try String(contentsOf: fileURL)
+        #expect(content.contains("- [x] 09:00 second id:second02"))
+        #expect(content.contains("- [ ] 08:00 first id:first001"))
+        #expect(content.contains("- [ ] 07:00 from agent id:agent003"))
+    }
+
+    @Test
+    func repositoryEditPreservesTaskID() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        let fileURL = tempFolder.appendingPathComponent(todayFileName(for: Date()))
+        try "- [ ] 08:00 first #tag id:keepme01\n".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let item = try #require(try repository.loadToday().first)
+        let updated = try repository.apply(.edit(item.id, text: "first updated"))
+
+        let content = try String(contentsOf: fileURL)
+        #expect(content == "- [ ] 08:00 first updated #tag id:keepme01\n")
+        #expect(updated.first?.id == item.id)
     }
 
     @Test

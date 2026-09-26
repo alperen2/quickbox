@@ -199,6 +199,10 @@ final class InboxRepository: InboxRepositorying, @unchecked Sendable {
                             components.append("date:\(dateMatch.1)")
                         }
 
+                        if let taskID = parsedOld.taskID {
+                            components.append("\(TaskIdentifier.metadataKey):\(taskID)")
+                        }
+
                         let finalString = components.joined(separator: " ")
                         let status = item.isCompleted ? "x" : " "
                         lines[item.lineIndex] = "- [\(status)] \(item.time) \(finalString)"

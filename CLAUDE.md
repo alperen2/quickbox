@@ -1,0 +1,59 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+quickbox is a minimalist macOS (14+) menu bar + Spotlight-style capture app. Captured thoughts are written as Markdown task lines into plain `.md` files in a user-chosen folder. Scope is intentionally limited to **capture + light triage** — avoid features that push it toward a full task manager.
+
+## Commands
+
+Schemes are `quickbox-Direct` and `quickbox-AppStore` (README/CONTRIBUTING mention a `quickbox` scheme, which no longer exists).
+
+```bash
+# Unit tests (same invocation as CI)
+xcodebuild test -project quickbox.xcodeproj -scheme quickbox-AppStore \
+  -destination 'platform=macOS,arch=arm64' -only-testing:quickboxTests \
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM=""
+
+# Single test (Swift Testing: Target/Suite/function)
+xcodebuild test -project quickbox.xcodeproj -scheme quickbox-AppStore -destination 'platform=macOS' \
+  -only-testing:quickboxTests/CaptureDraftAnalyzerTests/<testName>
+
+# UI smoke test run in CI
+  -only-testing:quickboxUITests/testAutocompleteSupportsMouseSelectionForTagAndProject
+
+# Docs (VitePress, source in docs/)
+npm install && npm run docs:dev   # docs:build is checked in CI
+```
+
+CI (`.github/workflows/ci.yml`) **fails on any Swift compiler warning** (it greps the unit test log for `.swift:N:N: warning:`), so keep builds warning-free. Release scripts live in `scripts/release/` (archive → export `.pkg` → upload); see `docs/release-playbook.md`.
+
+Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
+
+## Build targets
+
+- `quickbox` (bundle `alperen.quickbox`, direct distribution) and `quickboxAppStore` (bundle `alperen.quickbox.appstore`, product name "Quickbox Capture") compile **the same `quickbox/` folder** (file-system synchronized groups, so new files are picked up automatically). Each has its own entitlements file.
+- There are no compile-time flags that tell the two apart. Runtime branching uses the bundle ID. For example, `StorageAccessManager` requires a security-scoped bookmark folder only in the App Store build; the direct build falls back to `fallbackStoragePath`.
+- App targets use `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` with Swift 5 language mode. Test targets don't use that setting, and they host `quickbox.app`.
+- Build/version numbers are set per target in `project.pbxproj` (`CURRENT_PROJECT_VERSION`, `MARKETING_VERSION`).
+
+## Architecture
+
+**Composition root:** `quickboxApp` → `AppDelegate.applicationDidFinishLaunching` creates one `AppState` and wires up `CaptureWindowController` (the Spotlight-style panel), `SettingsWindowController`, and `MenuBarController` (a popover hosting `MenuBarDashboardView`). Controllers talk to each other through closures on `AppState` (`onCaptureRequested`, `onSettingsRequested`, `onCaptureSaved`), not through direct references. The app runs as `.accessory` (no Dock icon).
+
+**`AppState`** (`@MainActor ObservableObject`) is the single view model for every surface: draft text, the selected inbox date, items, calendar indicators, and preferences. Dependencies are injected through protocols (`InboxWriting`, `InboxRepositorying`, `CrashReporting`, `StorageResolving`), with defaults created in `init`. Tests pass `registerHotkeyOnInit: false` / `loadInboxOnInit: false` along with fakes.
+
+**Storage pipeline (`Core/Storage`):** there is no database. The Markdown files are the source of truth.
+- Line format: `- [ ] HH:mm text !1 @Project #tag due:YYYY-MM-DD key:value date:YYYY-MM-DD id:xxxxxxxx` (parsed by the `InboxParser.taskPattern` regex). New lines get a stable `id:` (`TaskIdentifier`), which is exposed as `InboxItem.taskID`, not as metadata. Item IDs are `"<file>#id:<taskID>"`, so mutations survive lines shifting. Legacy lines without `id:` fall back to `"<file>#<lineIndex>#<rawLine>"`. Any code that rebuilds a line (writer, repository edit) must carry `id:` over.
+- **Routing:** `InboxWriter.appendEntry` parses the draft. A task with `@Project` is appended to `<Project>.md` along with a hidden `date:` tag. Other tasks go to the daily file (named via `FormatSettings`, default `YYYY-MM-DD.md`) for the resolved `due:` date, or for today.
+- **Reading:** for a given day, `InboxRepository.load(on:)` reads that day's file and also scans every other `.md` file for lines carrying the matching `date:` tag. It hides items whose `defer:` date is in the future.
+- Natural-language dates are resolved **only** inside `due:`, `defer:`, and `start:` values (`DueDateResolver`; `DeferDateResolver` delegates to it). `CaptureDraftAnalyzer` generates live token previews for the capture UI using the same token rules as the parser. Keep the parser, analyzer, and writer consistent when you change the syntax.
+- All file I/O is serialized on `InboxStorageQueue.shared`. It always follows the resolve-then-`stopAccess` pattern (`storageResolver.resolvedBaseURL()` + `defer stopAccess`) needed for security-scoped access.
+- `IndexManager.shared` scans the storage folder for known `#tags` and projects (non-date filenames) to feed autocomplete. `inject` updates it incrementally after each capture.
+
+**Settings:** `AppPreferences` (Codable) is persisted as JSON in UserDefaults under `quickbox.preferences` by `SettingsStore`. If decoding fails, it silently falls back to `.default`. When you add fields, make sure decoding stays backward compatible.
+
+**Observability:** `CrashReporter` is opt-in (consent comes from preferences). It records only non-fatal errors with sanitized context and must never include task text.
+
+**UI testing hooks:** the `--ui-testing` launch argument turns off hotkey registration, uses the `.regular` activation policy, and seeds `IndexManager`. Adding `--ui-test-host-window` also hosts `CaptureView` in a normal window so XCUITest can drive it.
