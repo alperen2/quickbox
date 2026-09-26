@@ -19,8 +19,14 @@ final class IndexManager: ObservableObject {
     
     private init() {}
 
-    func buildIndex(in folderURL: URL) {
+    /// Resolves the storage folder and scans it in the background.
+    /// Security-scoped access is held for the whole scan and released only after it finishes,
+    /// otherwise the sandbox denies reads once the caller's scope ends.
+    func buildIndex(using storageResolver: StorageResolving) {
+        guard let folderURL = try? storageResolver.resolvedBaseURL() else { return }
+
         Task {
+            defer { storageResolver.stopAccess(for: folderURL) }
             let (newTags, newProjects) = await Self.scanFiles(in: folderURL)
             self.availableTags = newTags
             self.availableProjects = newProjects
