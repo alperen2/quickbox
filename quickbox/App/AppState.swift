@@ -322,8 +322,8 @@ final class AppState: ObservableObject {
             applyInboxMutationAsync(.toggle(id), successMessage: nil)
         case .delete(let id):
             applyInboxMutation(.delete(id), successMessage: "Deleted. You can undo.")
-        case .edit(let id, text: let text):
-            applyInboxMutation(.edit(id, text: text), successMessage: nil)
+        case .edit, .setMetadata:
+            applyInboxMutation(mutation, successMessage: nil)
         case .undoLastDelete:
             applyInboxMutation(.undoLastDelete, successMessage: "Restored")
         }

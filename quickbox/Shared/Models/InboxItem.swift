@@ -19,6 +19,8 @@ enum InboxMutation: Sendable {
     case toggle(String)
     case delete(String)
     case edit(String, text: String)
+    /// Sets (or removes, when `value` is nil) a single `key:value` token without touching the rest of the line.
+    case setMetadata(String, key: String, value: String?)
     case undoLastDelete
 }
 

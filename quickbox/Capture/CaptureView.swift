@@ -1923,19 +1923,6 @@ struct CaptureView: View {
     }
     
     private func updateMetadata(item: InboxItem, key: String, newValue: String?) {
-        guard let oldVal = item.metadata[key] else { return }
-        let oldString = "\(key):\(oldVal)"
-        var newText = item.rawLine
-        
-        if let newVal = newValue {
-            let newString = "\(key):\(newVal)"
-            newText = newText.replacingOccurrences(of: oldString, with: newString)
-        } else {
-            newText = newText.replacingOccurrences(of: " " + oldString, with: "")
-            newText = newText.replacingOccurrences(of: oldString, with: "")
-        }
-        
-        newText = newText.trimmingCharacters(in: .whitespaces)
-        appState.handleSpotlightMutation(.edit(item.id, text: newText))
+        appState.handleSpotlightMutation(.setMetadata(item.id, key: key, value: newValue))
     }
 }

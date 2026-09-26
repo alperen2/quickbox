@@ -525,6 +525,60 @@ struct quickboxTests {
     }
 
     @Test
+    func repositorySetMetadataReplacesOnlyThatToken() throws {
+        let (repository, fileURL, cleanup) = try makeRepositoryWithTodayFile(
+            "- [ ] 08:00 Draft !2 #social time:30m remind:1h id:meta0001\n"
+        )
+        defer { cleanup() }
+
+        let item = try #require(try repository.loadToday().first)
+        let updated = try repository.apply(.setMetadata(item.id, key: "time", value: "1h"))
+
+        #expect(try String(contentsOf: fileURL) == "- [ ] 08:00 Draft !2 #social remind:1h time:1h id:meta0001\n")
+        #expect(updated.first?.metadata == ["time": "1h", "remind": "1h"])
+    }
+
+    @Test
+    func repositorySetMetadataWithNilRemovesToken() throws {
+        let (repository, fileURL, cleanup) = try makeRepositoryWithTodayFile("- [x] 08:00 Draft time:30m for:agent id:meta0002\n")
+        defer { cleanup() }
+
+        let item = try #require(try repository.loadToday().first)
+        _ = try repository.apply(.setMetadata(item.id, key: "time", value: nil))
+
+        #expect(try String(contentsOf: fileURL) == "- [x] 08:00 Draft for:agent id:meta0002\n")
+    }
+
+    @Test
+    func repositorySetMetadataUpdatesDueAndKeepsProjectRouting() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let today = todayFileName(for: Date()).replacingOccurrences(of: ".md", with: "")
+        let fileURL = tempFolder.appendingPathComponent("Marketing.md")
+        try "- [ ] 08:00 Post @Marketing due:2026-09-28 date:\(today) id:meta0003\n".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        let item = try #require(try repository.loadToday().first)
+        _ = try repository.apply(.setMetadata(item.id, key: "due", value: "2026-09-30"))
+
+        #expect(try String(contentsOf: fileURL) == "- [ ] 08:00 Post @Marketing due:2026-09-30 date:\(today) id:meta0003\n")
+    }
+
+    @Test
+    func repositorySetMetadataRejectsReservedKeys() throws {
+        let (repository, fileURL, cleanup) = try makeRepositoryWithTodayFile("- [ ] 08:00 Draft id:meta0004\n")
+        defer { cleanup() }
+
+        let item = try #require(try repository.loadToday().first)
+        #expect(throws: InboxRepositoryError.reservedMetadataKey) {
+            try repository.apply(.setMetadata(item.id, key: "id", value: "hijack"))
+        }
+        #expect(try String(contentsOf: fileURL) == "- [ ] 08:00 Draft id:meta0004\n")
+    }
+
+    @Test
     func repositoryHandlesMissingDailyFile() throws {
         let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
@@ -808,7 +862,7 @@ struct quickboxTests {
                         rawLine: item.rawLine
                     )
                 }
-            case .undoLastDelete:
+            case .undoLastDelete, .setMetadata:
                 return currentItems
             }
         }
@@ -884,6 +938,15 @@ struct quickboxTests {
 
         #expect(crashReporter.lastConsentValue == true)
         #expect(appState.preferences.crashReportingEnabled == true)
+    }
+
+    private func makeRepositoryWithTodayFile(_ content: String) throws -> (InboxRepository, URL, () -> Void) {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        let fileURL = tempFolder.appendingPathComponent(todayFileName(for: Date()))
+        try content.write(to: fileURL, atomically: true, encoding: .utf8)
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        return (repository, fileURL, { try? FileManager.default.removeItem(at: tempFolder) })
     }
 
     private func todayFileName(for date: Date = Date()) -> String {
