@@ -2,7 +2,7 @@ import { AuthorizationError, CimdFetchError, type AuthRequest, type OAuthHelpers
 import { accountDirectory } from "../accounts/accountDirectory";
 import { appleConfig } from "../config";
 import { AppleSignInError, appleAuthorizeUrl, base64Url, isEmailVerified, redeemAppleCode } from "./apple";
-import { emailSender } from "./email";
+import { EmailDeliveryError, emailSender } from "./email";
 import { appleBridgePage, codePage, consentPage, emailPage, messagePage } from "./pages";
 
 /** The single scope: full access to the user's inbox. */
@@ -197,6 +197,10 @@ function authErrorResponse(error: unknown): Response {
   }
   if (error instanceof CimdFetchError) {
     return html(messagePage("Unknown app", "This app could not be verified."), { status: 400 });
+  }
+  if (error instanceof EmailDeliveryError) {
+    console.error("Sign-in code email failed:", error.message);
+    return html(messagePage("Couldn't send the code", "Please try again in a minute."), { status: 503 });
   }
   if (error instanceof AppleSignInError) {
     console.warn("Apple sign-in failed:", error.message);
