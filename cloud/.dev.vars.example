@@ -1,0 +1,4 @@
+# Copy to .dev.vars for `npm run dev`. Never commit .dev.vars.
+DEV_AUTH_TOKEN=change-me-to-a-long-random-string
+DEV_AGENT_NAME=claude
+DEFAULT_TIMEZONE=Europe/Istanbul

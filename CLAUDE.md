@@ -27,6 +27,9 @@ swift test --package-path Packages/QuickboxCore --filter InboxParserTests
 # UI smoke test run in CI
   -only-testing:quickboxUITests/testAutocompleteSupportsMouseSelectionForTagAndProject
 
+# Cloud MCP server (Cloudflare Workers, TypeScript, in cloud/)
+cd cloud && npm ci && npm test && npm run typecheck   # npm run dev needs cloud/.dev.vars (see .dev.vars.example)
+
 # Docs (VitePress, source in docs/)
 npm install && npm run docs:dev   # docs:build is checked in CI
 ```
@@ -52,7 +55,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 **Storage pipeline (`Core/Storage` + `QuickboxCore`):** there is no database. The Markdown files are the source of truth.
 - Line format: `- [ ] HH:mm text !1 @Project #tag due:YYYY-MM-DD key:value date:YYYY-MM-DD id:xxxxxxxx` (parsed by the `InboxParser.taskPattern` regex). New lines get a stable `id:` (`TaskIdentifier`), which is exposed as `InboxItem.taskID`, not as metadata. Item IDs are `"<file>#id:<taskID>"`, so mutations survive lines shifting. Legacy lines without `id:` fall back to `"<file>#<lineIndex>#<rawLine>"`. Any code that rebuilds a line (writer, repository edit) must carry `id:` over.
 - Human↔agent handoff uses ordinary metadata keys defined in `TaskHandoff.swift`: `for:` (me/agent/name), `by:` (author, absent = user), `from:` (origin task id), `ref:` (related note path).
-- `fixtures/task-lines.json` holds language-neutral golden parser cases, run by `TaskLineFixtureTests` (in the package). When you change the syntax, add a case there. Any future non-Swift parser (the cloud server) must pass the same file.
+- `fixtures/task-lines.json` (parser) and `fixtures/due-dates.json` (natural-language dates) are language-neutral golden cases. Both the Swift package and `cloud/` run them. When you change the syntax or the date rules, add a case there and update **both** implementations.
 - **Routing:** `InboxWriter.appendEntry` parses the draft. A task with `@Project` is appended to `<Project>.md` along with a hidden `date:` tag. Other tasks go to the daily file (named via `FormatSettings`, default `YYYY-MM-DD.md`) for the resolved `due:` date, or for today.
 - **Reading:** for a given day, `InboxRepository.load(on:)` reads that day's file and also scans every other `.md` file for lines carrying the matching `date:` tag. It hides items whose `defer:` date is in the future.
 - Natural-language dates are resolved **only** inside `due:`, `defer:`, and `start:` values (`DueDateResolver`; `DeferDateResolver` delegates to it). `CaptureDraftAnalyzer` generates live token previews for the capture UI using the same token rules as the parser. Keep the parser, analyzer, and writer consistent when you change the syntax.
@@ -64,3 +67,11 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 **Observability:** `CrashReporter` is opt-in (consent comes from preferences). It records only non-fatal errors with sanitized context and must never include task text.
 
 **UI testing hooks:** the `--ui-testing` launch argument turns off hotkey registration, uses the `.regular` activation policy, and seeds `IndexManager`. Adding `--ui-test-host-window` also hosts `CaptureView` in a normal window so XCUITest can drive it.
+
+**Cloud (`cloud/`):** a remote MCP server on Cloudflare Workers that exposes a user's inbox to AI agents. See `cloud/README.md`.
+- `cloud/src/core` is a TypeScript port of `QuickboxCore` (parser, line formatting, dates, ids) and must mirror it.
+- `Inbox` (in `cloud/src/inbox`) mirrors the app's routing, day view and edit rules on top of a synchronous `FileStore`.
+- The `InboxStore` Durable Object (one per user, SQLite, one row per `.md` file) is the single writer.
+- Expected errors cross the Durable Object RPC boundary as `InboxResult` values, not exceptions.
+- The server derives `by:` from the authenticated client, never from tool input.
+- Auth is dev-only (a bearer token in `.dev.vars`) until OAuth lands.
