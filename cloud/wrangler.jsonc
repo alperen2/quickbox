@@ -3,14 +3,24 @@
   "name": "quickbox-cloud",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
-  "compatibility_flags": ["nodejs_compat"],
+  // global_fetch_strictly_public: SSRF protection for Client ID Metadata Document fetches.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "observability": { "enabled": true },
   "vars": {
+    // The public origin; OAuth resource and issuer identifiers are built from it.
+    "PUBLIC_URL": "http://localhost:8787",
     // Used until users can set their own time zone.
     "DEFAULT_TIMEZONE": "UTC"
   },
+  "kv_namespaces": [{ "binding": "OAUTH_KV" }],
   "durable_objects": {
-    "bindings": [{ "name": "INBOX", "class_name": "InboxStore" }]
+    "bindings": [
+      { "name": "INBOX", "class_name": "InboxStore" },
+      { "name": "ACCOUNTS", "class_name": "AccountDirectory" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["InboxStore"] }]
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["InboxStore"] },
+    { "tag": "v2", "new_sqlite_classes": ["AccountDirectory"] }
+  ]
 }

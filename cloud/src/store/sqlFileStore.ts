@@ -1,8 +1,9 @@
 import type { FileStore } from "../inbox/fileStore";
+import type { Sql } from "./sql";
 
 /** `FileStore` on a Durable Object's SQLite storage. One row per Markdown file keeps files the source of truth. */
 export class SqlFileStore implements FileStore {
-  constructor(private readonly sql: SqlStorage) {
+  constructor(private readonly sql: Sql) {
     sql.exec(`CREATE TABLE IF NOT EXISTS files (
       path TEXT PRIMARY KEY,
       content TEXT NOT NULL,

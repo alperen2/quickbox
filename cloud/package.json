@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^1.1.0",
     "@modelcontextprotocol/server": "^2.0.0",
     "zod": "^4.6.5"
   },

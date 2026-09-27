@@ -1,6 +1,17 @@
-// Secrets and optional vars that `wrangler types` cannot see in wrangler.jsonc.
+// Secrets, optional vars and injected helpers that `wrangler types` cannot see in wrangler.jsonc.
 interface Env {
-  DEV_AUTH_TOKEN?: string;
-  DEV_USER_ID?: string;
-  DEV_AGENT_NAME?: string;
+  /** Injected by `OAuthProvider` into its handlers. */
+  OAUTH_PROVIDER: import("@cloudflare/workers-oauth-provider").OAuthHelpers;
+
+  APPLE_SERVICES_ID?: string;
+  APPLE_TEAM_ID?: string;
+  APPLE_KEY_ID?: string;
+  /** Contents of the Sign in with Apple `.p8` key. */
+  APPLE_PRIVATE_KEY?: string;
+
+  RESEND_API_KEY?: string;
+  /** Sender address, e.g. `quickbox <login@example.com>`. */
+  EMAIL_FROM?: string;
+  /** `"true"` prints sign-in codes to the console instead of emailing them. Local development only. */
+  DEV_LOG_EMAIL_CODES?: string;
 }

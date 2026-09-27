@@ -73,5 +73,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - `Inbox` (in `cloud/src/inbox`) mirrors the app's routing, day view and edit rules on top of a synchronous `FileStore`.
 - The `InboxStore` Durable Object (one per user, SQLite, one row per `.md` file) is the single writer.
 - Expected errors cross the Durable Object RPC boundary as `InboxResult` values, not exceptions.
-- The server derives `by:` from the authenticated client, never from tool input.
-- Auth is dev-only (a bearer token in `.dev.vars`) until OAuth lands.
+- The server derives `by:` from the OAuth client's name (token props), never from tool input.
+- Auth: `@cloudflare/workers-oauth-provider` (`src/oauth.ts`) protects `/mcp`. `/authorize` is a consent page offering Sign in with Apple and email codes (`src/auth/`). The global `AccountDirectory` Durable Object owns users and codes.
+- Apple's `form_post` callback is bridged to a same-site GET, because the flow's binding cookie is `SameSite=Lax`.
+- Local dev: `DEV_LOG_EMAIL_CODES=true` prints codes to the console. Tests run the Durable Object SQL on `node:sqlite` (`test/sqlite.ts`).

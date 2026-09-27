@@ -1,4 +1,14 @@
 # Copy to .dev.vars for `npm run dev`. Never commit .dev.vars.
-DEV_AUTH_TOKEN=change-me-to-a-long-random-string
-DEV_AGENT_NAME=claude
 DEFAULT_TIMEZONE=Europe/Istanbul
+
+# Email sign-in. For local development, print codes to the console:
+DEV_LOG_EMAIL_CODES=true
+# In production, set these instead (as secrets):
+# RESEND_API_KEY=
+# EMAIL_FROM=quickbox <login@your-domain>
+
+# Sign in with Apple (Services ID with the web redirect URL <PUBLIC_URL>/auth/apple/callback):
+# APPLE_SERVICES_ID=
+# APPLE_TEAM_ID=
+# APPLE_KEY_ID=
+# APPLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
