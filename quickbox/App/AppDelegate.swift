@@ -12,12 +12,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let isUITesting = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+        // Unit tests run inside this app; keep them away from the keychain and the network.
+        let isHostingUnitTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
         NSApp.setActivationPolicy(isUITesting ? .regular : .accessory)
 
         let state = AppState(
             settingsStore: SettingsStore(),
             hotkeyManager: HotkeyManager(),
-            registerHotkeyOnInit: !isUITesting
+            registerHotkeyOnInit: !isUITesting,
+            enableCloudSync: !isUITesting && !isHostingUnitTests
         )
         self.appState = state
 

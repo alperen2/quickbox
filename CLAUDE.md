@@ -43,7 +43,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - `quickbox` (bundle `alperen.quickbox`, direct distribution) and `quickboxAppStore` (bundle `alperen.quickbox.appstore`, product name "Quickbox Capture") compile **the same `quickbox/` folder** (file-system synchronized groups, so new files are picked up automatically). Each has its own entitlements file.
 - There are no compile-time flags that tell the two apart. Runtime branching uses the bundle ID. For example, `StorageAccessManager` requires a security-scoped bookmark folder only in the App Store build; the direct build falls back to `fallbackStoragePath`.
 - App targets use `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` with Swift 5 language mode. Test targets don't use that setting, and they host `quickbox.app`.
-- Both app targets link the local SwiftPM package **`Packages/QuickboxCore`**, which holds platform-independent logic: `InboxItem`, `InboxParser`, `CaptureDraftAnalyzer`, the date resolvers, `TaskIdentifier`, and `TaskHandoff`. It is meant to be shared with future iOS and cloud clients, so keep it free of UI, file I/O, and app types (`AppPreferences`, `FormatSettings`). Its API is `public`, and app files need `import QuickboxCore`. It uses Swift 5 language mode with `BareSlashRegexLiterals`. Its types are nonisolated, not MainActor. The package is wired into `project.pbxproj` by hand (`XCLocalSwiftPackageReference`).
+- Both app targets link the local SwiftPM package **`Packages/QuickboxCore`**, which holds platform-independent logic: `InboxItem`, `InboxParser`, `CaptureDraftAnalyzer`, the date resolvers, `TaskIdentifier`, `TaskHandoff`, and the sync wire models. It is meant to be shared with future iOS and cloud clients, so keep it free of UI, file I/O, and app types (`AppPreferences`, `FormatSettings`). Its API is `public`, and app files need `import QuickboxCore`. It uses Swift 5 language mode with `BareSlashRegexLiterals`. Its types are nonisolated, not MainActor. The package is wired into `project.pbxproj` by hand (`XCLocalSwiftPackageReference`).
 - Build/version numbers are set per target in `project.pbxproj` (`CURRENT_PROJECT_VERSION`, `MARKETING_VERSION`).
 
 ## Architecture
@@ -68,6 +68,17 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 
 **UI testing hooks:** the `--ui-testing` launch argument turns off hotkey registration, uses the `.regular` activation policy, and seeds `IndexManager`. Adding `--ui-test-host-window` also hosts `CaptureView` in a normal window so XCUITest can drive it.
 
+**Cloud sync in the app (`quickbox/Core/Cloud/`), optional:**
+- `AppState` wraps the local `InboxWriter` and `InboxRepository` in `SyncingInboxWriter` and `SyncingInboxRepository`, but only when `enableCloudSync` is on. `AppDelegate` turns it off for UI tests and when hosting unit tests. The wrappers keep writing files locally, then record `SyncOp`s into the persisted `SyncOutbox`. Captures get an explicit `id:` so the local and cloud lines share it.
+- `SyncEngine` runs one pass:
+  - First sync: import local-only files; where both sides have a file and it differs, the cloud wins and the local copy goes to `quickbox-conflicts/`.
+  - Push the outbox in batches. Ops the server rejects are dropped.
+  - Pull changes since the cursor. A file edited outside quickbox gets a conflict copy before it is overwritten.
+- `CloudSyncController` (Settings → quickbox Cloud) owns sign-in and the schedule (every 60 s, on app activation, and 2 s after a local change). Sign-in is `CloudAuthenticator`: OAuth + PKCE via `ASWebAuthenticationSession`, tokens in the Keychain, client id from `GET /app/config`.
+- While connected, file naming is fixed to the cloud's format (`yyyy-MM-dd.md`, `HH:mm`, no prefix).
+- The op types (`SyncOp`, `PushRequest`, `ChangesResponse`) live in `QuickboxCore` (`SyncModels.swift`), where iOS can reuse them. Their JSON is pinned by `fixtures/sync-push-request.json`, which both the package tests and the server's zod schema check.
+- App-hosted unit tests must not read files under `~/Documents`, the repository included. An unsigned host app triggers a macOS privacy prompt and the test hangs. Put repository-fixture tests in the package instead.
+
 **Cloud (`cloud/`):** a remote MCP server on Cloudflare Workers that exposes a user's inbox to AI agents. See `cloud/README.md`.
 - `cloud/src/core` is a TypeScript port of `QuickboxCore` (parser, line formatting, dates, ids) and must mirror it.
 - `Inbox` (in `cloud/src/inbox`) mirrors the app's routing, day view and edit rules on top of a synchronous `FileStore`.
@@ -76,4 +87,8 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - The server derives `by:` from the OAuth client's name (token props), never from tool input.
 - Auth: `@cloudflare/workers-oauth-provider` (`src/oauth.ts`) protects `/mcp`. `/authorize` is a consent page offering Sign in with Apple and email codes (`src/auth/`). The global `AccountDirectory` Durable Object owns users and codes.
 - Apple's `form_post` callback is bridged to a same-site GET, because the flow's binding cookie is `SameSite=Lax`.
+- Device sync lives under `/mcp/sync/*` (it shares the MCP resource's tokens):
+  - `GET changes?cursor=N` returns versioned files.
+  - `POST push` takes idempotent op batches: `add`, `update`, `delete`, `insertLine`, `importFile`.
+  - Only the first-party app client may call it, and it writes as the user.
 - Local dev: `DEV_LOG_EMAIL_CODES=true` prints codes to the console. Tests run the Durable Object SQL on `node:sqlite` (`test/sqlite.ts`).

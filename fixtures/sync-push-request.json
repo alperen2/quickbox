@@ -1,0 +1,40 @@
+{
+  "timeZone": "Europe/Istanbul",
+  "ops": [
+    {
+      "opId": "0b5c8e4a-0000-4000-8000-000000000001",
+      "type": "importFile",
+      "path": "2026-09-20.md",
+      "content": "- [ ] 08:00 Old local task\n"
+    },
+    {
+      "opId": "0b5c8e4a-0000-4000-8000-000000000002",
+      "type": "add",
+      "text": "Buy milk #home id:mac00001",
+      "capturedAt": { "date": "2026-09-28", "time": "09:30" }
+    },
+    {
+      "opId": "0b5c8e4a-0000-4000-8000-000000000003",
+      "type": "update",
+      "taskId": "mac00001",
+      "patch": { "due": null, "done": true, "metadata": { "remind": null, "time": "1h" } }
+    },
+    {
+      "opId": "0b5c8e4a-0000-4000-8000-000000000004",
+      "type": "update",
+      "taskId": "mac00001",
+      "patch": { "text": "Buy oat milk" }
+    },
+    {
+      "opId": "0b5c8e4a-0000-4000-8000-000000000005",
+      "type": "delete",
+      "taskId": "mac00001"
+    },
+    {
+      "opId": "0b5c8e4a-0000-4000-8000-000000000006",
+      "type": "insertLine",
+      "path": "2026-09-28.md",
+      "line": "- [ ] 09:30 Buy oat milk #home id:mac00001"
+    }
+  ]
+}

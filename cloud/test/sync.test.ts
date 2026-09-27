@@ -4,6 +4,7 @@ import { Inbox } from "../src/inbox/inbox";
 import { SqlFileStore } from "../src/store/sqlFileStore";
 import { pushRequestSchema, type SyncOp } from "../src/sync/ops";
 import { SyncService } from "../src/sync/syncService";
+import { readFixture } from "./fixtures";
 import { memorySql } from "./sqlite";
 
 const NOW: LocalNow = { date: { year: 2026, month: 9, day: 28 }, time: "09:12" };
@@ -141,5 +142,15 @@ describe("push request validation", () => {
       pushRequestSchema.safeParse({ ops: [{ opId: "abcdefgh", type: "add", text: "x", capturedAt: { date: "2026-02-30", time: "09:00" } }] }).success,
     ).toBe(false);
     expect(pushRequestSchema.safeParse({ ops: [{ opId: "abcdefgh", type: "delete", taskId: "t", extra: 1 }] }).success).toBe(false);
+  });
+});
+
+describe("fixtures/sync-push-request.json", () => {
+  it("is a valid push request, pinning the JSON the Mac app sends", () => {
+    const fixture = readFixture<unknown>("sync-push-request.json");
+
+    const parsed = pushRequestSchema.safeParse(fixture);
+
+    expect(parsed.success ? [] : parsed.error.issues).toEqual([]);
   });
 });

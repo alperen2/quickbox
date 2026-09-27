@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 
 struct SettingsView: View {
@@ -20,6 +21,7 @@ struct SettingsView: View {
     @State private var customTimeFormat: String
     @State private var prefixDraft: String
     @State private var previewFileName: String
+    @State private var isCloudConnected = false
     @FocusState private var isPrefixFieldFocused: Bool
 
     init(appState: AppState) {
@@ -45,7 +47,11 @@ struct SettingsView: View {
 
                 shortcutCard
                 storageCard
+                if let cloudSync = appState.cloudSync {
+                    CloudSyncCard(appState: appState, cloudSync: cloudSync)
+                }
                 namingCard
+                    .disabled(isCloudConnected)
                 captureCard
                 privacyCard
                 resetCard
@@ -66,6 +72,9 @@ struct SettingsView: View {
         }
         .onReceive(appState.$preferences) { _ in
             refreshPreviewFileName()
+        }
+        .onReceive(cloudConnectionPublisher) { connected in
+            isCloudConnected = connected
         }
     }
 
@@ -119,8 +128,15 @@ struct SettingsView: View {
         }
     }
 
+    private var cloudConnectionPublisher: AnyPublisher<Bool, Never> {
+        appState.cloudSync?.$isConnected.eraseToAnyPublisher() ?? Just(false).eraseToAnyPublisher()
+    }
+
     private var namingCard: some View {
-        SettingsCard(title: "File and time", subtitle: "Control naming and timestamp formatting") {
+        SettingsCard(
+            title: "File and time",
+            subtitle: isCloudConnected ? "Fixed while quickbox Cloud is connected" : "Control naming and timestamp formatting"
+        ) {
             VStack(alignment: .leading, spacing: 12) {
                 SettingRow(label: "File prefix") {
                     TextField("Optional", text: $prefixDraft)
@@ -316,6 +332,77 @@ struct SettingsView: View {
         var previewPreferences = appState.preferences
         previewPreferences.fileNamePrefix = FormatSettings.sanitizePrefix(prefixDraft)
         previewFileName = FormatSettings.fileName(for: Date(), preferences: previewPreferences)
+    }
+}
+
+private struct CloudSyncCard: View {
+    @ObservedObject var appState: AppState
+    @ObservedObject var cloudSync: CloudSyncController
+    @State private var isConnecting = false
+
+    var body: some View {
+        SettingsCard(title: "quickbox Cloud", subtitle: "Optional. Sync with your devices and AI agents") {
+            VStack(alignment: .leading, spacing: 10) {
+                if cloudSync.isConnected {
+                    SettingRow(label: "Status") {
+                        Text(statusText)
+                    }
+                    SettingRow(label: "Agents") {
+                        Text(CloudConfiguration.baseURL.appendingPathComponent("mcp").absoluteString)
+                            .font(.system(.callout, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                    HStack(spacing: 8) {
+                        Button("Sync now") {
+                            Task { await cloudSync.syncNow() }
+                        }
+                        .disabled(cloudSync.isSyncing)
+                        Button("Disconnect", role: .destructive) {
+                            appState.disconnectCloudSync()
+                        }
+                    }
+                    .controlSize(.small)
+                } else {
+                    Text("Your tasks stay in your folder. Connecting also keeps them in the cloud, so AI agents such as Claude can read and add tasks, and your devices stay in sync.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button(isConnecting ? "Connecting…" : "Connect…") {
+                        isConnecting = true
+                        Task {
+                            await appState.connectCloudSync()
+                            isConnecting = false
+                        }
+                    }
+                    .disabled(isConnecting)
+                    .controlSize(.small)
+                    Text("Connecting switches file names to yyyy-MM-dd and times to 24-hour, and uploads your existing files.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let message = cloudSync.statusMessage {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+    }
+
+    private var statusText: String {
+        if cloudSync.isSyncing { return "Syncing…" }
+        var parts: [String] = []
+        if let lastSyncedAt = cloudSync.lastSyncedAt {
+            parts.append("Synced \(lastSyncedAt.formatted(.relative(presentation: .named)))")
+        } else {
+            parts.append("Not synced yet")
+        }
+        if cloudSync.pendingChanges > 0 {
+            parts.append("\(cloudSync.pendingChanges) change(s) waiting")
+        }
+        return parts.joined(separator: " · ")
     }
 }
 
