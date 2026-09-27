@@ -15,15 +15,7 @@ struct TaskLineFixtureTests {
     }
 
     static func loadCases() throws -> [TaskLineFixture] {
-        // Packages/QuickboxCore/Tests/QuickboxCoreTests/<this file> -> repository root
-        let repositoryRoot = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let fixtureURL = repositoryRoot.appendingPathComponent("fixtures/task-lines.json")
-        let data = try Data(contentsOf: fixtureURL)
+        let data = try Data(contentsOf: FixtureLocation.url(named: "task-lines.json"))
         return try JSONDecoder().decode(FixtureFile.self, from: data).cases
     }
 }

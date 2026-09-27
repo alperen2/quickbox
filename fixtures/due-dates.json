@@ -1,0 +1,61 @@
+{
+  "description": "Golden cases for natural-language due/defer/start values. Each group fixes a reference day; expected values are calendar dates (YYYY-MM-DD) in the user's time zone, or null when the phrase does not resolve. Every resolver implementation (Swift app, cloud server) must match.",
+  "groups": [
+    {
+      "reference": "2026-03-02",
+      "note": "Monday",
+      "cases": [
+        { "input": "today", "expected": "2026-03-02" },
+        { "input": "tdy", "expected": "2026-03-02" },
+        { "input": "tomorrow", "expected": "2026-03-03" },
+        { "input": "Tomorrow", "expected": "2026-03-03" },
+        { "input": "tmr", "expected": "2026-03-03" },
+        { "input": "nw", "expected": "2026-03-09" },
+        { "input": "nextweek", "expected": "2026-03-09" },
+        { "input": "next weekend", "expected": "2026-03-07" },
+        { "input": "nextweekend", "expected": "2026-03-07" },
+        { "input": "end of week", "expected": "2026-03-06" },
+        { "input": "eow", "expected": "2026-03-06" },
+        { "input": "end of month", "expected": "2026-03-31" },
+        { "input": "eom", "expected": "2026-03-31" },
+        { "input": "end of year", "expected": "2026-12-31" },
+        { "input": "friday", "expected": "2026-03-06" },
+        { "input": "monday", "expected": "2026-03-09" },
+        { "input": "next friday", "expected": "2026-03-13" },
+        { "input": "  next   friday ", "expected": "2026-03-13" },
+        { "input": "next monday", "expected": "2026-03-16" },
+        { "input": "in 2 days", "expected": "2026-03-04" },
+        { "input": "in 1 week", "expected": "2026-03-09" },
+        { "input": "in 2 weeks", "expected": "2026-03-16" },
+        { "input": "in 1 month", "expected": "2026-04-02" },
+        { "input": "in3d", "expected": "2026-03-05" },
+        { "input": "in2w", "expected": "2026-03-16" },
+        { "input": "in1m", "expected": "2026-04-02" },
+        { "input": "15", "expected": "2026-03-15" },
+        { "input": "2", "expected": "2026-04-02" },
+        { "input": "1", "expected": "2026-04-01" },
+        { "input": "jan15", "expected": "2027-01-15" },
+        { "input": "15mar", "expected": "2026-03-15" },
+        { "input": "mar1", "expected": "2027-03-01" },
+        { "input": "mar2", "expected": "2026-03-02" },
+        { "input": "2026-05-20", "expected": "2026-05-20" },
+        { "input": "someday", "expected": null },
+        { "input": "32", "expected": null },
+        { "input": "next funday", "expected": null }
+      ]
+    },
+    {
+      "reference": "2026-01-31",
+      "note": "Saturday, last day of a long month",
+      "cases": [
+        { "input": "in 1 month", "expected": "2026-02-28" },
+        { "input": "in1m", "expected": "2026-02-28" },
+        { "input": "eom", "expected": "2026-01-31" },
+        { "input": "eow", "expected": "2026-02-06" },
+        { "input": "saturday", "expected": "2026-02-07" },
+        { "input": "next weekend", "expected": "2026-02-07" },
+        { "input": "dec31", "expected": "2026-12-31" }
+      ]
+    }
+  ]
+}
