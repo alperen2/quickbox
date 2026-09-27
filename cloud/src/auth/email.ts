@@ -11,7 +11,9 @@ export class ResendEmailSender implements EmailSender {
   constructor(
     private readonly apiKey: string,
     private readonly from: string,
-    private readonly fetchImpl: typeof fetch = fetch,
+    // Wrapped so it is never called as a method: Workers throws "Illegal invocation" when
+    // `fetch` runs with `this` set to anything but the global scope.
+    private readonly fetchImpl: typeof fetch = (input, init) => fetch(input, init),
   ) {}
 
   async sendSignInCode(to: string, code: string): Promise<void> {
