@@ -10,8 +10,6 @@ interface Env {
   APPLE_PRIVATE_KEY?: string;
 
   RESEND_API_KEY?: string;
-  /** Sender address, e.g. `quickbox <login@example.com>`. */
-  EMAIL_FROM?: string;
   /** `"true"` prints sign-in codes to the console instead of emailing them. Local development only. */
   DEV_LOG_EMAIL_CODES?: string;
 }

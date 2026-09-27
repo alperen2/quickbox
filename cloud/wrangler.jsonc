@@ -8,9 +8,12 @@
   "observability": { "enabled": true },
   "vars": {
     // The public origin; OAuth resource and issuer identifiers are built from it.
-    "PUBLIC_URL": "http://localhost:8787",
+    // Changing it invalidates existing connector connections. `.dev.vars` overrides it locally.
+    "PUBLIC_URL": "https://quickbox-cloud.aalperendurmuss.workers.dev",
     // Used until users can set their own time zone.
-    "DEFAULT_TIMEZONE": "UTC"
+    "DEFAULT_TIMEZONE": "Europe/Istanbul",
+    // Sender for sign-in codes; RESEND_API_KEY is a secret.
+    "EMAIL_FROM": "quickbox <giris@fsg.alperendurmus.com>"
   },
   "kv_namespaces": [{ "binding": "OAUTH_KV" }],
   "durable_objects": {
