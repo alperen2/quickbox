@@ -31,6 +31,8 @@ export interface TaskPatch {
   assignee?: string | null;
   ref?: string | null;
   done?: boolean;
+  /** Any other `key:value` token; `null` removes it. `id`, `date`, `due` and `by` are not settable here. */
+  metadata?: Record<string, string | null>;
 }
 
 export interface Task {

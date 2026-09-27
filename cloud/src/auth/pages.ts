@@ -47,6 +47,25 @@ export interface SignInMethods {
   email: boolean;
 }
 
+function signInButtons(handle: string, methods: SignInMethods, denyLabel: string): string {
+  return `<form method="post" action="/authorize">
+  <input type="hidden" name="handle" value="${escapeHtml(handle)}">
+  ${methods.apple ? '<button class="primary" name="decision" value="apple">Continue with Apple</button>' : ""}
+  ${methods.email ? `<button${methods.apple ? "" : ' class="primary"'} name="decision" value="email">Continue with email</button>` : ""}
+  <button class="link" name="decision" value="deny">${denyLabel}</button>
+</form>`;
+}
+
+/** The quickbox apps' own sign-in: no third party is being granted access. */
+export function appSignInPage(handle: string, methods: SignInMethods): string {
+  return page(
+    "Sign in to quickbox",
+    `<h1>Sign in to quickbox</h1>
+<p>Sync your inbox across your devices and your AI agents.</p>
+${signInButtons(handle, methods, "Cancel")}`,
+  );
+}
+
 /** Consent and sign-in in one step: every "continue" button is an approval for this client. */
 export function consentPage(client: ClientInfo, request: AuthRequest, handle: string, methods: SignInMethods): string {
   const name = escapeHtml(client.clientName ?? client.clientId);
@@ -62,12 +81,7 @@ export function consentPage(client: ClientInfo, request: AuthRequest, handle: st
 <p>It will be able to read and change your tasks and notes. ${publisher}</p>
 <p>Access will be sent to <strong>${escapeHtml(redirectHost)}</strong>.</p>
 ${isLocal ? '<p class="warning">This sends access to an app on your computer. Continue only if you just started connecting from it.</p>' : ""}
-<form method="post" action="/authorize">
-  <input type="hidden" name="handle" value="${escapeHtml(handle)}">
-  ${methods.apple ? '<button class="primary" name="decision" value="apple">Continue with Apple</button>' : ""}
-  ${methods.email ? `<button${methods.apple ? "" : ' class="primary"'} name="decision" value="email">Continue with email</button>` : ""}
-  <button class="link" name="decision" value="deny">Don't allow</button>
-</form>`,
+${signInButtons(handle, methods, "Don't allow")}`,
   );
 }
 

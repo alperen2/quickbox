@@ -3,7 +3,8 @@ import { accountDirectory } from "../accounts/accountDirectory";
 import { appleConfig } from "../config";
 import { AppleSignInError, appleAuthorizeUrl, base64Url, isEmailVerified, redeemAppleCode } from "./apple";
 import { EmailDeliveryError, emailSender } from "./email";
-import { appleBridgePage, codePage, consentPage, emailPage, messagePage } from "./pages";
+import { isFirstPartyClient } from "./firstParty";
+import { appleBridgePage, appSignInPage, codePage, consentPage, emailPage, messagePage } from "./pages";
 
 /** The single scope: full access to the user's inbox. */
 export const INBOX_SCOPE = "inbox";
@@ -50,7 +51,11 @@ async function showConsent(request: Request, env: Env): Promise<Response> {
   if (!client) return html(messagePage("Unknown app", "This app is not registered with quickbox."), { status: 400 });
 
   const consent = await oauth.beginConsent(authRequest);
-  return html(consentPage(client, authRequest, consent.handle, availableMethods(env)), { headers: consent.headers });
+  const methods = availableMethods(env);
+  const body = (await isFirstPartyClient(env, client.clientId))
+    ? appSignInPage(consent.handle, methods)
+    : consentPage(client, authRequest, consent.handle, methods);
+  return html(body, { headers: consent.headers });
 }
 
 async function decide(request: Request, env: Env): Promise<Response> {
