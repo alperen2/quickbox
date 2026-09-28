@@ -58,7 +58,7 @@ describe("MCP endpoint", () => {
       clientInfo: { name: "test-client", version: "1.0.0" },
     });
 
-    expect(message.result.serverInfo.name).toBe("quickbox");
+    expect(message.result.serverInfo.name).toBe("pigeon");
     expect(message.result.instructions).toContain('list_tasks for="agent"');
   });
 
@@ -129,7 +129,7 @@ describe("MCP endpoint with the official client", () => {
     await client.close();
 
     expect(era).toBe(mode);
-    expect(instructions).toContain("quickbox");
+    expect(instructions).toContain("Pigeon");
     expect(JSON.parse((queue.content as { text: string }[])[0]!.text)).toEqual([
       expect.objectContaining({ id: "request1", text: "Write caption" }),
     ]);

@@ -15,9 +15,9 @@ Inside spotlight panel, manage today's items quickly:
 - delete + undo
 - use the circled calendar button next to quick capture to open the larger calendar view with quick day/week/month jumps
 
-## Quickbox Syntax
+## Pigeon Syntax
 
-Quickbox uses a powerful, natural language-friendly syntax to organize your thoughts instantly:
+Pigeon uses a powerful, natural language-friendly syntax to organize your thoughts instantly:
 
 ### Projects & Context
 - `@ProjectName` — Routes the task to the project's own folder instead of the daily inbox. Project entries use the same dated file naming as the inbox (e.g., `ProjectName/2026-02-27.md`).
@@ -39,7 +39,7 @@ Quickbox uses a powerful, natural language-friendly syntax to organize your thou
 Natural language date parsing is intentionally limited to `due:`, `defer:`, and `start:` values to keep behavior deterministic and distraction-free.
 
 ### Interactive Features
-When typing `@`, `#`, or keywords like `due:` and `time:`, Quickbox provides an **interactive autocomplete menu**.
+When typing `@`, `#`, or keywords like `due:` and `time:`, Pigeon provides an **interactive autocomplete menu**.
 * **Smart Previews:** The menu shows exactly what time or date a shorthand or phrase (like `eow` or `next friday`) resolves to.
 * **Clickable Pills:** You can click on the generated metadata pills in your task list to quickly edit values or remove them without manual text editing.
 

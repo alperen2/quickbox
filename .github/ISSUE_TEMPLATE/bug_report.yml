@@ -16,7 +16,7 @@ body:
       required: true
   - type: input
     attributes:
-      label: quickbox Version
+      label: Pigeon Version
       placeholder: 1.0.0-beta.1
     validations:
       required: true

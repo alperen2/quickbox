@@ -121,14 +121,14 @@ final class AppState: ObservableObject {
         preferences.fileDateFormat = AppPreferences.defaultFileDateFormat
         preferences.timeFormat = AppPreferences.defaultTimeFormat
         preferences.fileNamePrefix = ""
-        persistPreferences(message: "quickbox Cloud uses yyyy-MM-dd file names and 24-hour times.")
+        persistPreferences(message: "\(Brand.cloudName) uses yyyy-MM-dd file names and 24-hour times.")
         await cloudSync.connect()
         loadInbox()
     }
 
     func disconnectCloudSync() async {
         await cloudSync?.disconnect()
-        settingsMessage = "Disconnected from quickbox Cloud. Your local files are unchanged."
+        settingsMessage = "Disconnected from \(Brand.cloudName). Your local files are unchanged."
     }
 
     private func handleRemoteChanges() {
@@ -546,7 +546,7 @@ final class AppState: ObservableObject {
         panel.allowsMultipleSelection = false
         panel.canCreateDirectories = true
         panel.prompt = "Use folder"
-        panel.message = "Choose where quickbox should save your markdown files."
+        panel.message = "Choose where \(Brand.name) should save your markdown files."
 
         if panel.runModal() == .OK, let url = panel.url {
             do {

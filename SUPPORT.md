@@ -8,7 +8,7 @@
 ## Before Opening an Issue
 
 - Confirm you are on the latest beta
-- Include macOS version and quickbox version
+- Include macOS version and Pigeon version
 - Provide exact reproduction steps
 
 ## Diagnostic Bundle

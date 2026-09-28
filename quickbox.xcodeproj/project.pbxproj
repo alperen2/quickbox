@@ -32,7 +32,7 @@
 		05FFD3BB2F51F4D400E51518 /* quickbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = quickbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		05FFD3C82F51F4D500E51518 /* quickboxTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quickboxTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		05FFD3D22F51F4D500E51518 /* quickboxUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = quickboxUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A10000022F9A000100AA0001 /* Quickbox Capture.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Quickbox Capture.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000022F9A000100AA0001 /* Pigeon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pigeon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -101,7 +101,7 @@
 			isa = PBXGroup;
 			children = (
 				05FFD3BB2F51F4D400E51518 /* quickbox.app */,
-				A10000022F9A000100AA0001 /* Quickbox Capture.app */,
+				A10000022F9A000100AA0001 /* Pigeon.app */,
 				05FFD3C82F51F4D500E51518 /* quickboxTests.xctest */,
 				05FFD3D22F51F4D500E51518 /* quickboxUITests.xctest */,
 			);
@@ -199,8 +199,8 @@
 			packageProductDependencies = (
 				C20000032F9B000100BB0001 /* QuickboxCore */,
 			);
-			productName = "Quickbox Capture";
-			productReference = A10000022F9A000100AA0001 /* Quickbox Capture.app */;
+			productName = Pigeon;
+			productReference = A10000022F9A000100AA0001 /* Pigeon.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -470,6 +470,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Pigeon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -505,6 +506,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Pigeon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -624,8 +626,8 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Quickbox Capture";
-				INFOPLIST_KEY_CFBundleName = "Quickbox Capture";
+				INFOPLIST_KEY_CFBundleDisplayName = Pigeon;
+				INFOPLIST_KEY_CFBundleName = Pigeon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -634,7 +636,7 @@
 				);
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = alperen.quickbox.appstore;
-				PRODUCT_NAME = "Quickbox Capture";
+				PRODUCT_NAME = Pigeon;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -661,8 +663,8 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "Quickbox Capture";
-				INFOPLIST_KEY_CFBundleName = "Quickbox Capture";
+				INFOPLIST_KEY_CFBundleDisplayName = Pigeon;
+				INFOPLIST_KEY_CFBundleName = Pigeon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -671,7 +673,7 @@
 				);
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = alperen.quickbox.appstore;
-				PRODUCT_NAME = "Quickbox Capture";
+				PRODUCT_NAME = Pigeon;
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

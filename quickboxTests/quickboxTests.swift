@@ -252,6 +252,15 @@ struct quickboxTests {
     }
 
     @Test
+    func defaultStorageFolderKeepsExistingQuickboxFolder() {
+        let existing = AppPreferences.defaultFallbackStoragePath { $0 == AppPreferences.legacyFallbackStoragePath }
+        let fresh = AppPreferences.defaultFallbackStoragePath { _ in false }
+
+        #expect(existing == "~/Documents/Quickbox")
+        #expect(fresh == "~/Documents/Pigeon")
+    }
+
+    @Test
     func storageResolverThrowsForInvalidBookmark() {
         let preferences = AppPreferences(
             shortcutKey: AppPreferences.default.shortcutKey,

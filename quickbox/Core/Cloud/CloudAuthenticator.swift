@@ -41,8 +41,8 @@ enum CloudAuthError: LocalizedError, Equatable {
         switch self {
         case .cancelled: return "Sign-in was cancelled."
         case .invalidCallback: return "Sign-in could not be completed. Please try again."
-        case .signedOut: return "Your quickbox Cloud session ended. Connect again in Settings."
-        case .server(let message): return "quickbox Cloud: \(message)"
+        case .signedOut: return "Your \(Brand.cloudName) session ended. Connect again in Settings."
+        case .server(let message): return "\(Brand.cloudName): \(message)"
         }
     }
 }

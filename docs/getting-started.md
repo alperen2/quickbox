@@ -16,5 +16,5 @@ Select `quickbox` scheme and run.
 ## Run tests
 
 ```bash
-xcodebuild test -project quickbox.xcodeproj -scheme quickbox -destination 'platform=macOS' -only-testing:quickboxTests
+xcodebuild test -project quickbox.xcodeproj -scheme quickbox-AppStore -destination 'platform=macOS' -only-testing:quickboxTests
 ```

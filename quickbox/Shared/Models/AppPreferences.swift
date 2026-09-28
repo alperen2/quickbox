@@ -28,17 +28,25 @@ struct AppPreferences: Codable {
     var crashReportingEnabled: Bool
 
     static let defaultShortcut = "command+shift+space"
-    static let defaultFolderName = "Quickbox"
     static let defaultFileDateFormat = "yyyy-MM-dd"
     static let defaultTimeFormat = "HH:mm"
-    static let defaultFallbackStoragePath = "~/Documents/Quickbox"
+    static let legacyFallbackStoragePath = "~/Documents/Quickbox"
+    static let newFallbackStoragePath = "~/Documents/Pigeon"
+
+    /// Preferences are saved only after a change, so users who never touched Settings read this
+    /// default on every launch: keep them on the folder that already holds their tasks.
+    static func defaultFallbackStoragePath(
+        folderExists: (String) -> Bool = { FileManager.default.fileExists(atPath: ($0 as NSString).expandingTildeInPath) }
+    ) -> String {
+        folderExists(legacyFallbackStoragePath) ? legacyFallbackStoragePath : newFallbackStoragePath
+    }
 
     static var `default`: AppPreferences {
         return AppPreferences(
             shortcutKey: defaultShortcut,
             afterSaveMode: .close,
             storageBookmarkData: nil,
-            fallbackStoragePath: defaultFallbackStoragePath,
+            fallbackStoragePath: defaultFallbackStoragePath(),
             launchAtLogin: false,
             fileDateFormat: defaultFileDateFormat,
             timeFormat: defaultTimeFormat,

@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: quickbox
+  name: Pigeon
   text: Fast thought capture for macOS
   tagline: Capture in 1-2 seconds and get back to work.
   actions:
@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: Minimal by design
-    details: quickbox stays focused on fast capture and light triage instead of becoming a full task manager.
+    details: Pigeon stays focused on fast capture and light triage instead of becoming a full task manager.
   - title: Local-first
     details: Your notes stay in the folder you choose. No network dependency for daily use.
   - title: Production-ready baseline

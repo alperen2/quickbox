@@ -1,6 +1,6 @@
-# quickbox cloud
+# Pigeon cloud
 
-Remote MCP server that gives AI agents (claude.ai, Claude Desktop, ChatGPT, any MCP client) access to a user's quickbox inbox. The inbox is the same Markdown task and note files the Mac app writes. Runs on Cloudflare Workers with one Durable Object per user.
+Remote MCP server that gives AI agents (claude.ai, Claude Desktop, ChatGPT, any MCP client) access to a user's Pigeon inbox. The inbox is the same Markdown task and note files the Mac app writes. Runs on Cloudflare Workers with one Durable Object per user.
 
 ```
 MCP client ──OAuth 2.1──▶ OAuthProvider ──/mcp + token──▶ createMcpHandler ──▶ InboxStore (one DO per user, SQLite)
@@ -15,7 +15,7 @@ MCP client ──OAuth 2.1──▶ OAuthProvider ──/mcp + token──▶ cr
 - **`src/accounts/`**: the `AccountDirectory` Durable Object stores users, identities and email codes. Apple and email sign-ins with the same verified address reach the same user.
 - **`src/mcp/`**: the tools `list_tasks`, `add_task`, `update_task`, `complete_task`, `read_note` and `write_note`, plus agent instructions. Each request is served statelessly, for both 2025-era and 2026-07-28 clients.
 
-**Device sync** (`src/sync/`): the quickbox apps keep a local Markdown mirror.
+**Device sync** (`src/sync/`): the Pigeon apps keep a local Markdown mirror.
 - `GET /mcp/sync/changes?cursor=N` returns files changed after version N.
 - `POST /mcp/sync/push` replays their offline edits as idempotent ops: `add`, `update`, `delete`, `insertLine`, `importFile`.
 - Only the first-party app client may use it. Its OAuth client is created once and published at `GET /app/config`. Agent tokens get `403` there.

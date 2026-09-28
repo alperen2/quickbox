@@ -136,7 +136,7 @@ struct SettingsView: View {
     private var namingCard: some View {
         SettingsCard(
             title: "File and time",
-            subtitle: isCloudConnected ? "Fixed while quickbox Cloud is connected" : "Control naming and timestamp formatting"
+            subtitle: isCloudConnected ? "Fixed while \(Brand.cloudName) is connected" : "Control naming and timestamp formatting"
         ) {
             VStack(alignment: .leading, spacing: 12) {
                 SettingRow(label: "File prefix") {
@@ -344,7 +344,7 @@ private struct CloudSyncCard: View {
     @State private var isWorking = false
 
     var body: some View {
-        SettingsCard(title: "quickbox Cloud", subtitle: "Optional. Sync with your devices and AI agents") {
+        SettingsCard(title: Brand.cloudName, subtitle: "Optional. Sync with your devices and AI agents") {
             VStack(alignment: .leading, spacing: 10) {
                 if cloudSync.isConnected {
                     connectedContent
@@ -363,7 +363,7 @@ private struct CloudSyncCard: View {
         .task(id: cloudSync.isConnected) {
             await cloudSync.refreshAccount()
         }
-        .confirmationDialog("Delete your quickbox Cloud account?", isPresented: $isConfirmingDeletion) {
+        .confirmationDialog("Delete your \(Brand.cloudName) account?", isPresented: $isConfirmingDeletion) {
             Button("Delete account and cloud data", role: .destructive) {
                 run { await cloudSync.deleteAccount() }
             }

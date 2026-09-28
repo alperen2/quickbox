@@ -1,6 +1,6 @@
 export default {
   lang: "en-US",
-  title: "quickbox",
+  title: "Pigeon",
   description: "Minimal macOS quick capture app",
   base: "/quickbox/",
   lastUpdated: true,

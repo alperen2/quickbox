@@ -86,7 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let rootView = CaptureView(appState: state, mode: .spotlight) {}
         let hostController = NSHostingController(rootView: rootView)
         let window = NSWindow(contentViewController: hostController)
-        window.title = "quickbox UI Test Host"
+        window.title = "\(Brand.name) UI Test Host"
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.setContentSize(NSSize(width: 760, height: 620))
         window.center()

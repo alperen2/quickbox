@@ -1,4 +1,5 @@
 import type { AuthRequest, ClientInfo } from "@cloudflare/workers-oauth-provider";
+import { PRODUCT_NAME } from "../brand";
 
 /** Every value that reaches HTML goes through this: client names and URIs are attacker-chosen. */
 export function escapeHtml(value: string): string {
@@ -38,7 +39,7 @@ function page(title: string, body: string, scriptNonce?: string): string {
 <title>${escapeHtml(title)}</title>
 <style>${STYLE}</style>
 </head>
-<body><main><div class="brand">quickbox</div>${body}</main>${script}</body>
+<body><main><div class="brand">${PRODUCT_NAME}</div>${body}</main>${script}</body>
 </html>`;
 }
 
@@ -56,11 +57,11 @@ function signInButtons(handle: string, methods: SignInMethods, denyLabel: string
 </form>`;
 }
 
-/** The quickbox apps' own sign-in: no third party is being granted access. */
+/** The first-party apps' own sign-in: no third party is being granted access. */
 export function appSignInPage(handle: string, methods: SignInMethods): string {
   return page(
-    "Sign in to quickbox",
-    `<h1>Sign in to quickbox</h1>
+    `Sign in to ${PRODUCT_NAME}`,
+    `<h1>Sign in to ${PRODUCT_NAME}</h1>
 <p>Sync your inbox across your devices and your AI agents.</p>
 ${signInButtons(handle, methods, "Cancel")}`,
   );
@@ -76,8 +77,8 @@ export function consentPage(client: ClientInfo, request: AuthRequest, handle: st
     : "This app registered itself, so its name is not verified.";
 
   return page(
-    `Allow ${client.clientName ?? "this app"} to use quickbox`,
-    `<h1>Allow <strong>${name}</strong> to use your quickbox inbox?</h1>
+    `Allow ${client.clientName ?? "this app"} to use ${PRODUCT_NAME}`,
+    `<h1>Allow <strong>${name}</strong> to use your ${PRODUCT_NAME} inbox?</h1>
 <p>It will be able to read and change your tasks and notes. ${publisher}</p>
 <p>Access will be sent to <strong>${escapeHtml(redirectHost)}</strong>.</p>
 ${isLocal ? '<p class="warning">This sends access to an app on your computer. Continue only if you just started connecting from it.</p>' : ""}
@@ -87,7 +88,7 @@ ${signInButtons(handle, methods, "Don't allow")}`,
 
 export function emailPage(state: string, message?: string): string {
   return page(
-    "Sign in to quickbox",
+    `Sign in to ${PRODUCT_NAME}`,
     `<h1>Sign in with email</h1>
 <p>We'll send you a 6-digit code.</p>
 ${message ? `<p class="warning">${escapeHtml(message)}</p>` : ""}

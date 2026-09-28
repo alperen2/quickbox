@@ -1,6 +1,6 @@
 # Contributing
 
-Quick contribution rules for quickbox:
+Quick contribution rules for Pigeon:
 
 - Keep scope focused and minimal
 - Run tests before opening a PR

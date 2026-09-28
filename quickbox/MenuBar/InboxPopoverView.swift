@@ -8,7 +8,7 @@ struct MenuBarDashboardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
-                Text("quickbox")
+                Text(Brand.name)
                     .font(.headline)
 
                 Spacer()
@@ -49,7 +49,7 @@ struct MenuBarDashboardView: View {
 
             VStack(spacing: 2) {
                 PopoverMenuRow(title: "Settings", systemImage: "gearshape", action: onOpenSettings)
-                PopoverMenuRow(title: "Quit quickbox", systemImage: "power", action: onQuit)
+                PopoverMenuRow(title: "Quit \(Brand.name)", systemImage: "power", action: onQuit)
             }
 
             if let message = appState.inboxMessage {
