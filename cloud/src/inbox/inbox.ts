@@ -21,9 +21,18 @@ export interface Clock {
 }
 
 const TOKEN_VALUE_PATTERN = /^[A-Za-z0-9_-]+$/;
-const NOTE_PATH_PATTERN = /^notes\/[A-Za-z0-9_-]+(\/[A-Za-z0-9_-]+)*\.md$/;
-/** Root-level Markdown files the app may create: no folders, hidden files or control characters. */
-const TASK_FILE_PATTERN = /^[^/\\.\u0000-\u001f][^/\\\u0000-\u001f]{0,199}\.md$/;
+/**
+ * Storage layout, shared with the Mac app (`StorageLayout.swift`):
+ *   <day>.md              inbox tasks for that day
+ *   <Project>/<day>.md    project tasks for that day
+ *   _notes/<name>.md      free-form notes (agent output)
+ * Folders starting with "_" are system folders and never projects.
+ */
+export const NOTES_FOLDER = "_notes";
+const NOTE_PATH_PATTERN = /^_notes\/[A-Za-z0-9_-]+(\/[A-Za-z0-9_-]+)*\.md$/;
+const PROJECT_FOLDER_PATTERN = /^[A-Za-z0-9-][A-Za-z0-9_-]*$/;
+/** A task file name a device may upload: no folders, hidden files or control characters. */
+const TASK_FILE_NAME_PATTERN = /^[^/\\.\u0000-\u001f][^/\\\u0000-\u001f]{0,199}\.md$/;
 const MAX_NOTE_BYTES = 256 * 1024;
 const MAX_FILE_BYTES = 1024 * 1024;
 /** Tokens owned by the storage layer (routing, identity, authorship) or edited through dedicated fields. */
@@ -38,9 +47,9 @@ interface LocatedTask {
 }
 
 /**
- * One user's inbox: Markdown task files at the root (`YYYY-MM-DD.md`, `<Project>.md`)
- * and free-form notes under `notes/`. Mirrors the app's routing and editing rules so
- * files written here read the same in the Mac app.
+ * One user's inbox: dated Markdown task files at the root and in project folders, plus
+ * free-form notes under `_notes/`. Mirrors the app's routing and editing rules so files
+ * written here read the same in the Mac app.
  */
 export class Inbox {
   constructor(
@@ -88,14 +97,15 @@ export class Inbox {
 
     const resolvedDue = parsed.due === null ? null : resolveDueDate(parsed.due, now.date);
     const targetDay = formatISODate(resolvedDue ?? now.date);
-    const path = parsed.project === null ? `${targetDay}.md` : `${parsed.project}.md`;
+    const path = parsed.project === null ? `${targetDay}.md` : `${parsed.project}/${targetDay}.md`;
 
     const line = formatTaskLine({
       ...fieldsOf(parsed),
       time: now.time,
       due: resolvedDue ? formatISODate(resolvedDue) : parsed.due,
       metadata,
-      routeDate: parsed.project === null ? null : targetDay,
+      // The file's day routes the task; the legacy `date:` tag is no longer written.
+      routeDate: null,
       taskId,
     });
 
@@ -140,14 +150,15 @@ export class Inbox {
    * sync API addresses tasks by id.
    */
   importFile(path: string, content: string): { imported: boolean } {
-    const filePath = path.startsWith("notes/") ? validNotePath(path) : validTaskFilePath(path);
+    const isNote = path.startsWith(`${NOTES_FOLDER}/`);
+    const filePath = isNote ? validNotePath(path) : validTaskFilePath(path);
     if (new TextEncoder().encode(content).byteLength > MAX_FILE_BYTES) {
       throw new InboxError("invalid_input", `Files are limited to ${MAX_FILE_BYTES / 1024} KB.`);
     }
     if (this.files.read(filePath) !== null) return { imported: false };
 
     const lines = splitLines(content.replace(/\r\n?/g, "\n"));
-    if (!filePath.startsWith("notes/")) {
+    if (!isNote) {
       const taken = new Set(this.taskFiles().flatMap((file) => parseTaskLines(splitLines(this.files.read(file)), file).map((t) => t.taskId)));
       for (const line of parseTaskLines(lines, filePath)) {
         if (line.taskId !== null && !taken.has(line.taskId)) {
@@ -180,17 +191,16 @@ export class Inbox {
     return { path, content };
   }
 
+  /** A day shows its inbox file and the same-named file in every project folder, like the app. */
   private tasksFor(day: LocalDate | null): LocatedTask[] {
-    const dayFile = day ? `${formatISODate(day)}.md` : null;
-    const routeTag = day ? `date:${formatISODate(day)}` : null;
+    const dayFileName = day ? `${formatISODate(day)}.md` : null;
 
-    return this.taskFiles().flatMap((path) => {
-      const lines = splitLines(this.files.read(path));
-      const located = parseTaskLines(lines, path).map((line) => ({ path, lines, line }));
-      if (!day || path === dayFile) return located;
-      // Tasks routed to project files show up on the day named by their `date:` tag.
-      return located.filter(({ line }) => line.rawLine.includes(routeTag!));
-    });
+    return this.taskFiles()
+      .filter((path) => dayFileName === null || path.split("/").pop() === dayFileName)
+      .flatMap((path) => {
+        const lines = splitLines(this.files.read(path));
+        return parseTaskLines(lines, path).map((line) => ({ path, lines, line }));
+      });
   }
 
   private find(taskId: string): LocatedTask | null {
@@ -214,12 +224,9 @@ export class Inbox {
     return taskId;
   }
 
-  /** Task files live at the root; `notes/` holds free-form documents. */
+  /** Task files: `.md` files at the root and directly inside project folders. */
   private taskFiles(): string[] {
-    return this.files
-      .list()
-      .filter((path) => path.endsWith(".md") && !path.includes("/"))
-      .sort();
+    return this.files.list().filter(isTaskFilePath).sort();
   }
 
   private resolveDay(value: string, today: LocalDate): LocalDate {
@@ -292,8 +299,14 @@ function replaceTaskId(rawLine: string, taskId: string): string {
   return `${withoutId} id:${taskId}`;
 }
 
+/** `<file>.md` at the root or `<Project>/<file>.md`. */
 function validTaskFilePath(path: string): string {
-  if (!TASK_FILE_PATTERN.test(path)) throw new InboxError("invalid_input", `"${path}" is not a valid task file name.`);
+  const parts = path.split("/");
+  const fileName = parts.pop()!;
+  const validFolder = parts.length === 0 || (parts.length === 1 && PROJECT_FOLDER_PATTERN.test(parts[0]!));
+  if (!validFolder || !TASK_FILE_NAME_PATTERN.test(fileName)) {
+    throw new InboxError("invalid_input", `"${path}" is not a valid task file path.`);
+  }
   return path;
 }
 
@@ -316,9 +329,16 @@ function taskIdValue(value: string): string {
 
 function validNotePath(path: string): string {
   if (!NOTE_PATH_PATTERN.test(path)) {
-    throw new InboxError("invalid_input", `Note paths look like notes/<name>.md (letters, digits, "-", "_").`);
+    throw new InboxError("invalid_input", `Note paths look like ${NOTES_FOLDER}/<name>.md (letters, digits, "-", "_").`);
   }
   return path;
+}
+
+function isTaskFilePath(path: string): boolean {
+  if (!path.endsWith(".md")) return false;
+  const parts = path.split("/");
+  if (parts.length === 1) return true;
+  return parts.length === 2 && PROJECT_FOLDER_PATTERN.test(parts[0]!);
 }
 
 function matches(value: string | null | undefined, expected: string | undefined): boolean {

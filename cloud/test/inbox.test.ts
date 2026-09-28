@@ -45,13 +45,13 @@ describe("addTask", () => {
     expect(store.read("2026-10-09.md")).toBe("- [ ] 09:12 Pay rent due:2026-10-09 id:task0001\n");
   });
 
-  it("routes project tasks to the project file with a hidden date tag", () => {
+  it("routes project tasks to the project folder's file for their day", () => {
     const { inbox, store } = makeInbox();
 
     inbox.addTask({ text: "Plan sprint @quickbox", due: "tomorrow" }, USER);
 
-    expect(store.read("quickbox.md")).toBe(
-      "- [ ] 09:12 Plan sprint @quickbox due:2026-09-29 date:2026-09-29 id:task0001\n",
+    expect(store.read("quickbox/2026-09-29.md")).toBe(
+      "- [ ] 09:12 Plan sprint @quickbox due:2026-09-29 id:task0001\n",
     );
   });
 
@@ -100,14 +100,13 @@ describe("listTasks", () => {
       "- [ ] 11:00 Hidden until Wednesday defer:2026-09-30 id:defer001",
       "- [ ] 12:00 Legacy line without id",
     ].join("\n"),
-    "Marketing.md": [
-      "- [ ] 07:30 Routed to today @Marketing date:2026-09-28 id:mkt00001",
-      "- [ ] 07:45 Routed to tomorrow @Marketing for:agent date:2026-09-29 id:mkt00002",
-    ].join("\n"),
-    "notes/mkt00001.md": "- [ ] 00:00 not a task file",
+    "Marketing/2026-09-28.md": "- [ ] 07:30 Routed to today @Marketing id:mkt00001",
+    "Marketing/2026-09-29.md": "- [ ] 07:45 Routed to tomorrow @Marketing for:agent id:mkt00002",
+    "_notes/2026-09-28.md": "- [ ] 00:00 a note, not a task file",
+    "_archive/2026-09-28.md": "- [ ] 00:00 system folders are never projects",
   };
 
-  it("shows a day like the app: its daily file plus routed project tasks, hiding deferred ones", () => {
+  it("shows a day like the app: its daily file plus each project's file for that day, hiding deferred ones", () => {
     const { inbox } = makeInbox(files);
 
     const tasks = inbox.listTasks({ date: "today" });
@@ -155,13 +154,13 @@ describe("listTasks", () => {
 describe("updateTask", () => {
   it("edits only the requested fields and keeps routing and identity tokens", () => {
     const { inbox, store } = makeInbox({
-      "Marketing.md": "- [ ] 07:30 Draft !2 @Marketing #social time:30m date:2026-09-28 id:mkt00001\n",
+      "Marketing/2026-09-28.md": "- [ ] 07:30 Draft !2 @Marketing #social time:30m id:mkt00001\n",
     });
 
     const task = inbox.updateTask("mkt00001", { text: "Final draft", due: "tomorrow", assignee: "agent", priority: 1 });
 
-    expect(store.read("Marketing.md")).toBe(
-      "- [ ] 07:30 Final draft !1 @Marketing #social due:2026-09-29 for:agent time:30m date:2026-09-28 id:mkt00001\n",
+    expect(store.read("Marketing/2026-09-28.md")).toBe(
+      "- [ ] 07:30 Final draft !1 @Marketing #social due:2026-09-29 for:agent time:30m id:mkt00001\n",
     );
     expect(task.metadata).toEqual({ for: "agent", time: "30m" });
   });
@@ -189,15 +188,16 @@ describe("updateTask", () => {
 });
 
 describe("notes", () => {
-  it("reads and writes Markdown notes under notes/ only", () => {
+  it("reads and writes Markdown notes under _notes/ only", () => {
     const { inbox } = makeInbox();
 
-    inbox.writeNote("notes/k3f9x2ab.md", "# Caption\nHello");
+    inbox.writeNote("_notes/k3f9x2ab.md", "# Caption\nHello");
 
-    expect(inbox.readNote("notes/k3f9x2ab.md")).toEqual({ path: "notes/k3f9x2ab.md", content: "# Caption\nHello" });
-    expectInboxError(() => inbox.readNote("notes/missing.md"), "not_found");
+    expect(inbox.readNote("_notes/k3f9x2ab.md")).toEqual({ path: "_notes/k3f9x2ab.md", content: "# Caption\nHello" });
+    expectInboxError(() => inbox.readNote("_notes/missing.md"), "not_found");
+    expectInboxError(() => inbox.writeNote("notes/old-location.md", ""), "invalid_input");
     expectInboxError(() => inbox.writeNote("2026-09-28.md", "overwrite tasks"), "invalid_input");
-    expectInboxError(() => inbox.writeNote("notes/../x.md", ""), "invalid_input");
+    expectInboxError(() => inbox.writeNote("_notes/../x.md", ""), "invalid_input");
   });
 });
 
@@ -215,17 +215,17 @@ describe("agent handoff", () => {
     const [queued] = inbox.listTasks({ assignee: "agent" });
     expect(queued?.id).toBe(request.id);
 
-    inbox.writeNote(`notes/${request.id}.md`, "Caption: Autumn launch 🍂");
-    inbox.updateTask(request.id!, { ref: `notes/${request.id}.md`, done: true });
+    inbox.writeNote(`_notes/${request.id}.md`, "Caption: Autumn launch 🍂");
+    inbox.updateTask(request.id!, { ref: `_notes/${request.id}.md`, done: true });
     const followUp = inbox.addTask(
-      { text: "Publish post @Marketing", assignee: "me", origin: request.id!, ref: `notes/${request.id}.md` },
+      { text: "Publish post @Marketing", assignee: "me", origin: request.id!, ref: `_notes/${request.id}.md` },
       CLAUDE,
     );
 
-    expect(store.read("Marketing.md")).toBe(
+    expect(store.read("Marketing/2026-09-28.md")).toBe(
       [
-        "- [x] 09:12 Create Instagram post @Marketing due:2026-09-28 for:agent ref:notes/task0001.md date:2026-09-28 id:task0001",
-        "- [ ] 09:12 Publish post @Marketing by:claude for:me from:task0001 ref:notes/task0001.md date:2026-09-28 id:task0002",
+        "- [x] 09:12 Create Instagram post @Marketing due:2026-09-28 for:agent ref:_notes/task0001.md id:task0001",
+        "- [ ] 09:12 Publish post @Marketing by:claude for:me from:task0001 ref:_notes/task0001.md id:task0002",
         "",
       ].join("\n"),
     );

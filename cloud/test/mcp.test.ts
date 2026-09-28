@@ -82,12 +82,12 @@ describe("MCP endpoint", () => {
 
     const message = await call("tools/call", {
       name: "add_task",
-      arguments: { text: "Publish post", for: "me", from: "request1", ref: "notes/request1.md" },
+      arguments: { text: "Publish post", for: "me", from: "request1", ref: "_notes/request1.md" },
     });
 
     expect(JSON.parse(toolText(message))).toMatchObject({ id: "newtask1", metadata: { by: "claude", for: "me" } });
     expect(store.read("2026-09-28.md")).toContain(
-      "- [ ] 09:12 Publish post by:claude for:me from:request1 ref:notes/request1.md id:newtask1",
+      "- [ ] 09:12 Publish post by:claude for:me from:request1 ref:_notes/request1.md id:newtask1",
     );
   });
 

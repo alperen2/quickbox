@@ -9,7 +9,7 @@ MCP client ──OAuth 2.1──▶ OAuthProvider ──/mcp + token──▶ cr
 ```
 
 - **`src/core/`**: the task line format, natural-language dates and task ids. This is a port of `Packages/QuickboxCore`. Both implementations run against the same `../fixtures/*.json` golden cases.
-- **`src/inbox/`**: the `Inbox` domain logic. It follows the app's routing (daily file or `<Project>.md` with a `date:` tag), its day view, and its editing rules. It is synchronous and storage-agnostic.
+- **`src/inbox/`**: the `Inbox` domain logic. It follows the app's layout (`<day>.md`, `<Project>/<day>.md`, notes in `_notes/`), its day view, and its editing rules. It is synchronous and storage-agnostic.
 - **`src/store/`**: the `InboxStore` Durable Object. Each user gets one instance, which makes it the single writer, so edits from the phone, the Mac and agents never race.
 - **`src/auth/`, `src/oauth.ts`**: `@cloudflare/workers-oauth-provider` issues tokens for `/mcp`. It supports Client ID Metadata Documents and dynamic registration. `/authorize` is one consent page that names the client and offers the sign-in methods. Each method then runs as a browser-bound upstream step.
 - **`src/accounts/`**: the `AccountDirectory` Durable Object stores users, identities and email codes. Apple and email sign-ins with the same verified address reach the same user.

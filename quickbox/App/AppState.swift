@@ -308,10 +308,7 @@ final class AppState: ObservableObject {
             }
             
             // Build autocomplete index in the background
-            if let folderURL = try? storageAccessManager.resolvedBaseURL() {
-                defer { storageAccessManager.stopAccess(for: folderURL) }
-                IndexManager.shared.buildIndex(in: folderURL)
-            }
+            IndexManager.shared.buildIndex(using: storageAccessManager)
             
         } catch {
             inboxMessage = error.localizedDescription

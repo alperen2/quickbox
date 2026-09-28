@@ -9,7 +9,7 @@ export const HandoffKey = {
   author: "by",
   /** `id:` of the task this one was spawned from. */
   origin: "from",
-  /** Path of a related note, e.g. an agent's draft under `notes/`. */
+  /** Path of a related note, e.g. an agent's draft under `_notes/`. */
   reference: "ref",
 } as const;
 

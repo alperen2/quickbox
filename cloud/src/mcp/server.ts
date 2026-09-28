@@ -7,7 +7,7 @@ export const SERVER_INSTRUCTIONS = `quickbox is the user's inbox of Markdown tas
 
 How to work with it:
 1. Find your work with list_tasks for="agent". Tasks meant for the user carry for="me".
-2. Do the task. Put longer output (drafts, research, copy) in a note: write_note at notes/<task id>.md.
+2. Do the task. Put longer output (drafts, research, copy) in a note: write_note at _notes/<task id>.md.
 3. Close the loop: complete_task (or update_task with ref=<note path> and done=true). If the user has to do something next (review, approve, publish, send, pay), add_task with for="me", from=<original task id> and ref=<note path>.
 
 Rules:
@@ -17,7 +17,7 @@ Rules:
 - Do not store secrets or credentials in tasks or notes.`;
 
 const taskId = z.string().describe("The task's 8-character id, e.g. k3f9x2ab.");
-const notePath = z.string().describe("Path of a note, e.g. notes/k3f9x2ab.md.");
+const notePath = z.string().describe("Path of a note, e.g. _notes/k3f9x2ab.md.");
 const assignee = z.string().describe('Who should act: "me" (the user), "agent", or a specific agent name.');
 const dueDate = z.string().describe("YYYY-MM-DD or a phrase such as today, tomorrow, next friday, in 3 days.");
 
@@ -113,7 +113,7 @@ export function createQuickboxServer(inbox: InboxApi, actor: Actor): McpServer {
     "write_note",
     {
       title: "Write note",
-      description: "Create or replace a Markdown note under notes/. Use notes/<task id>.md for a task's output.",
+      description: "Create or replace a Markdown note under _notes/. Use _notes/<task id>.md for a task's output.",
       inputSchema: z.object({
         path: notePath,
         content: z.string().describe("Full Markdown content; replaces the existing note."),

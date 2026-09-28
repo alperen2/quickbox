@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 protocol StorageResolving {
     func resolvedBaseURL() throws -> URL
@@ -24,6 +25,7 @@ enum StorageAccessError: LocalizedError, Equatable {
 
 final class StorageAccessManager: StorageResolving {
     var preferences: AppPreferences
+    private let logger = Logger(subsystem: "quickbox", category: "storage")
 
     init(preferences: AppPreferences) {
         self.preferences = preferences
@@ -36,22 +38,29 @@ final class StorageAccessManager: StorageResolving {
     func resolvedBaseURL() throws -> URL {
         if let bookmarkData = preferences.storageBookmarkData {
             var isStale = false
+            let url: URL
             do {
-                let url = try URL(
+                url = try URL(
                     resolvingBookmarkData: bookmarkData,
                     options: [.withSecurityScope],
                     relativeTo: nil,
                     bookmarkDataIsStale: &isStale
                 )
-
-                guard url.startAccessingSecurityScopedResource() else {
-                    throw StorageAccessError.cannotAccessSecurityScope
-                }
-
-                return url
             } catch {
+                logger.error("Bookmark resolution failed: \(error.localizedDescription, privacy: .public) (\(String(describing: error), privacy: .public))")
                 throw StorageAccessError.invalidBookmark
             }
+
+            if isStale {
+                logger.notice("Storage bookmark is stale for \(url.path, privacy: .public)")
+            }
+
+            guard url.startAccessingSecurityScopedResource() else {
+                logger.error("startAccessingSecurityScopedResource returned false for \(url.path, privacy: .public)")
+                throw StorageAccessError.cannotAccessSecurityScope
+            }
+
+            return url
         }
 
         if requiresSecurityScopedStorage {
