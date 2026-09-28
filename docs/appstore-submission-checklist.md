@@ -22,6 +22,7 @@
   - Menu bar behavior and spotlight capture entrypoint.
   - Global shortcut usage.
   - Local-first storage behavior and user-selected folder access.
+  - Pigeon Cloud sign-in with the review account (see `appstore-review-notes.md`).
 
 ## Go/No-Go Gates
 
@@ -30,5 +31,6 @@
   - build-appstore
   - ui-smoke
 - Privacy manifest (`PrivacyInfo.xcprivacy`) is included.
+- The review account works: `APP_REVIEW_EMAIL` and `APP_REVIEW_CODE` are set on the server (`wrangler secret put`), and signing in with them succeeds.
 - Crash diagnostics remain opt-in and do not contain task text.
 - Internal smoke test on a clean macOS user account passed.
