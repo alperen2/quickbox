@@ -1,11 +1,12 @@
 import CryptoKit
 import Foundation
 
-/// The storage folder as seen by sync: root-level task files plus `notes/`. Every access goes
-/// through the storage queue and the security-scoped folder, like the rest of the storage layer.
+/// The storage folder as seen by sync: `.md` files at the root and one folder deep (project
+/// folders and `_notes/`), except `_conflicts/`. Every access goes through the storage queue and
+/// the security-scoped folder, like the rest of the storage layer.
 struct LocalMirror {
-    static let conflictsFolder = "quickbox-conflicts"
-    static let notesFolder = "notes"
+    /// System folders start with "_" so they never collide with project folders (see `StorageLayout`).
+    static let conflictsFolder = "_conflicts"
 
     private let storageResolver: StorageResolving
 
@@ -13,13 +14,22 @@ struct LocalMirror {
         self.storageResolver = storageResolver
     }
 
-    /// Paths relative to the storage folder, e.g. `2026-09-28.md` or `notes/k3f9x2ab.md`.
+    /// Paths relative to the storage folder, e.g. `2026-09-28.md`, `Marketing/2026-09-28.md` or `_notes/k3f9x2ab.md`.
     func markdownFiles() throws -> [String: String] {
         try withFolder { folder in
+            let fileManager = FileManager.default
+            let subfolders = try fileManager.contentsOfDirectory(
+                at: folder,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            )
+            .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+            .filter { $0.lastPathComponent != Self.conflictsFolder }
+
             var files: [String: String] = [:]
-            for (directory, prefix) in [(folder, ""), (folder.appendingPathComponent(Self.notesFolder), "\(Self.notesFolder)/")] {
-                let urls = (try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
-                for url in urls where url.pathExtension == "md" && !url.lastPathComponent.hasPrefix(".") {
+            for (directory, prefix) in [(folder, "")] + subfolders.map({ ($0, "\($0.lastPathComponent)/") }) {
+                let urls = (try? fileManager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? []
+                for url in urls where url.pathExtension == "md" {
                     files[prefix + url.lastPathComponent] = try String(contentsOf: url, encoding: .utf8)
                 }
             }

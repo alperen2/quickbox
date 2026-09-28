@@ -75,7 +75,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 **Cloud sync in the app (`quickbox/Core/Cloud/`), optional:**
 - `AppState` wraps the local `InboxWriter` and `InboxRepository` in `SyncingInboxWriter` and `SyncingInboxRepository`, but only when `enableCloudSync` is on. `AppDelegate` turns it off for UI tests and when hosting unit tests. The wrappers keep writing files locally, then record `SyncOp`s into the persisted `SyncOutbox`. Captures get an explicit `id:` so the local and cloud lines share it.
 - `SyncEngine` runs one pass:
-  - First sync: import local-only files; where both sides have a file and it differs, the cloud wins and the local copy goes to `quickbox-conflicts/`.
+  - First sync: import local-only files; where both sides have a file and it differs, the cloud wins and the local copy goes to `_conflicts/`.
   - Push the outbox in batches. Ops the server rejects are dropped.
   - Pull changes since the cursor. A file edited outside quickbox gets a conflict copy before it is overwritten.
 - `CloudSyncController` (Settings → quickbox Cloud) owns sign-in and the schedule (every 60 s, on app activation, and 2 s after a local change). Sign-in is `CloudAuthenticator`: OAuth + PKCE via `ASWebAuthenticationSession`, tokens in the Keychain, client id from `GET /app/config`.

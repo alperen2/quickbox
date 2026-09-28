@@ -3,7 +3,7 @@ import Foundation
 /// Metadata keys that let people and agents hand tasks to each other in plain Markdown.
 ///
 ///     - [ ] 09:12 Create Instagram post id:k3f9x2ab for:agent
-///     - [ ] 11:40 Publish post id:p7a2m1cd for:me by:claude from:k3f9x2ab ref:notes/k3f9x2ab.md
+///     - [ ] 11:40 Publish post id:p7a2m1cd for:me by:claude from:k3f9x2ab ref:_notes/k3f9x2ab.md
 ///
 /// They are ordinary `key:value` tokens, so the parser needs no special casing and
 /// existing files stay valid. Keep this list in sync with `fixtures/task-lines.json`.
