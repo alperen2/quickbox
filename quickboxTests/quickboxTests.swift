@@ -43,7 +43,7 @@ struct quickboxTests {
             lineIndex: 0,
             rawLine: ""
         )
-        let line = writer.formattedLine(for: item, captureDate: date, routeDate: date, isProjectRoute: false)
+        let line = writer.formattedLine(for: item, captureDate: date)
         #expect(line == "- [ ] 18:07 Call designer")
     }
 
@@ -94,6 +94,111 @@ struct quickboxTests {
         let fileURL = tempFolder.appendingPathComponent("2026-02-27.md")
         let content = try String(contentsOf: fileURL)
         #expect(content == "- [ ] 10:30 First id:aaaa1111\n- [ ] 10:31 Second id:bbbb2222\n")
+    }
+
+    @Test
+    func projectEntriesAreStoredInDatedFilesInsideProjectDirectory() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        var generatedIDs = ["proj0001", "inbx0001"].makeIterator()
+        let writer = InboxWriter(storageResolver: TestStorageResolver(baseURL: tempFolder), makeTaskID: { generatedIDs.next()! })
+
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 2
+        components.day = 27
+        components.hour = 10
+        components.minute = 30
+        let date = Calendar(identifier: .gregorian).date(from: components)!
+
+        try writer.appendEntry("Ship release @alpha", now: date)
+        try writer.appendEntry("Inbox note", now: date)
+
+        let projectFileURL = tempFolder.appendingPathComponent("alpha/2026-02-27.md")
+        #expect(try String(contentsOf: projectFileURL) == "- [ ] 10:30 Ship release @alpha id:proj0001\n")
+
+        let dailyFileURL = tempFolder.appendingPathComponent("2026-02-27.md")
+        #expect(try String(contentsOf: dailyFileURL) == "- [ ] 10:30 Inbox note id:inbx0001\n")
+        #expect(!FileManager.default.fileExists(atPath: tempFolder.appendingPathComponent("alpha.md").path))
+    }
+
+    @Test
+    func repositoryLoadsAndMutatesProjectDirectoryEntries() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let resolver = TestStorageResolver(baseURL: tempFolder)
+        let writer = InboxWriter(storageResolver: resolver)
+        let repository = InboxRepository(storageResolver: resolver)
+
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 2
+        components.day = 27
+        components.hour = 9
+        components.minute = 0
+        let date = Calendar(identifier: .gregorian).date(from: components)!
+
+        try writer.appendEntry("Inbox note", now: date)
+        try writer.appendEntry("Project task @alpha", now: date)
+
+        let items = try repository.load(on: date)
+        #expect(items.map(\.text).sorted() == ["Inbox note", "Project task"])
+
+        let projectItem = try #require(items.first { $0.projectName == "alpha" })
+        let updated = try repository.apply(.toggle(projectItem.id), on: date)
+        #expect(updated.first { $0.projectName == "alpha" }?.isCompleted == true)
+
+        let projectFileURL = tempFolder.appendingPathComponent("alpha/2026-02-27.md")
+        #expect(try String(contentsOf: projectFileURL).hasPrefix("- [x] 09:00 Project task"))
+    }
+
+    @Test
+    func repositoryMigratesLegacyFlatProjectFilesOnLoad() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        try "- [ ] 08:00 Old task @alpha date:2026-02-27\n- [x] 08:05 Other day @alpha #ops date:2026-02-28\n"
+            .write(to: tempFolder.appendingPathComponent("alpha.md"), atomically: true, encoding: .utf8)
+
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 2
+        components.day = 27
+        let date = Calendar(identifier: .gregorian).date(from: components)!
+
+        let items = try repository.load(on: date)
+        #expect(items.map(\.text) == ["Old task"])
+        #expect(items.first?.id.hasPrefix("alpha/2026-02-27.md#") == true)
+
+        let alphaFolder = tempFolder.appendingPathComponent("alpha")
+        #expect(try String(contentsOf: alphaFolder.appendingPathComponent("2026-02-27.md")) == "- [ ] 08:00 Old task @alpha\n")
+        #expect(try String(contentsOf: alphaFolder.appendingPathComponent("2026-02-28.md")) == "- [x] 08:05 Other day @alpha #ops\n")
+        #expect(!FileManager.default.fileExists(atPath: tempFolder.appendingPathComponent("alpha.md").path))
+    }
+
+    @Test
+    func legacyMigrationKeepsUnroutableLinesAndSkipsDuplicates() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let alphaFolder = tempFolder.appendingPathComponent("alpha")
+        try FileManager.default.createDirectory(at: alphaFolder, withIntermediateDirectories: true)
+        let targetURL = alphaFolder.appendingPathComponent("2026-02-27.md")
+        try "- [ ] 08:00 Old task @alpha\n".write(to: targetURL, atomically: true, encoding: .utf8)
+
+        let legacyURL = tempFolder.appendingPathComponent("alpha.md")
+        try "# Notes\n- [ ] 08:00 Old task @alpha date:2026-02-27\n- [ ] 09:00 Untagged @alpha\n"
+            .write(to: legacyURL, atomically: true, encoding: .utf8)
+
+        try LegacyProjectMigrator().migrate(in: tempFolder)
+
+        #expect(try String(contentsOf: targetURL) == "- [ ] 08:00 Old task @alpha\n")
+        #expect(try String(contentsOf: legacyURL) == "# Notes\n- [ ] 09:00 Untagged @alpha\n")
     }
 
     @Test
@@ -342,8 +447,8 @@ struct quickboxTests {
 
         try writer.appendEntry("Publish post id:post42 @Marketing", now: date)
 
-        let content = try String(contentsOf: tempFolder.appendingPathComponent("Marketing.md"))
-        #expect(content == "- [ ] 10:30 Publish post @Marketing date:2026-02-27 id:post42\n")
+        let content = try String(contentsOf: tempFolder.appendingPathComponent("Marketing/2026-02-27.md"))
+        #expect(content == "- [ ] 10:30 Publish post @Marketing id:post42\n")
     }
 
     @Test
@@ -415,20 +520,24 @@ struct quickboxTests {
     }
 
     @Test
-    func repositorySetMetadataUpdatesDueAndKeepsProjectRouting() throws {
+    func repositorySetMetadataKeepsTaskIDThroughLegacyProjectMigration() throws {
         let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempFolder) }
 
         let today = todayFileName(for: Date()).replacingOccurrences(of: ".md", with: "")
-        let fileURL = tempFolder.appendingPathComponent("Marketing.md")
-        try "- [ ] 08:00 Post @Marketing due:2026-09-28 date:\(today) id:meta0003\n".write(to: fileURL, atomically: true, encoding: .utf8)
+        let legacyURL = tempFolder.appendingPathComponent("Marketing.md")
+        try "- [ ] 08:00 Post @Marketing due:2026-09-28 date:\(today) id:meta0003\n".write(to: legacyURL, atomically: true, encoding: .utf8)
 
+        // Loading migrates the flat project file into Marketing/<today>.md; the id survives the move.
         let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
         let item = try #require(try repository.loadToday().first)
         _ = try repository.apply(.setMetadata(item.id, key: "due", value: "2026-09-30"))
 
-        #expect(try String(contentsOf: fileURL) == "- [ ] 08:00 Post @Marketing due:2026-09-30 date:\(today) id:meta0003\n")
+        let migratedURL = tempFolder.appendingPathComponent("Marketing/\(today).md")
+        #expect(item.id == "Marketing/\(today).md#id:meta0003")
+        #expect(try String(contentsOf: migratedURL) == "- [ ] 08:00 Post @Marketing due:2026-09-30 id:meta0003\n")
+        #expect(!FileManager.default.fileExists(atPath: legacyURL.path))
     }
 
     @Test

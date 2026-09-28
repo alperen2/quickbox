@@ -19,8 +19,14 @@ final class IndexManager: ObservableObject {
     
     private init() {}
 
-    func buildIndex(in folderURL: URL) {
+    /// Resolves the storage folder and scans it in the background.
+    /// Security-scoped access is held for the whole scan and released only after it finishes,
+    /// otherwise the sandbox denies reads once the caller's scope ends.
+    func buildIndex(using storageResolver: StorageResolving) {
+        guard let folderURL = try? storageResolver.resolvedBaseURL() else { return }
+
         Task {
+            defer { storageResolver.stopAccess(for: folderURL) }
             let (newTags, newProjects) = await Self.scanFiles(in: folderURL)
             self.availableTags = newTags
             self.availableProjects = newProjects
@@ -38,21 +44,20 @@ final class IndexManager: ObservableObject {
                 var uniqueProjects = Set<String>()
 
                 let tagPattern = /#([a-zA-Z0-9_\-]+)/
-                
-                // Add known project names based on filenames directly
-                for fileURL in markdownFiles {
-                    let filename = fileURL.deletingPathExtension().lastPathComponent
-                    // If it's not a date-based log, consider it a known project
-                    let isDateLog = filename.firstMatch(of: /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) != nil
-                    if !isDateLog {
-                        uniqueProjects.insert(filename)
-                    }
 
-                    // Scan file content for tags
-                    if let content = try? String(contentsOf: fileURL, encoding: .utf8) {
-                        for match in content.matches(of: tagPattern) {
-                            uniqueTags.insert(String(match.1))
-                        }
+                for fileURL in markdownFiles {
+                    uniqueTags.formUnion(tags(in: fileURL, matching: tagPattern))
+                }
+
+                // Each subdirectory is a project holding dated `<date>.md` files
+                let projectDirectories = try StorageLayout(preferences: .default, fileManager: fileManager)
+                    .projectDirectories(in: folderURL)
+                for directoryURL in projectDirectories {
+                    uniqueProjects.insert(directoryURL.lastPathComponent)
+
+                    let projectFiles = (try? fileManager.contentsOfDirectory(at: directoryURL, includingPropertiesForKeys: nil)) ?? []
+                    for fileURL in projectFiles where fileURL.pathExtension == "md" {
+                        uniqueTags.formUnion(tags(in: fileURL, matching: tagPattern))
                     }
                 }
 
@@ -62,6 +67,11 @@ final class IndexManager: ObservableObject {
                 return ([], [])
             }
         }.value
+    }
+
+    private nonisolated static func tags(in fileURL: URL, matching pattern: Regex<(Substring, Substring)>) -> [String] {
+        guard let content = try? String(contentsOf: fileURL, encoding: .utf8) else { return [] }
+        return content.matches(of: pattern).map { String($0.1) }
     }
     
     // Quick injection when a new task is captured so we don't need a full rebuild
