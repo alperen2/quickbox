@@ -19,9 +19,9 @@ enum InboxRepositoryError: LocalizedError, Equatable {
         case .emptyEditedText:
             return "Task text cannot be empty."
         case .reservedMetadataKey:
-            return "This field is managed by quickbox and cannot be changed."
+            return "This field is managed by \(Brand.name) and cannot be changed."
         case .permissionDenied:
-            return "quickbox cannot write to the storage folder. Check folder permissions in Settings."
+            return "\(Brand.name) cannot write to the storage folder. Check folder permissions in Settings."
         case .diskFull:
             return "Your disk appears to be full. Free some space and try again."
         case .storageUnavailable:

@@ -7,7 +7,7 @@ final class SettingsWindowController: NSWindowController {
         let hostingController = NSHostingController(rootView: rootView)
         let window = NSWindow(contentViewController: hostingController)
 
-        window.title = "quickbox Settings"
+        window.title = "\(Brand.name) Settings"
         window.styleMask = [.titled, .closable, .miniaturizable]
         window.setContentSize(NSSize(width: 680, height: 560))
         window.minSize = NSSize(width: 620, height: 500)

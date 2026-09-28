@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A10000062F9A000100AA0001"
-               BuildableName = "Quickbox Capture.app"
+               BuildableName = "Pigeon.app"
                BlueprintName = "quickboxAppStore"
                ReferencedContainer = "container:quickbox.xcodeproj">
             </BuildableReference>
@@ -68,7 +68,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A10000062F9A000100AA0001"
-            BuildableName = "Quickbox Capture.app"
+            BuildableName = "Pigeon.app"
             BlueprintName = "quickboxAppStore"
             ReferencedContainer = "container:quickbox.xcodeproj">
          </BuildableReference>
@@ -85,7 +85,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A10000062F9A000100AA0001"
-            BuildableName = "Quickbox Capture.app"
+            BuildableName = "Pigeon.app"
             BlueprintName = "quickboxAppStore"
             ReferencedContainer = "container:quickbox.xcodeproj">
          </BuildableReference>

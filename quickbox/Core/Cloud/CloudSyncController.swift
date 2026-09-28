@@ -121,7 +121,7 @@ final class CloudSyncController: ObservableObject {
         do {
             try await accountAPI.deleteAccount()
             forgetSession()
-            statusMessage = "Your quickbox Cloud account and its data were deleted. Your local files are unchanged."
+            statusMessage = "Your \(Brand.cloudName) account and its data were deleted. Your local files are unchanged."
             return true
         } catch {
             statusMessage = error.localizedDescription
