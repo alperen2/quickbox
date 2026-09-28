@@ -19,7 +19,7 @@ export interface NewTask {
   assignee?: string;
   /** `id:` of the task this one follows up on. */
   origin?: string;
-  /** Related note path, e.g. `notes/k3f9x2ab.md`. */
+  /** Related note path, e.g. `_notes/k3f9x2ab.md`. */
   ref?: string;
 }
 
