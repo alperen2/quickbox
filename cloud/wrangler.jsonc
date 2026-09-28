@@ -15,7 +15,7 @@
     // Used until users can set their own time zone.
     "DEFAULT_TIMEZONE": "Europe/Istanbul",
     // Sender for sign-in codes; RESEND_API_KEY is a secret.
-    "EMAIL_FROM": "Pigeon <giris@usepigeon.cc>"
+    "EMAIL_FROM": "Pigeon <signin@usepigeon.cc>"
   },
   "kv_namespaces": [{ "binding": "OAUTH_KV" }],
   "durable_objects": {
