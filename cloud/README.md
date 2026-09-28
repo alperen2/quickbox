@@ -15,6 +15,11 @@ MCP client ──OAuth 2.1──▶ OAuthProvider ──/mcp + token──▶ cr
 - **`src/accounts/`**: the `AccountDirectory` Durable Object stores users, identities and email codes. Apple and email sign-ins with the same verified address reach the same user.
 - **`src/mcp/`**: the tools `list_tasks`, `add_task`, `update_task`, `complete_task`, `read_note` and `write_note`, plus agent instructions. Each request is served statelessly, for both 2025-era and 2026-07-28 clients.
 
+**Device sync** (`src/sync/`): the quickbox apps keep a local Markdown mirror.
+- `GET /mcp/sync/changes?cursor=N` returns files changed after version N.
+- `POST /mcp/sync/push` replays their offline edits as idempotent ops: `add`, `update`, `delete`, `insertLine`, `importFile`.
+- Only the first-party app client may use it. Its OAuth client is created once and published at `GET /app/config`. Agent tokens get `403` there.
+
 Agents never write their own `by:`. The server sets it from the OAuth client's registered name.
 
 ### Sign-in notes
@@ -41,4 +46,6 @@ npm run typecheck
    - `APPLE_SERVICES_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY`. The Services ID needs `<PUBLIC_URL>/auth/apple/callback` as a return URL.
 4. Add `<PUBLIC_URL>/mcp` as a custom connector in claude.ai.
 
-Before real users arrive, the account side still needs account deletion (required by the App Store once the apps sign in) and a way to list or revoke connected apps.
+Account management is first-party only: `GET /mcp/account`, `DELETE /mcp/account/apps/{grantId}` and `POST /mcp/account/delete` (with `{"confirm":"DELETE"}`). The Mac app exposes all three in Settings.
+
+When Sign in with Apple goes live, account deletion must also revoke the user's Apple token (App Store guideline 5.1.1(v)). That requires keeping Apple's refresh token at sign-in, which is not done yet.

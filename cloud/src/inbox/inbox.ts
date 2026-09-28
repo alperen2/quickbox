@@ -31,7 +31,14 @@ const TOKEN_VALUE_PATTERN = /^[A-Za-z0-9_-]+$/;
 export const NOTES_FOLDER = "_notes";
 const NOTE_PATH_PATTERN = /^_notes\/[A-Za-z0-9_-]+(\/[A-Za-z0-9_-]+)*\.md$/;
 const PROJECT_FOLDER_PATTERN = /^[A-Za-z0-9-][A-Za-z0-9_-]*$/;
+/** A task file name a device may upload: no folders, hidden files or control characters. */
+const TASK_FILE_NAME_PATTERN = /^[^/\\.\u0000-\u001f][^/\\\u0000-\u001f]{0,199}\.md$/;
 const MAX_NOTE_BYTES = 256 * 1024;
+const MAX_FILE_BYTES = 1024 * 1024;
+/** Tokens owned by the storage layer (routing, identity, authorship) or edited through dedicated fields. */
+const RESERVED_METADATA_KEYS = new Set(["id", "date", "due", HandoffKey.author]);
+/** Date keys whose values may be multi-word phrases such as "next friday". */
+const PHRASE_METADATA_KEYS = new Set(["defer", "start"]);
 
 interface LocatedTask {
   path: string;
@@ -67,8 +74,12 @@ export class Inbox {
       .map(({ path, line }) => toTask(path, line));
   }
 
-  addTask(input: NewTask, actor: Actor): Task {
-    const now = this.clock.now();
+  /**
+   * `capturedAt` lets a client that captured the task offline keep its original day and time;
+   * otherwise the task is stamped with the current time in the user's time zone.
+   */
+  addTask(input: NewTask, actor: Actor, options: { capturedAt?: LocalNow } = {}): Task {
+    const now = options.capturedAt ?? this.clock.now();
     const parsed = parseTaskLine(`- [ ] 00:00 ${composeDraft(input)}`);
     if (!parsed || parsed.text === "") {
       throw new InboxError("invalid_input", "Task text is empty. Put the task description before any tokens.");
@@ -114,6 +125,56 @@ export class Inbox {
 
   completeTask(taskId: string): Task {
     return this.updateTask(taskId, { done: true });
+  }
+
+  deleteTask(taskId: string): void {
+    const located = this.require(taskId);
+    located.lines.splice(located.line.lineIndex, 1);
+    this.files.write(located.path, joinLines(located.lines));
+  }
+
+  /** Puts back a whole task line, e.g. to undo a delete. The line must carry an id that is not in use. */
+  insertLine(path: string, rawLine: string): Task {
+    const filePath = validTaskFilePath(path);
+    const parsed = parseTaskLine(toSingleLine(rawLine));
+    if (!parsed?.taskId) throw new InboxError("invalid_input", "Only task lines with an id: can be inserted.");
+    if (this.find(parsed.taskId)) throw new InboxError("conflict", `A task with id "${parsed.taskId}" already exists.`);
+
+    this.files.write(filePath, joinLines([...splitLines(this.files.read(filePath)), parsed.rawLine]));
+    return toTask(filePath, this.require(parsed.taskId).line);
+  }
+
+  /**
+   * Uploads a file from a device that is connecting for the first time. Existing cloud files win,
+   * so nothing already in the cloud is overwritten. Task lines without an id get one, since the
+   * sync API addresses tasks by id.
+   */
+  importFile(path: string, content: string): { imported: boolean } {
+    const isNote = path.startsWith(`${NOTES_FOLDER}/`);
+    const filePath = isNote ? validNotePath(path) : validTaskFilePath(path);
+    if (new TextEncoder().encode(content).byteLength > MAX_FILE_BYTES) {
+      throw new InboxError("invalid_input", `Files are limited to ${MAX_FILE_BYTES / 1024} KB.`);
+    }
+    if (this.files.read(filePath) !== null) return { imported: false };
+
+    const lines = splitLines(content.replace(/\r\n?/g, "\n"));
+    if (!isNote) {
+      const taken = new Set(this.taskFiles().flatMap((file) => parseTaskLines(splitLines(this.files.read(file)), file).map((t) => t.taskId)));
+      for (const line of parseTaskLines(lines, filePath)) {
+        if (line.taskId !== null && !taken.has(line.taskId)) {
+          taken.add(line.taskId);
+          continue;
+        }
+        let taskId = this.newTaskId();
+        while (taken.has(taskId)) taskId = this.newTaskId();
+        taken.add(taskId);
+        // Rewrite in place so the rest of the line keeps its exact spelling.
+        lines[line.lineIndex] = replaceTaskId(line.rawLine, taskId);
+      }
+    }
+
+    this.files.write(filePath, joinLines(lines));
+    return { imported: true };
   }
 
   readNote(path: string): Note {
@@ -216,6 +277,37 @@ function applyPatch(fields: TaskLineFields, patch: TaskPatch, today: LocalDate):
     setToken(fields, HandoffKey.reference, patch.ref === null ? null : validNotePath(patch.ref));
   }
   if (patch.done !== undefined) fields.completed = patch.done;
+  for (const [rawKey, value] of Object.entries(patch.metadata ?? {})) {
+    const key = rawKey.toLowerCase();
+    if (!TOKEN_VALUE_PATTERN.test(key) || RESERVED_METADATA_KEYS.has(key)) {
+      throw new InboxError("invalid_input", `The ${rawKey}: field cannot be set this way.`);
+    }
+    setToken(fields, key, value === null ? null : metadataValue(key, value));
+  }
+}
+
+function metadataValue(key: string, value: string): string {
+  const trimmed = toSingleLine(value).trim().replace(/\s+/g, " ");
+  const valid = PHRASE_METADATA_KEYS.has(key) ? /^[A-Za-z0-9_ -]+$/.test(trimmed) : TOKEN_VALUE_PATTERN.test(trimmed);
+  if (!valid) throw new InboxError("invalid_input", `Invalid value for ${key}:.`);
+  return trimmed;
+}
+
+/** Replaces a line's `id:` token, or appends one when it has none (or an invalid/duplicate one). */
+function replaceTaskId(rawLine: string, taskId: string): string {
+  const withoutId = rawLine.replace(/(^|\s)id:\S*/gi, "").replace(/\s+$/, "");
+  return `${withoutId} id:${taskId}`;
+}
+
+/** `<file>.md` at the root or `<Project>/<file>.md`. */
+function validTaskFilePath(path: string): string {
+  const parts = path.split("/");
+  const fileName = parts.pop()!;
+  const validFolder = parts.length === 0 || (parts.length === 1 && PROJECT_FOLDER_PATTERN.test(parts[0]!));
+  if (!validFolder || !TASK_FILE_NAME_PATTERN.test(fileName)) {
+    throw new InboxError("invalid_input", `"${path}" is not a valid task file path.`);
+  }
+  return path;
 }
 
 function setToken(fields: TaskLineFields, key: string, value: string | null): void {

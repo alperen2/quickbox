@@ -126,6 +126,18 @@ export class Accounts {
     return { ok: true, userId: this.userForIdentity("email", email, email) };
   }
 
+  email(userId: string): string | null {
+    return this.sql.exec<{ email: string | null }>("SELECT email FROM users WHERE id = ?", userId).toArray()[0]?.email ?? null;
+  }
+
+  /** Forgets the user, their sign-in identities and any pending email code. */
+  deleteUser(userId: string): void {
+    const email = this.email(userId);
+    this.sql.exec("DELETE FROM identities WHERE user_id = ?", userId);
+    this.sql.exec("DELETE FROM users WHERE id = ?", userId);
+    if (email) this.sql.exec("DELETE FROM email_codes WHERE email = ?", email);
+  }
+
   signInWithApple(identity: AppleIdentity): string {
     const verifiedEmail = identity.emailVerified && identity.email ? normalizeEmail(identity.email) : null;
     return this.userForIdentity("apple", identity.subject, verifiedEmail);
