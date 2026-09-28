@@ -43,6 +43,14 @@ export class AccountDirectory extends DurableObject<Env> {
   async signInWithApple(identity: AppleIdentity) {
     return this.accounts.signInWithApple(identity);
   }
+
+  async accountEmail(userId: string) {
+    return this.accounts.email(userId);
+  }
+
+  async deleteUser(userId: string) {
+    this.accounts.deleteUser(userId);
+  }
 }
 
 export function accountDirectory(env: Env) {

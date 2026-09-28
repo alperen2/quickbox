@@ -1,6 +1,8 @@
 import { OAuthProvider } from "@cloudflare/workers-oauth-provider";
 import { createMcpHandler } from "@modelcontextprotocol/server";
 import { agentName } from "./auth/agentName";
+import { handleAccountRequest } from "./account/api";
+import { accountDirectory } from "./accounts/accountDirectory";
 import { APP_REDIRECT_URI, ensureFirstPartyClientId, isFirstPartyClient } from "./auth/firstParty";
 import { handleAuthRequest, INBOX_SCOPE, type AuthProps } from "./auth/routes";
 import { publicUrl } from "./config";
@@ -9,7 +11,7 @@ import { handleSyncRequest } from "./sync/api";
 
 const DAY_SECONDS = 24 * 60 * 60;
 
-type ProtectedContext = ExecutionContext & { props: AuthProps; auth: { clientId: string } };
+type ProtectedContext = ExecutionContext & { props: AuthProps; auth: { clientId: string; token: string } };
 
 /** `/mcp` and `/mcp/sync/*`, reachable only with an access token issued by this Worker. */
 const mcpApiHandler = {
@@ -17,10 +19,20 @@ const mcpApiHandler = {
     const { props, auth } = ctx as ProtectedContext;
     const inbox = env.INBOX.get(env.INBOX.idFromName(props.userId));
 
-    if (new URL(request.url).pathname.startsWith("/mcp/sync/")) {
-      // Sync writes as the user, so only the quickbox apps may use it; agents go through MCP.
+    const { pathname } = new URL(request.url);
+    const isSync = pathname.startsWith("/mcp/sync/");
+    const isAccount = pathname === "/mcp/account" || pathname.startsWith("/mcp/account/");
+    if (isSync || isAccount) {
+      // These act as the user (sync writes, account deletion), so only the quickbox apps may use them.
       if (!(await isFirstPartyClient(env, auth.clientId))) return Response.json({ error: "Forbidden" }, { status: 403 });
-      return handleSyncRequest(request, inbox);
+      if (isSync) return handleSyncRequest(request, inbox);
+
+      const token = await env.OAUTH_PROVIDER.unwrapToken(auth.token);
+      return handleAccountRequest(
+        request,
+        { userId: props.userId, grantId: token?.grantId ?? null },
+        { grants: env.OAUTH_PROVIDER, directory: accountDirectory(env), inbox, firstPartyClientId: auth.clientId },
+      );
     }
 
     const actor = { kind: "agent", name: agentName(props.clientName) } as const;
