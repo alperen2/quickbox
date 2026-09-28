@@ -1,4 +1,5 @@
 import Foundation
+import QuickboxCore
 
 protocol InboxWriting {
     func appendEntry(_ text: String, now: Date) throws
@@ -27,10 +28,16 @@ enum InboxWriterError: LocalizedError, Equatable {
 final class InboxWriter: InboxWriting {
     private let storageResolver: StorageResolving
     private let fileManager: FileManager
+    private let makeTaskID: () -> String
 
-    init(storageResolver: StorageResolving, fileManager: FileManager = .default) {
+    init(
+        storageResolver: StorageResolving,
+        fileManager: FileManager = .default,
+        makeTaskID: @escaping () -> String = TaskIdentifier.generate
+    ) {
         self.storageResolver = storageResolver
         self.fileManager = fileManager
+        self.makeTaskID = makeTaskID
     }
 
     func appendEntry(_ text: String, now: Date = Date()) throws {
@@ -42,7 +49,10 @@ final class InboxWriter: InboxWriting {
         // Parse the text to extract tokens
         let parser = InboxParser()
         let parsedItems = parser.parse(lines: ["- [ ] 00:00 " + trimmed], sourceID: "temp")
-        guard let item = parsedItems.first else { throw InboxWriterError.emptyEntry }
+        guard var item = parsedItems.first else { throw InboxWriterError.emptyEntry }
+        if item.taskID == nil {
+            item.taskID = makeTaskID()
+        }
         
         let preferences = currentPreferences()
         
@@ -126,6 +136,10 @@ final class InboxWriter: InboxWriting {
              if let value = item.metadata[key] {
                  components.append("\(key):\(value)")
              }
+        }
+
+        if let taskID = item.taskID {
+            components.append("\(TaskIdentifier.metadataKey):\(taskID)")
         }
 
         let finalString = components.joined(separator: " ")

@@ -1,4 +1,5 @@
 import Foundation
+import QuickboxCore
 
 /// Moves entries from the legacy flat `<Project>.md` layout into the
 /// `<Project>/<date>.md` layout described by `StorageLayout`.

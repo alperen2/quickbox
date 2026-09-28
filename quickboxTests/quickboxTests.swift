@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import QuickboxCore
 @testable import quickbox
 
 @MainActor
@@ -73,7 +74,8 @@ struct quickboxTests {
         prefs.fallbackStoragePath = tempFolder.path
 
         let resolver = StorageAccessManager(preferences: prefs)
-        let writer = InboxWriter(storageResolver: resolver)
+        var generatedIDs = ["aaaa1111", "bbbb2222"].makeIterator()
+        let writer = InboxWriter(storageResolver: resolver, makeTaskID: { generatedIDs.next()! })
 
         var components = DateComponents()
         components.year = 2026
@@ -91,7 +93,7 @@ struct quickboxTests {
 
         let fileURL = tempFolder.appendingPathComponent("2026-02-27.md")
         let content = try String(contentsOf: fileURL)
-        #expect(content == "- [ ] 10:30 First\n- [ ] 10:31 Second\n")
+        #expect(content == "- [ ] 10:30 First id:aaaa1111\n- [ ] 10:31 Second id:bbbb2222\n")
     }
 
     @Test
@@ -99,7 +101,8 @@ struct quickboxTests {
         let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         defer { try? FileManager.default.removeItem(at: tempFolder) }
 
-        let writer = InboxWriter(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        var generatedIDs = ["proj0001", "inbx0001"].makeIterator()
+        let writer = InboxWriter(storageResolver: TestStorageResolver(baseURL: tempFolder), makeTaskID: { generatedIDs.next()! })
 
         var components = DateComponents()
         components.year = 2026
@@ -113,10 +116,10 @@ struct quickboxTests {
         try writer.appendEntry("Inbox note", now: date)
 
         let projectFileURL = tempFolder.appendingPathComponent("alpha/2026-02-27.md")
-        #expect(try String(contentsOf: projectFileURL) == "- [ ] 10:30 Ship release @alpha\n")
+        #expect(try String(contentsOf: projectFileURL) == "- [ ] 10:30 Ship release @alpha id:proj0001\n")
 
         let dailyFileURL = tempFolder.appendingPathComponent("2026-02-27.md")
-        #expect(try String(contentsOf: dailyFileURL) == "- [ ] 10:30 Inbox note\n")
+        #expect(try String(contentsOf: dailyFileURL) == "- [ ] 10:30 Inbox note id:inbx0001\n")
         #expect(!FileManager.default.fileExists(atPath: tempFolder.appendingPathComponent("alpha.md").path))
     }
 
@@ -363,100 +366,6 @@ struct quickboxTests {
     }
 
     @Test
-    func parserReturnsOnlyValidTaskLines() {
-        let parser = InboxParser()
-        let lines = [
-            "- [ ] 09:10 plan sprint",
-            "random line",
-            "- [x] 09:20 done item"
-        ]
-
-        let items = parser.parse(lines: lines, sourceID: "today.md")
-        #expect(items.count == 2)
-        #expect(items[0].isCompleted == false)
-        #expect(items[1].isCompleted == true)
-        #expect(items[0].lineIndex == 0)
-        #expect(items[1].lineIndex == 2)
-    }
-
-    @Test
-    func parserSupportsMultiWordDateMetadataValues() throws {
-        let parser = InboxParser()
-        let lines = [
-            "- [ ] 09:10 Plan launch due:next friday defer:end of month start:in 2 weeks #ops @alpha !1"
-        ]
-
-        let items = parser.parse(lines: lines, sourceID: "today.md")
-        let item = try #require(items.first)
-
-        #expect(item.dueDate == "next friday")
-        #expect(item.metadata["defer"] == "end of month")
-        #expect(item.metadata["start"] == "in 2 weeks")
-        #expect(item.tags == ["ops"])
-        #expect(item.projectName == "alpha")
-        #expect(item.priority == 1)
-    }
-
-    @Test
-    func dueDateResolverSupportsNaturalPhrases() throws {
-        let calendar = Calendar(identifier: .gregorian)
-        var comps = DateComponents()
-        comps.year = 2026
-        comps.month = 3
-        comps.day = 2
-        comps.hour = 10
-        comps.minute = 0
-        let referenceDate = try #require(calendar.date(from: comps))
-
-        let resolver = DueDateResolver()
-
-        let nextWeekend = try #require(resolver.resolve(dueDateString: "next weekend", from: referenceDate))
-        let endOfMonth = try #require(resolver.resolve(dueDateString: "end of month", from: referenceDate))
-        let inTwoWeeks = try #require(resolver.resolve(dueDateString: "in 2 weeks", from: referenceDate))
-
-        let weekendComponents = calendar.dateComponents([.year, .month, .day], from: nextWeekend)
-        #expect(weekendComponents.year == 2026)
-        #expect(weekendComponents.month == 3)
-        #expect(weekendComponents.day == 7)
-
-        let endOfMonthComponents = calendar.dateComponents([.year, .month, .day], from: endOfMonth)
-        #expect(endOfMonthComponents.year == 2026)
-        #expect(endOfMonthComponents.month == 3)
-        #expect(endOfMonthComponents.day == 31)
-
-        let inTwoWeeksComponents = calendar.dateComponents([.year, .month, .day], from: inTwoWeeks)
-        #expect(inTwoWeeksComponents.year == 2026)
-        #expect(inTwoWeeksComponents.month == 3)
-        #expect(inTwoWeeksComponents.day == 16)
-    }
-
-    @Test
-    func dueDateResolverDifferentiatesWeekdayAndNextWeekday() throws {
-        let calendar = Calendar(identifier: .gregorian)
-        var comps = DateComponents()
-        comps.year = 2026
-        comps.month = 3
-        comps.day = 2
-        comps.hour = 10
-        comps.minute = 0
-        let referenceDate = try #require(calendar.date(from: comps))
-
-        let resolver = DueDateResolver()
-        let friday = try #require(resolver.resolve(dueDateString: "friday", from: referenceDate))
-        let nextFriday = try #require(resolver.resolve(dueDateString: "next friday", from: referenceDate))
-
-        let fridayComps = calendar.dateComponents([.year, .month, .day], from: friday)
-        #expect(fridayComps.year == 2026)
-        #expect(fridayComps.month == 3)
-        #expect(fridayComps.day == 6)
-
-        let nextFridayComps = calendar.dateComponents([.year, .month, .day], from: nextFriday)
-        #expect(nextFridayComps.year == 2026)
-        #expect(nextFridayComps.month == 3)
-        #expect(nextFridayComps.day == 13)
-    }
-
-    @Test
     func repositoryToggleDeleteUndoFlow() throws {
         let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
@@ -513,6 +422,134 @@ struct quickboxTests {
         #expect(fileAfterEdit.contains("due:next friday"))
         #expect(fileAfterEdit.contains("start:in 2 days"))
         #expect(fileAfterEdit.contains("time:30m"))
+    }
+
+    @Test
+    func appendKeepsExplicitTaskIDInsteadOfGeneratingOne() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        var prefs = AppPreferences.default
+        prefs.storageBookmarkData = nil
+        prefs.fallbackStoragePath = tempFolder.path
+        let writer = InboxWriter(
+            storageResolver: StorageAccessManager(preferences: prefs),
+            makeTaskID: { Issue.record("An explicit id must not be replaced"); return "unused" }
+        )
+
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 2
+        components.day = 27
+        components.hour = 10
+        components.minute = 30
+        let date = Calendar(identifier: .gregorian).date(from: components)!
+
+        try writer.appendEntry("Publish post id:post42 @Marketing", now: date)
+
+        let content = try String(contentsOf: tempFolder.appendingPathComponent("Marketing/2026-02-27.md"))
+        #expect(content == "- [ ] 10:30 Publish post @Marketing id:post42\n")
+    }
+
+    @Test
+    func repositoryMutatesByTaskIDAfterFileChangedUnderneath() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        let fileURL = tempFolder.appendingPathComponent(todayFileName(for: Date()))
+        try "- [ ] 08:00 first id:first001\n- [ ] 09:00 second id:second02\n".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let items = try repository.loadToday()
+        let second = try #require(items.first(where: { $0.taskID == "second02" }))
+
+        // Simulate another writer (sync, agent) inserting a line above the item after it was loaded.
+        try "- [ ] 07:00 from agent id:agent003\n- [ ] 08:00 first id:first001\n- [ ] 09:00 second id:second02\n"
+            .write(to: fileURL, atomically: true, encoding: .utf8)
+
+        _ = try repository.apply(.toggle(second.id))
+
+        let content = try String(contentsOf: fileURL)
+        #expect(content.contains("- [x] 09:00 second id:second02"))
+        #expect(content.contains("- [ ] 08:00 first id:first001"))
+        #expect(content.contains("- [ ] 07:00 from agent id:agent003"))
+    }
+
+    @Test
+    func repositoryEditPreservesTaskID() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        let fileURL = tempFolder.appendingPathComponent(todayFileName(for: Date()))
+        try "- [ ] 08:00 first #tag id:keepme01\n".write(to: fileURL, atomically: true, encoding: .utf8)
+
+        let item = try #require(try repository.loadToday().first)
+        let updated = try repository.apply(.edit(item.id, text: "first updated"))
+
+        let content = try String(contentsOf: fileURL)
+        #expect(content == "- [ ] 08:00 first updated #tag id:keepme01\n")
+        #expect(updated.first?.id == item.id)
+    }
+
+    @Test
+    func repositorySetMetadataReplacesOnlyThatToken() throws {
+        let (repository, fileURL, cleanup) = try makeRepositoryWithTodayFile(
+            "- [ ] 08:00 Draft !2 #social time:30m remind:1h id:meta0001\n"
+        )
+        defer { cleanup() }
+
+        let item = try #require(try repository.loadToday().first)
+        let updated = try repository.apply(.setMetadata(item.id, key: "time", value: "1h"))
+
+        #expect(try String(contentsOf: fileURL) == "- [ ] 08:00 Draft !2 #social remind:1h time:1h id:meta0001\n")
+        #expect(updated.first?.metadata == ["time": "1h", "remind": "1h"])
+    }
+
+    @Test
+    func repositorySetMetadataWithNilRemovesToken() throws {
+        let (repository, fileURL, cleanup) = try makeRepositoryWithTodayFile("- [x] 08:00 Draft time:30m for:agent id:meta0002\n")
+        defer { cleanup() }
+
+        let item = try #require(try repository.loadToday().first)
+        _ = try repository.apply(.setMetadata(item.id, key: "time", value: nil))
+
+        #expect(try String(contentsOf: fileURL) == "- [x] 08:00 Draft for:agent id:meta0002\n")
+    }
+
+    @Test
+    func repositorySetMetadataKeepsTaskIDThroughLegacyProjectMigration() throws {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempFolder) }
+
+        let today = todayFileName(for: Date()).replacingOccurrences(of: ".md", with: "")
+        let legacyURL = tempFolder.appendingPathComponent("Marketing.md")
+        try "- [ ] 08:00 Post @Marketing due:2026-09-28 date:\(today) id:meta0003\n".write(to: legacyURL, atomically: true, encoding: .utf8)
+
+        // Loading migrates the flat project file into Marketing/<today>.md; the id survives the move.
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        let item = try #require(try repository.loadToday().first)
+        _ = try repository.apply(.setMetadata(item.id, key: "due", value: "2026-09-30"))
+
+        let migratedURL = tempFolder.appendingPathComponent("Marketing/\(today).md")
+        #expect(item.id == "Marketing/\(today).md#id:meta0003")
+        #expect(try String(contentsOf: migratedURL) == "- [ ] 08:00 Post @Marketing due:2026-09-30 id:meta0003\n")
+        #expect(!FileManager.default.fileExists(atPath: legacyURL.path))
+    }
+
+    @Test
+    func repositorySetMetadataRejectsReservedKeys() throws {
+        let (repository, fileURL, cleanup) = try makeRepositoryWithTodayFile("- [ ] 08:00 Draft id:meta0004\n")
+        defer { cleanup() }
+
+        let item = try #require(try repository.loadToday().first)
+        #expect(throws: InboxRepositoryError.reservedMetadataKey) {
+            try repository.apply(.setMetadata(item.id, key: "id", value: "hijack"))
+        }
+        #expect(try String(contentsOf: fileURL) == "- [ ] 08:00 Draft id:meta0004\n")
     }
 
     @Test
@@ -719,8 +756,13 @@ struct quickboxTests {
             repository: repository
         )
 
+        // Wait for the indicators to be applied, not just for the repository calls: results reach the
+        // main actor a step later, and a second request in between would legitimately reload.
         appState.loadCalendarIndicators(from: start, to: day3)
-        try await waitUntil("initial indicator load") { repository.loadCallCount == 3 }
+        try await waitUntil("initial indicator load") {
+            [day1, day2, day3].allSatisfy { appState.calendarDayIndicators[$0] != nil }
+        }
+        #expect(repository.loadCallCount == 3)
 
         let cachedLoadCount = repository.loadCallCount
         appState.loadCalendarIndicators(from: start, to: day3)
@@ -728,7 +770,10 @@ struct quickboxTests {
         #expect(repository.loadCallCount == cachedLoadCount)
 
         appState.loadCalendarIndicators(from: start, to: day3, forceReload: true)
-        try await waitUntil("force indicator reload") { repository.loadCallCount == cachedLoadCount + 3 }
+        try await waitUntil("force indicator reload") {
+            repository.loadCallCount == cachedLoadCount + 3
+                && [day1, day2, day3].allSatisfy { appState.calendarDayIndicators[$0] != nil }
+        }
     }
 
     @MainActor
@@ -748,7 +793,8 @@ struct quickboxTests {
         )
 
         appState.loadCalendarIndicators(from: morning, to: evening)
-        try await waitUntil("same day indicator load") { repository.loadCallCount == 1 }
+        try await waitUntil("same day indicator load") { appState.calendarDayIndicators[normalized] != nil }
+        #expect(repository.loadCallCount == 1)
         #expect(appState.calendarDayIndicators[normalized]?.totalCount == 1)
 
         appState.loadCalendarIndicators(from: morning, to: evening)
@@ -799,7 +845,7 @@ struct quickboxTests {
                         rawLine: item.rawLine
                     )
                 }
-            case .undoLastDelete:
+            case .undoLastDelete, .setMetadata:
                 return currentItems
             }
         }
@@ -875,6 +921,15 @@ struct quickboxTests {
 
         #expect(crashReporter.lastConsentValue == true)
         #expect(appState.preferences.crashReportingEnabled == true)
+    }
+
+    private func makeRepositoryWithTodayFile(_ content: String) throws -> (InboxRepository, URL, () -> Void) {
+        let tempFolder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempFolder, withIntermediateDirectories: true)
+        let fileURL = tempFolder.appendingPathComponent(todayFileName(for: Date()))
+        try content.write(to: fileURL, atomically: true, encoding: .utf8)
+        let repository = InboxRepository(storageResolver: TestStorageResolver(baseURL: tempFolder))
+        return (repository, fileURL, { try? FileManager.default.removeItem(at: tempFolder) })
     }
 
     private func todayFileName(for date: Date = Date()) -> String {

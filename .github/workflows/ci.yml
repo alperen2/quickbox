@@ -16,6 +16,11 @@ jobs:
         with:
           xcode-version: 'latest-stable'
 
+      - name: Run QuickboxCore package tests
+        run: |
+          set -o pipefail
+          swift test --package-path Packages/QuickboxCore 2>&1 | tee swift-test.log
+
       - name: Run unit tests
         run: |
           set -o pipefail
@@ -31,7 +36,7 @@ jobs:
 
       - name: Enforce warning budget
         run: |
-          if grep -nE "\.swift:[0-9]+:[0-9]+: warning:" xcodebuild.log; then
+          if grep -nE "\.swift:[0-9]+:[0-9]+: warning:" xcodebuild.log swift-test.log; then
             echo "Compiler warnings detected. Failing build."
             exit 1
           fi
@@ -108,6 +113,30 @@ jobs:
             ui-smoke.log
             ui-smoke-attempt1.log
             ui-smoke-attempt2.log
+
+  cloud:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: cloud/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test (includes shared golden fixtures)
+        run: npm test
 
   docs-build:
     runs-on: ubuntu-latest

@@ -1,0 +1,98 @@
+{
+  "description": "Golden cases for the quickbox task line format. Every parser implementation (Swift app, cloud server) must produce exactly these results. Date values are kept raw: natural-language resolution is not part of parsing.",
+  "cases": [
+    {
+      "name": "plain open task",
+      "lines": ["- [ ] 09:00 Call designer"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:00", "text": "Call designer", "tags": [], "priority": null, "project": null, "due": null, "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "completed task accepts lower and upper x",
+      "lines": ["- [x] 09:00 Done lower", "- [X] 10:00 Done upper"],
+      "expected": [
+        { "lineIndex": 0, "completed": true, "time": "09:00", "text": "Done lower", "tags": [], "priority": null, "project": null, "due": null, "metadata": {}, "taskID": null },
+        { "lineIndex": 1, "completed": true, "time": "10:00", "text": "Done upper", "tags": [], "priority": null, "project": null, "due": null, "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "non-task lines are ignored but keep line indexes",
+      "lines": ["# Notes", "", "just a sentence", "- [ ] missing time", "- [ ] 11:15 Real task"],
+      "expected": [
+        { "lineIndex": 4, "completed": false, "time": "11:15", "text": "Real task", "tags": [], "priority": null, "project": null, "due": null, "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "priority project and tags",
+      "lines": ["- [ ] 09:00 Ship release !1 @quickbox #work #urgent"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:00", "text": "Ship release", "tags": ["work", "urgent"], "priority": 1, "project": "quickbox", "due": null, "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "natural language due phrase stays raw",
+      "lines": ["- [ ] 09:00 Prepare brief due:next friday"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:00", "text": "Prepare brief", "tags": [], "priority": null, "project": null, "due": "next friday", "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "date phrases stop at the next token type",
+      "lines": ["- [ ] 09:00 Review draft defer:in 2 days #review time:30m"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:00", "text": "Review draft", "tags": ["review"], "priority": null, "project": null, "due": null, "metadata": { "defer": "in 2 days", "time": "30m" }, "taskID": null }
+      ]
+    },
+    {
+      "name": "routing date tag is hidden from metadata",
+      "lines": ["- [ ] 09:00 Plan sprint @quickbox date:2026-02-27"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:00", "text": "Plan sprint", "tags": [], "priority": null, "project": "quickbox", "due": null, "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "urls are not metadata",
+      "lines": ["- [ ] 09:00 Read https://example.com/post"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:00", "text": "Read https://example.com/post", "tags": [], "priority": null, "project": null, "due": null, "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "task id is exposed separately from metadata",
+      "lines": ["- [ ] 09:00 Draft post #social time:30m id:k3f9x2ab"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:00", "text": "Draft post", "tags": ["social"], "priority": null, "project": null, "due": null, "metadata": { "time": "30m" }, "taskID": "k3f9x2ab" }
+      ]
+    },
+    {
+      "name": "invalid task id is dropped",
+      "lines": ["- [ ] 09:00 Weird id id:a.b"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:00", "text": "Weird id", "tags": [], "priority": null, "project": null, "due": null, "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "duplicated task id keeps only the first occurrence",
+      "lines": ["- [ ] 08:00 original id:dup00001", "- [ ] 09:00 pasted copy id:dup00001"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "08:00", "text": "original", "tags": [], "priority": null, "project": null, "due": null, "metadata": {}, "taskID": "dup00001" },
+        { "lineIndex": 1, "completed": false, "time": "09:00", "text": "pasted copy", "tags": [], "priority": null, "project": null, "due": null, "metadata": {}, "taskID": null }
+      ]
+    },
+    {
+      "name": "task handed to an agent",
+      "lines": ["- [ ] 09:12 Create Instagram post @Marketing due:2026-09-28 for:agent id:k3f9x2ab"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "09:12", "text": "Create Instagram post", "tags": [], "priority": null, "project": "Marketing", "due": "2026-09-28", "metadata": { "for": "agent" }, "taskID": "k3f9x2ab" }
+      ]
+    },
+    {
+      "name": "follow-up written by an agent",
+      "lines": ["- [ ] 11:40 Publish post @Marketing for:me by:claude from:k3f9x2ab ref:_notes/k3f9x2ab.md id:p7a2m1cd"],
+      "expected": [
+        { "lineIndex": 0, "completed": false, "time": "11:40", "text": "Publish post", "tags": [], "priority": null, "project": "Marketing", "due": null, "metadata": { "for": "me", "by": "claude", "from": "k3f9x2ab", "ref": "_notes/k3f9x2ab.md" }, "taskID": "p7a2m1cd" }
+      ]
+    }
+  ]
+}

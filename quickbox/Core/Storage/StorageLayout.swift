@@ -4,6 +4,7 @@ import Foundation
 ///
 /// - Inbox entries:   `<base>/<prefix><date>.md`
 /// - Project entries: `<base>/<Project>/<prefix><date>.md`
+/// - System folders:  `<base>/_notes/`, `<base>/_conflicts/` (never projects)
 ///
 /// Older versions stored project entries in a flat `<base>/<Project>.md` file;
 /// `LegacyProjectMigrator` moves those into this layout.
@@ -28,11 +29,22 @@ struct StorageLayout {
     }
 
     func projectDirectories(in baseURL: URL) throws -> [URL] {
+        try Self.projectDirectories(in: baseURL, fileManager: fileManager)
+    }
+
+    /// Nonisolated so background scans (e.g. the autocomplete index) can list projects off the main actor.
+    nonisolated static func projectDirectories(in baseURL: URL, fileManager: FileManager = .default) throws -> [URL] {
         try fileManager.contentsOfDirectory(
             at: baseURL,
             includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles]
         )
         .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true }
+        .filter { !isSystemFolder($0.lastPathComponent) }
+    }
+
+    /// Folders starting with "_" (`_notes`, `_conflicts`) belong to quickbox, not to a project.
+    nonisolated static func isSystemFolder(_ name: String) -> Bool {
+        name.hasPrefix("_")
     }
 }

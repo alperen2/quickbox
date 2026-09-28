@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "quickbox-cloud",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  // global_fetch_strictly_public: SSRF protection for Client ID Metadata Document fetches.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "observability": { "enabled": true },
+  "vars": {
+    // The public origin; OAuth resource and issuer identifiers are built from it.
+    // Changing it invalidates existing connector connections. `.dev.vars` overrides it locally.
+    "PUBLIC_URL": "https://quickbox-cloud.aalperendurmuss.workers.dev",
+    // Used until users can set their own time zone.
+    "DEFAULT_TIMEZONE": "Europe/Istanbul",
+    // Sender for sign-in codes; RESEND_API_KEY is a secret.
+    "EMAIL_FROM": "quickbox <giris@fsg.alperendurmus.com>"
+  },
+  "kv_namespaces": [{ "binding": "OAUTH_KV" }],
+  "durable_objects": {
+    "bindings": [
+      { "name": "INBOX", "class_name": "InboxStore" },
+      { "name": "ACCOUNTS", "class_name": "AccountDirectory" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["InboxStore"] },
+    { "tag": "v2", "new_sqlite_classes": ["AccountDirectory"] }
+  ]
+}

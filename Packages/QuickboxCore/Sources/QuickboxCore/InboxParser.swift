@@ -1,6 +1,8 @@
 import Foundation
 
-struct InboxParser {
+public struct InboxParser {
+    public init() {}
+
     private static let taskPattern = /^- \[(?<done>[ xX])\] (?<time>\d{2}:\d{2}) (?<text>.+)$/
     private static let dateMetadataKeys: Set<String> = ["due", "defer", "start"]
     private static let metadataKeyPattern = /^[a-zA-Z0-9_\-]+$/
@@ -21,8 +23,10 @@ struct InboxParser {
         "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"
     ]
 
-    func parse(lines: [String], sourceID: String) -> [InboxItem] {
-        lines.enumerated().compactMap { index, line in
+    public func parse(lines: [String], sourceID: String) -> [InboxItem] {
+        var seenTaskIDs = Set<String>()
+
+        return lines.enumerated().compactMap { index, line in
             guard let match = line.firstMatch(of: Self.taskPattern) else {
                 return nil
             }
@@ -30,13 +34,13 @@ struct InboxParser {
             let isCompleted = match.output.done != " "
             let time = String(match.output.time)
             var text = String(match.output.text)
-            let id = "\(sourceID)#\(index)#\(line)"
-            
+
             var tags: [String] = []
             var dueDate: String? = nil
             var priority: Int? = nil
             var projectName: String? = nil
             var metadata: [String: String] = [:]
+            var taskID: String? = nil
 
             let tagPattern = /#([a-zA-Z0-9_\-]+)/
             let priorityPattern = /!([1-3])/
@@ -58,6 +62,8 @@ struct InboxParser {
             for (key, value) in metadataExtraction.values {
                 if key == "due" {
                     dueDate = value
+                } else if key == TaskIdentifier.metadataKey {
+                    taskID = TaskIdentifier.isValid(value) ? value : nil
                 } else if key != "date" {
                     // Hide internal `date:` routing tags from UI metadata.
                     metadata[key] = value
@@ -70,20 +76,37 @@ struct InboxParser {
             text = text.replacing(projectPattern, with: "")
             text = text.trimmingCharacters(in: .whitespaces)
 
+            // A duplicated `id:` (e.g. a copy-pasted line) must not alias two items,
+            // so only the first occurrence keeps the stable identity.
+            if let candidate = taskID, !seenTaskIDs.insert(candidate).inserted {
+                taskID = nil
+            }
+
             return InboxItem(
-                id: id,
+                id: Self.itemID(sourceID: sourceID, taskID: taskID, lineIndex: index, rawLine: line),
                 text: text,
                 tags: tags,
                 dueDate: dueDate,
                 priority: priority,
                 projectName: projectName,
                 metadata: metadata,
+                taskID: taskID,
                 time: time,
                 isCompleted: isCompleted,
                 lineIndex: index,
                 rawLine: line
             )
         }
+    }
+
+    /// Lines with an `id:` token get a position-independent identity; legacy lines fall back
+    /// to their index and content. The source file prefix is kept because mutations use it
+    /// to locate the file to edit.
+    private static func itemID(sourceID: String, taskID: String?, lineIndex: Int, rawLine: String) -> String {
+        if let taskID {
+            return "\(sourceID)#\(TaskIdentifier.metadataKey):\(taskID)"
+        }
+        return "\(sourceID)#\(lineIndex)#\(rawLine)"
     }
 
     private func extractMetadataTokens(from text: String) -> (values: [String: String], remainingText: String) {

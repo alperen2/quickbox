@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C20000042F9B000100BB0001 /* QuickboxCore in Frameworks */ = {isa = PBXBuildFile; productRef = C20000022F9B000100BB0001 /* QuickboxCore */; };
+		C20000052F9B000100BB0001 /* QuickboxCore in Frameworks */ = {isa = PBXBuildFile; productRef = C20000032F9B000100BB0001 /* QuickboxCore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		05FFD3C92F51F4D500E51518 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -53,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C20000042F9B000100BB0001 /* QuickboxCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,6 +80,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C20000052F9B000100BB0001 /* QuickboxCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -121,6 +128,7 @@
 			);
 			name = quickbox;
 			packageProductDependencies = (
+				C20000022F9B000100BB0001 /* QuickboxCore */,
 			);
 			productName = quickbox;
 			productReference = 05FFD3BB2F51F4D400E51518 /* quickbox.app */;
@@ -189,6 +197,7 @@
 			);
 			name = quickboxAppStore;
 			packageProductDependencies = (
+				C20000032F9B000100BB0001 /* QuickboxCore */,
 			);
 			productName = "Quickbox Capture";
 			productReference = A10000022F9A000100AA0001 /* Quickbox Capture.app */;
@@ -230,6 +239,7 @@
 			mainGroup = 05FFD3B22F51F4D400E51518;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				C20000012F9B000100BB0001 /* XCLocalSwiftPackageReference "Packages/QuickboxCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 05FFD3BC2F51F4D400E51518 /* Products */;
@@ -721,6 +731,26 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		C20000012F9B000100BB0001 /* XCLocalSwiftPackageReference "Packages/QuickboxCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/QuickboxCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C20000022F9B000100BB0001 /* QuickboxCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C20000012F9B000100BB0001 /* XCLocalSwiftPackageReference "Packages/QuickboxCore" */;
+			productName = QuickboxCore;
+		};
+		C20000032F9B000100BB0001 /* QuickboxCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C20000012F9B000100BB0001 /* XCLocalSwiftPackageReference "Packages/QuickboxCore" */;
+			productName = QuickboxCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 05FFD3B32F51F4D400E51518 /* Project object */;
 }

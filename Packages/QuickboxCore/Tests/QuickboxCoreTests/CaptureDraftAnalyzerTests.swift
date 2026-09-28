@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import quickbox
+@testable import QuickboxCore
 
 struct CaptureDraftAnalyzerTests {
     private let analyzer = CaptureDraftAnalyzer()

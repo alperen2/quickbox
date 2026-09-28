@@ -2,6 +2,7 @@ import AppKit
 import Combine
 import Foundation
 import ServiceManagement
+import QuickboxCore
 
 @MainActor
 final class AppState: ObservableObject {
@@ -38,6 +39,8 @@ final class AppState: ObservableObject {
     private let inboxRepository: InboxRepositorying
     private let crashReporter: CrashReporting
     private let clipboardProvider: () -> String?
+    /// Present when the app was started with cloud sync available; `nil` in tests and UI tests.
+    let cloudSync: CloudSyncController?
     private let mutationQueue = DispatchQueue(label: "quickbox.appstate.mutation", qos: .userInitiated)
     private var calendarIndicatorLoadedDates: Set<Date> = []
     private var calendarIndicatorLoadingTask: Task<Void, Never>?
@@ -57,7 +60,8 @@ final class AppState: ObservableObject {
             NSPasteboard.general.string(forType: .string)
         },
         registerHotkeyOnInit: Bool = true,
-        loadInboxOnInit: Bool = true
+        loadInboxOnInit: Bool = true,
+        enableCloudSync: Bool = false
     ) {
         self.settingsStore = settingsStore
         self.hotkeyManager = hotkeyManager
@@ -68,8 +72,20 @@ final class AppState: ObservableObject {
 
         let storageAccessManager = storageAccessManager ?? StorageAccessManager(preferences: loadedPreferences)
         self.storageAccessManager = storageAccessManager
-        self.inboxWriter = inboxWriter ?? InboxWriter(storageResolver: storageAccessManager)
-        self.inboxRepository = inboxRepository ?? InboxRepository(storageResolver: storageAccessManager)
+        let localWriter = inboxWriter ?? InboxWriter(storageResolver: storageAccessManager)
+        let localRepository = inboxRepository ?? InboxRepository(storageResolver: storageAccessManager)
+        if enableCloudSync {
+            // Sync wraps the local storage: files are still written locally first, then replayed in the cloud.
+            let cloudSync = CloudSyncController(storageResolver: storageAccessManager)
+            let onLocalWrite: @Sendable () -> Void = { [weak cloudSync] in cloudSync?.localFilesChanged() }
+            self.cloudSync = cloudSync
+            self.inboxWriter = SyncingInboxWriter(base: localWriter, recorder: cloudSync.outbox, onLocalWrite: onLocalWrite)
+            self.inboxRepository = SyncingInboxRepository(base: localRepository, recorder: cloudSync.outbox, onLocalWrite: onLocalWrite)
+        } else {
+            self.cloudSync = nil
+            self.inboxWriter = localWriter
+            self.inboxRepository = localRepository
+        }
         self.crashReporter = crashReporter ?? CrashReporter(consentEnabled: loadedPreferences.crashReportingEnabled)
 
         hotkeyManager.onHotKey = { [weak self] in
@@ -85,9 +101,39 @@ final class AppState: ObservableObject {
             }
         }
 
+        cloudSync?.onRemoteChanges = { [weak self] in
+            self?.handleRemoteChanges()
+        }
+
         if loadInboxOnInit {
             loadInbox()
         }
+    }
+
+    /// Whether file naming must follow the cloud's format (`yyyy-MM-dd.md`, `HH:mm`, no prefix).
+    var isCloudSyncConnected: Bool {
+        cloudSync?.isConnected ?? false
+    }
+
+    func connectCloudSync() async {
+        guard let cloudSync else { return }
+        // Local files must use the cloud's names before the first sync uploads them.
+        preferences.fileDateFormat = AppPreferences.defaultFileDateFormat
+        preferences.timeFormat = AppPreferences.defaultTimeFormat
+        preferences.fileNamePrefix = ""
+        persistPreferences(message: "quickbox Cloud uses yyyy-MM-dd file names and 24-hour times.")
+        await cloudSync.connect()
+        loadInbox()
+    }
+
+    func disconnectCloudSync() async {
+        await cloudSync?.disconnect()
+        settingsMessage = "Disconnected from quickbox Cloud. Your local files are unchanged."
+    }
+
+    private func handleRemoteChanges() {
+        calendarIndicatorLoadedDates.removeAll()
+        reloadInbox(silent: true)
     }
 
     deinit {
@@ -319,8 +365,8 @@ final class AppState: ObservableObject {
             applyInboxMutationAsync(.toggle(id), successMessage: nil)
         case .delete(let id):
             applyInboxMutation(.delete(id), successMessage: "Deleted. You can undo.")
-        case .edit(let id, text: let text):
-            applyInboxMutation(.edit(id, text: text), successMessage: nil)
+        case .edit, .setMetadata:
+            applyInboxMutation(mutation, successMessage: nil)
         case .undoLastDelete:
             applyInboxMutation(.undoLastDelete, successMessage: "Restored")
         }

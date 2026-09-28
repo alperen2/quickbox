@@ -50,8 +50,7 @@ final class IndexManager: ObservableObject {
                 }
 
                 // Each subdirectory is a project holding dated `<date>.md` files
-                let projectDirectories = try StorageLayout(preferences: .default, fileManager: fileManager)
-                    .projectDirectories(in: folderURL)
+                let projectDirectories = try StorageLayout.projectDirectories(in: folderURL, fileManager: fileManager)
                 for directoryURL in projectDirectories {
                     uniqueProjects.insert(directoryURL.lastPathComponent)
 
