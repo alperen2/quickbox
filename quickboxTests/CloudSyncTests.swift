@@ -462,6 +462,19 @@ struct CloudAuthenticatorTests {
         #expect(!authenticator.isSignedIn)
         await #expect(throws: CloudAuthError.signedOut) { try await authenticator.accessToken() }
     }
+
+    @Test
+    func tokensSavedWithoutAnOriginBelongToTheLegacyServer() {
+        let store = MemoryTokenStore()
+        store.tokens = CloudTokens(accessToken: "old", refreshToken: "old", expiresAt: Date().addingTimeInterval(3600), origin: nil)
+
+        let legacy = CloudAuthenticator(baseURL: URL(string: CloudConfiguration.legacyOrigin)!, tokenStore: store, web: FakeWeb { $0 })
+        let moved = CloudAuthenticator(baseURL: StubServer.baseURL, tokenStore: store, web: FakeWeb { $0 })
+
+        #expect(legacy.isSignedIn)
+        #expect(!moved.isSignedIn)
+        #expect(moved.hasSessionFromAnotherServer)
+    }
 }
 
 extension CloudAuthenticatorTests {

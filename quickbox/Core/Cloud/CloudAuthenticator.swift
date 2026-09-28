@@ -13,6 +13,9 @@ nonisolated enum CloudConfiguration {
         }
         return URL(string: "https://api.usepigeon.cc")!
     }
+
+    /// Where the cloud ran before it moved to the product domain. Tokens saved without an origin came from here.
+    static let legacyOrigin = "https://quickbox-cloud.aalperendurmuss.workers.dev"
 }
 
 /// Published by the server at `/app/config`: everything needed to start OAuth as the quickbox app.
@@ -32,6 +35,9 @@ nonisolated struct CloudTokens: Codable, Equatable, Sendable {
     /// The server that issued them. Tokens are bound to that server's resource, so they are
     /// useless after a move to another address. `nil` for tokens saved before this was recorded.
     let origin: String?
+
+    /// `origin`, or the legacy server for tokens saved before the origin was recorded.
+    var issuer: String { origin ?? CloudConfiguration.legacyOrigin }
 }
 
 enum CloudAuthError: LocalizedError, Equatable {
@@ -215,7 +221,7 @@ final class CloudAuthenticator {
     /// Tokens issued by this server. Ones from another address (the server moved) count as signed out,
     /// so the user connects again instead of hitting authorization errors.
     private func storedTokens() -> CloudTokens? {
-        guard let tokens = tokenStore.load(), tokens.origin == baseURL.absoluteString else { return nil }
+        guard let tokens = tokenStore.load(), tokens.issuer == baseURL.absoluteString else { return nil }
         return tokens
     }
 
