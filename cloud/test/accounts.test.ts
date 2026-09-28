@@ -110,3 +110,21 @@ describe("Sign in with Apple", () => {
     expect(viaEmail.ok && viaEmail.userId).not.toBe(viaApple);
   });
 });
+
+describe("account deletion", () => {
+  it("forgets the user and their identities, so the same address starts fresh", () => {
+    const { accounts, advance } = makeAccounts();
+    const first = accounts.verifyEmailCode("ada@example.com", requestCode(accounts, "ada@example.com"));
+    const appleUser = accounts.signInWithApple({ subject: "apple-1", email: "ada@example.com", emailVerified: true });
+    if (!first.ok) throw new Error("sign-in failed");
+
+    accounts.deleteUser(first.userId);
+    advance(61_000);
+    const again = accounts.verifyEmailCode("ada@example.com", requestCode(accounts, "ada@example.com"));
+
+    expect(appleUser).toBe(first.userId);
+    expect(accounts.email(first.userId)).toBeNull();
+    expect(again.ok && again.userId).not.toBe(first.userId);
+    expect(accounts.signInWithApple({ subject: "apple-1", email: null, emailVerified: false })).not.toBe(first.userId);
+  });
+});

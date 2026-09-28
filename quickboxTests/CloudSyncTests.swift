@@ -367,7 +367,7 @@ struct SyncingStorageTests {
 @Suite(.serialized)
 struct CloudAuthenticatorTests {
 
-    private final class MemoryTokenStore: CloudTokenStoring {
+    final class MemoryTokenStore: CloudTokenStoring {
         var tokens: CloudTokens?
         func load() -> CloudTokens? { tokens }
         func save(_ tokens: CloudTokens) { self.tokens = tokens }
@@ -375,7 +375,7 @@ struct CloudAuthenticatorTests {
     }
 
     /// Plays the browser: answers the authorization URL with a scripted callback.
-    private final class FakeWeb: WebAuthenticating {
+    final class FakeWeb: WebAuthenticating {
         var respond: (URL) -> URL
         var openedURL: URL?
         init(respond: @escaping (URL) -> URL) { self.respond = respond }
@@ -453,6 +453,54 @@ struct CloudAuthenticatorTests {
     }
 }
 
+extension CloudAuthenticatorTests {
+    private func signedInClient(_ stub: StubServer) -> CloudHTTPClient {
+        let store = MemoryTokenStore()
+        store.tokens = CloudTokens(accessToken: "access-1", refreshToken: "refresh-1", expiresAt: Date().addingTimeInterval(3600))
+        let authenticator = CloudAuthenticator(baseURL: StubServer.baseURL, urlSession: stub.session, tokenStore: store, web: FakeWeb { $0 })
+        return CloudHTTPClient(baseURL: StubServer.baseURL, authenticator: authenticator, urlSession: stub.session)
+    }
+
+    @Test
+    func loadsTheAccountWithConnectedApps() async throws {
+        let stub = StubServer()
+        defer { stub.stop() }
+        var seen: URLRequest?
+        stub.handler = { request in
+            seen = request
+            return (200, #"{"email":"ada@example.com","apps":[{"grantId":"g1","name":"Claude","connectedAt":1790000000000,"isQuickboxApp":false,"isThisDevice":false}]}"#)
+        }
+
+        let account = try await signedInClient(stub).account()
+
+        #expect(seen?.url?.path == "/mcp/account")
+        #expect(seen?.value(forHTTPHeaderField: "Authorization") == "Bearer access-1")
+        #expect(account == CloudAccount(email: "ada@example.com", apps: [
+            ConnectedApp(grantId: "g1", name: "Claude", connectedAt: 1_790_000_000_000, isQuickboxApp: false, isThisDevice: false),
+        ]))
+    }
+
+    @Test
+    func disconnectsAnAppAndDeletesTheAccountWithConfirmation() async throws {
+        let stub = StubServer()
+        defer { stub.stop() }
+        var requests: [(method: String?, path: String?, body: [String: String])] = []
+        stub.handler = { request in
+            requests.append((request.httpMethod, request.url?.path, StubServer.json(of: request)))
+            return (204, "")
+        }
+        let client = signedInClient(stub)
+
+        try await client.disconnectApp(grantID: "g1")
+        try await client.deleteAccount()
+
+        #expect(requests.count == 2)
+        #expect(requests.first?.method == "DELETE" && requests.first?.path == "/mcp/account/apps/g1")
+        #expect(requests.last?.method == "POST" && requests.last?.path == "/mcp/account/delete")
+        #expect(requests.last?.body == ["confirm": "DELETE"])
+    }
+}
+
 /// Routes a URLSession to an in-process handler (one active stub at a time).
 private final class StubServer {
     static let baseURL = URL(string: "https://cloud.test")!
@@ -469,6 +517,11 @@ private final class StubServer {
     }()
 
     func stop() { StubURLProtocol.handler = nil }
+
+    static func json(of request: URLRequest) -> [String: String] {
+        let body = request.httpBody ?? request.httpBodyStream.map(Self.read) ?? Data()
+        return (try? JSONSerialization.jsonObject(with: body) as? [String: String]) ?? [:]
+    }
 
     static func form(of request: URLRequest) -> [String: String] {
         let body = request.httpBody ?? request.httpBodyStream.map(Self.read) ?? Data()

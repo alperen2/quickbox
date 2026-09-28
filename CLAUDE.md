@@ -84,6 +84,10 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - App-hosted unit tests must not read files under `~/Documents`, the repository included. An unsigned host app triggers a macOS privacy prompt and the test hangs. Put repository-fixture tests in the package instead.
 
 **Cloud (`cloud/`):** a remote MCP server on Cloudflare Workers that exposes a user's inbox to AI agents. See `cloud/README.md`.
+- **Keep Cloudflare at the edges, so the server can move to self-hosting.**
+  - Only these may touch Cloudflare-specific APIs: `src/store/` (Durable Objects), `src/accounts/accountDirectory.ts`, `src/oauth.ts` and `src/auth/` (the OAuth provider), and `src/index.ts`. That includes `cloudflare:workers`, `DurableObject`, KV and `env` bindings.
+  - Domain and protocol code must stay runtime-agnostic and run under plain Node (the tests prove this). It receives storage through interfaces: `FileStore` and `Sql` (the `SqlStorage` subset). This covers `src/core`, `src/inbox`, `src/sync` (except `api.ts`), `src/accounts/accounts.ts` and `src/mcp`.
+  - New features should follow the same shape: logic behind an interface, plus a thin Durable Object adapter.
 - `cloud/src/core` is a TypeScript port of `QuickboxCore` (parser, line formatting, dates, ids) and must mirror it.
 - `Inbox` (in `cloud/src/inbox`) mirrors the app's routing, day view and edit rules on top of a synchronous `FileStore`.
 - The `InboxStore` Durable Object (one per user, SQLite, one row per `.md` file) is the single writer.
@@ -95,4 +99,9 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
   - `GET changes?cursor=N` returns versioned files.
   - `POST push` takes idempotent op batches: `add`, `update`, `delete`, `insertLine`, `importFile`.
   - Only the first-party app client may call it, and it writes as the user.
+- Account management lives under `/mcp/account*` (`src/account/api.ts`) and is first-party only:
+  - It lists grants as "connected apps" and can revoke one.
+  - `POST /mcp/account/delete` with `{"confirm":"DELETE"}` deletes the account in this order: revoke all grants, wipe the user's `InboxStore` storage, then remove the directory entry.
+  - The Mac's "Disconnect this Mac" also revokes its own grant.
+- If you change what the cloud stores, update `docs/privacy.md` and `quickbox/PrivacyInfo.xcprivacy`.
 - Local dev: `DEV_LOG_EMAIL_CODES=true` prints codes to the console. Tests run the Durable Object SQL on `node:sqlite` (`test/sqlite.ts`).

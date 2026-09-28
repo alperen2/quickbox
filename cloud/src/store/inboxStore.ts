@@ -62,4 +62,9 @@ export class InboxStore extends DurableObject<Env> implements InboxApi {
   async syncChanges(cursor: number) {
     return this.sync.changes(cursor);
   }
+
+  /** Account deletion: removes every file, note, setting and sync record of this user. */
+  async deleteAllData() {
+    await this.ctx.storage.deleteAll();
+  }
 }

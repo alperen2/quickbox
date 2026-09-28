@@ -126,8 +126,8 @@ final class AppState: ObservableObject {
         loadInbox()
     }
 
-    func disconnectCloudSync() {
-        cloudSync?.disconnect()
+    func disconnectCloudSync() async {
+        await cloudSync?.disconnect()
         settingsMessage = "Disconnected from quickbox Cloud. Your local files are unchanged."
     }
 

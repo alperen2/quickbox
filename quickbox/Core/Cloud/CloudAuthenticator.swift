@@ -285,8 +285,15 @@ final class CloudAuthenticator {
     }
 }
 
-/// The sync endpoints, authenticated with the app's access token.
-final class HTTPCloudSyncAPI: CloudSyncAPI {
+protocol CloudAccountAPI {
+    func account() async throws -> CloudAccount
+    func disconnectApp(grantID: String) async throws
+    /// Deletes the account and every cloud copy of the user's tasks and notes.
+    func deleteAccount() async throws
+}
+
+/// The quickbox apps' HTTP API (sync and account management), authenticated with the app's access token.
+final class CloudHTTPClient: CloudSyncAPI, CloudAccountAPI {
     private let baseURL: URL
     private let authenticator: CloudAuthenticator
     private let urlSession: URLSession
@@ -310,6 +317,24 @@ final class HTTPCloudSyncAPI: CloudSyncAPI {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(pushRequest)
         return try JSONDecoder().decode(PushResponse.self, from: try await send(request))
+    }
+
+    func account() async throws -> CloudAccount {
+        try JSONDecoder().decode(CloudAccount.self, from: try await send(URLRequest(url: baseURL.appendingPathComponent("mcp/account"))))
+    }
+
+    func disconnectApp(grantID: String) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("mcp/account/apps").appendingPathComponent(grantID))
+        request.httpMethod = "DELETE"
+        _ = try await send(request)
+    }
+
+    func deleteAccount() async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("mcp/account/delete"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = Data(#"{"confirm":"DELETE"}"#.utf8)
+        _ = try await send(request)
     }
 
     /// Retries once with a refreshed token if the access token was rejected.
