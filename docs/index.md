@@ -3,8 +3,11 @@ layout: home
 
 hero:
   name: Pigeon
-  text: Quick capture for you and your AI agents
-  tagline: Capture a thought in a second. Tasks stay plain Markdown, and the agents you connect can pick them up and hand work back.
+  text: Agentic To Do Tracker
+  tagline: Capture a thought in a second. Tasks stay plain Markdown, and the AI agents you connect pick them up and hand work back.
+  image:
+    src: /pigeon-mark.svg
+    alt: Pigeon
   actions:
     - theme: brand
       text: Get Started
