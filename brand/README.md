@@ -8,13 +8,16 @@ Pigeon is an agentic to-do tracker: you capture a thought in a second, and the A
 | --- | --- |
 | `pigeon-mark.svg` | The P mark alone. Favicon, nav bar, sign-in pages, avatars. |
 | `pigeon-wordmark.svg` | The lowercase "pigeon" wordmark. Use it next to or under the mark. |
-| `pigeon-logo-original.png` | The original lockup (mark, wordmark, tagline, domain), 364×439. Reference only. |
+| `source/pigeon-mark-4320.png` | The mark at 3228×4320 with a transparent background. Use it for the app icon and large raster exports. |
+| `source/pigeon-mark-1080.png`, `source/pigeon-lockup-1080.png` | The designer's exports: the mark, and the mark with the wordmark. |
+| `source/pigeon-lockup-with-tagline.png` | An early lockup with the tagline and domain. Reference only. |
 
-The SVGs were traced from the original PNG. They work at web sizes. For the app icon and print, export fresh vectors from the design source.
-
-- The pigeon is negative space. On a dark background it takes the background color, so the mark works on light and dark surfaces without a separate version.
+- The wordmark SVG uses the original glyph outlines from the design file.
+- The mark SVG was traced from the 3228×4320 master, because the design file only stores the mark as an image.
+- The mark is a single color, `#F36175`. An early lockup had a magenta headset, but the official files don't.
+- The pigeon is negative space, and so are the letter counters in the wordmark. On a dark background they take the background color, so the logo works on light and dark surfaces without a separate version.
 - Keep clear space around the mark at least as wide as the P's stem.
-- Do not recolor, outline, rotate or add effects to the mark. On busy photos, put it on a white or coral tile.
+- Don't recolor, outline, rotate or add effects to the logo. On busy photos, put it on a white or coral tile.
 - Write the product name as **Pigeon** in text. The wordmark's lowercase "pigeon" is artwork only.
 
 ## Colors
@@ -22,7 +25,6 @@ The SVGs were traced from the original PNG. They work at web sizes. For the app 
 | Role | Hex | Notes |
 | --- | --- | --- |
 | Coral (primary) | `#F36175` | The logo color. Large type, illustrations, fills behind dark text. 3.1:1 on white, so never use it for body text on white. |
-| Magenta (secondary) | `#F25181` | The headset. Small accents in artwork only. |
 | Coral 600 | `#D1425A` | Buttons with white text and the macOS accent in light mode (4.5:1 with white). |
 | Coral 700 | `#C53650` | Links and brand text on white (5.2:1). |
 | Coral 800 | `#AD193D` | Hover and pressed states on white (7:1). |
