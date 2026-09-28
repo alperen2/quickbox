@@ -5,6 +5,7 @@ import { handleAccountRequest } from "./account/api";
 import { accountDirectory } from "./accounts/accountDirectory";
 import { APP_REDIRECT_URI, ensureFirstPartyClientId, isFirstPartyClient } from "./auth/firstParty";
 import { handleAuthRequest, INBOX_SCOPE, type AuthProps } from "./auth/routes";
+import { PRODUCT_NAME } from "./brand";
 import { publicUrl } from "./config";
 import { createQuickboxServer } from "./mcp/server";
 import { handleSyncRequest } from "./sync/api";
@@ -85,7 +86,7 @@ export function oauthProvider(env: Env): OAuthProvider<Env> {
       authorization_servers: [origin],
       scopes_supported: [INBOX_SCOPE],
       bearer_methods_supported: ["header"],
-      resource_name: "quickbox",
+      resource_name: PRODUCT_NAME,
     },
   });
   cached = { origin, provider };

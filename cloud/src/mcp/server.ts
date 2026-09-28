@@ -2,8 +2,9 @@ import { McpServer, type CallToolResult } from "@modelcontextprotocol/server";
 import * as z from "zod";
 import type { InboxApi, InboxResult } from "../inbox/api";
 import type { Actor } from "../inbox/types";
+import { PRODUCT_NAME } from "../brand";
 
-export const SERVER_INSTRUCTIONS = `quickbox is the user's inbox of Markdown tasks and notes, shared by the user and their AI agents.
+export const SERVER_INSTRUCTIONS = `${PRODUCT_NAME} is the user's inbox of Markdown tasks and notes, shared by the user and their AI agents.
 
 How to work with it:
 1. Find your work with list_tasks for="agent". Tasks meant for the user carry for="me".
@@ -27,7 +28,7 @@ const dueDate = z.string().describe("YYYY-MM-DD or a phrase such as today, tomor
  */
 export function createQuickboxServer(inbox: InboxApi, actor: Actor): McpServer {
   const server = new McpServer(
-    { name: "quickbox", version: "0.1.0" },
+    { name: PRODUCT_NAME.toLowerCase(), version: "0.1.0" },
     { instructions: SERVER_INSTRUCTIONS },
   );
 
@@ -36,7 +37,7 @@ export function createQuickboxServer(inbox: InboxApi, actor: Actor): McpServer {
     {
       title: "List tasks",
       description:
-        "List tasks. Without a date it searches every task file (use for=\"agent\" to get your queue); with a date it shows that day like the quickbox app does. Defaults to open tasks.",
+        `List tasks. Without a date it searches every task file (use for="agent" to get your queue); with a date it shows that day like the ${PRODUCT_NAME} app does. Defaults to open tasks.`,
       inputSchema: z.object({
         date: dueDate.optional(),
         for: assignee.optional(),
@@ -55,7 +56,7 @@ export function createQuickboxServer(inbox: InboxApi, actor: Actor): McpServer {
     {
       title: "Add task",
       description:
-        'Add a task. `text` uses quickbox syntax (e.g. "Publish post @Marketing #social !2"). Use for="me" to hand work back to the user, with from=<id of the task it follows> and ref=<note path>.',
+        `Add a task. \`text\` uses ${PRODUCT_NAME} syntax (e.g. "Publish post @Marketing #social !2"). Use for="me" to hand work back to the user, with from=<id of the task it follows> and ref=<note path>.`,
       inputSchema: z.object({
         text: z.string().describe("Task description, optionally with !priority, @Project, #tags."),
         due: dueDate.optional(),

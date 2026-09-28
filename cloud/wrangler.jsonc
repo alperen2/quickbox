@@ -13,7 +13,7 @@
     // Used until users can set their own time zone.
     "DEFAULT_TIMEZONE": "Europe/Istanbul",
     // Sender for sign-in codes; RESEND_API_KEY is a secret.
-    "EMAIL_FROM": "quickbox <giris@fsg.alperendurmus.com>"
+    "EMAIL_FROM": "Pigeon <giris@fsg.alperendurmus.com>"
   },
   "kv_namespaces": [{ "binding": "OAUTH_KV" }],
   "durable_objects": {

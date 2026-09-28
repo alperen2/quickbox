@@ -1,9 +1,10 @@
 import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
 import { accountDirectory } from "../accounts/accountDirectory";
+import { PRODUCT_NAME } from "../brand";
 
 /** Where the quickbox apps receive the authorization code (ASWebAuthenticationSession callback). */
 export const APP_REDIRECT_URI = "quickbox://oauth/callback";
-export const APP_CLIENT_NAME = "quickbox";
+export const APP_CLIENT_NAME = PRODUCT_NAME;
 
 let cachedClientId: string | undefined;
 
@@ -14,16 +15,22 @@ let cachedClientId: string | undefined;
  */
 export async function ensureFirstPartyClientId(env: Env, oauth: OAuthHelpers): Promise<string> {
   const existing = cachedClientId ?? (await accountDirectory(env).firstPartyClientId());
-  if (existing && (await oauth.lookupClient(existing))) return (cachedClientId = existing);
+  const client = existing ? await oauth.lookupClient(existing) : null;
+  if (existing && client) {
+    // The client was registered under an earlier product name; the consent and connected-apps
+    // screens show this name, so keep it current.
+    if (client.clientName !== APP_CLIENT_NAME) await oauth.updateClient(existing, { clientName: APP_CLIENT_NAME });
+    return (cachedClientId = existing);
+  }
 
-  const client = await oauth.createClient({
+  const created = await oauth.createClient({
     clientName: APP_CLIENT_NAME,
     redirectUris: [APP_REDIRECT_URI],
     tokenEndpointAuthMethod: "none",
     grantTypes: ["authorization_code", "refresh_token"],
     responseTypes: ["code"],
   });
-  return (cachedClientId = await accountDirectory(env).claimFirstPartyClientId(client.clientId));
+  return (cachedClientId = await accountDirectory(env).claimFirstPartyClientId(created.clientId));
 }
 
 export async function isFirstPartyClient(env: Env, clientId: string): Promise<boolean> {

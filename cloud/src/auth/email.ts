@@ -1,3 +1,5 @@
+import { PRODUCT_NAME } from "../brand";
+
 export interface EmailSender {
   sendSignInCode(to: string, code: string): Promise<void>;
 }
@@ -23,8 +25,8 @@ export class ResendEmailSender implements EmailSender {
       body: JSON.stringify({
         from: this.from,
         to: [to],
-        subject: `Your quickbox code: ${code}`,
-        text: `Your quickbox sign-in code is ${code}.\n\nIt expires in 10 minutes. If you didn't try to sign in, you can ignore this email.`,
+        subject: `Your ${PRODUCT_NAME} code: ${code}`,
+        text: `Your ${PRODUCT_NAME} sign-in code is ${code}.\n\nIt expires in 10 minutes. If you didn't try to sign in, you can ignore this email.`,
       }),
     });
     if (!response.ok) throw new EmailDeliveryError(`Resend returned ${response.status}`);
@@ -34,7 +36,7 @@ export class ResendEmailSender implements EmailSender {
 /** Local development only: prints codes to the `wrangler dev` console instead of emailing them. */
 export class ConsoleEmailSender implements EmailSender {
   async sendSignInCode(to: string, code: string): Promise<void> {
-    console.log(`[dev] quickbox sign-in code for ${to}: ${code}`);
+    console.log(`[dev] ${PRODUCT_NAME} sign-in code for ${to}: ${code}`);
   }
 }
 
