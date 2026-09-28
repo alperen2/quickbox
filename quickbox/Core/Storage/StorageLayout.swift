@@ -28,6 +28,11 @@ struct StorageLayout {
     }
 
     func projectDirectories(in baseURL: URL) throws -> [URL] {
+        try Self.projectDirectories(in: baseURL, fileManager: fileManager)
+    }
+
+    /// Nonisolated so background scans (e.g. the autocomplete index) can list projects off the main actor.
+    nonisolated static func projectDirectories(in baseURL: URL, fileManager: FileManager = .default) throws -> [URL] {
         try fileManager.contentsOfDirectory(
             at: baseURL,
             includingPropertiesForKeys: [.isDirectoryKey],
