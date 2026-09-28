@@ -756,8 +756,13 @@ struct quickboxTests {
             repository: repository
         )
 
+        // Wait for the indicators to be applied, not just for the repository calls: results reach the
+        // main actor a step later, and a second request in between would legitimately reload.
         appState.loadCalendarIndicators(from: start, to: day3)
-        try await waitUntil("initial indicator load") { repository.loadCallCount == 3 }
+        try await waitUntil("initial indicator load") {
+            [day1, day2, day3].allSatisfy { appState.calendarDayIndicators[$0] != nil }
+        }
+        #expect(repository.loadCallCount == 3)
 
         let cachedLoadCount = repository.loadCallCount
         appState.loadCalendarIndicators(from: start, to: day3)
@@ -765,7 +770,10 @@ struct quickboxTests {
         #expect(repository.loadCallCount == cachedLoadCount)
 
         appState.loadCalendarIndicators(from: start, to: day3, forceReload: true)
-        try await waitUntil("force indicator reload") { repository.loadCallCount == cachedLoadCount + 3 }
+        try await waitUntil("force indicator reload") {
+            repository.loadCallCount == cachedLoadCount + 3
+                && [day1, day2, day3].allSatisfy { appState.calendarDayIndicators[$0] != nil }
+        }
     }
 
     @MainActor
@@ -785,7 +793,8 @@ struct quickboxTests {
         )
 
         appState.loadCalendarIndicators(from: morning, to: evening)
-        try await waitUntil("same day indicator load") { repository.loadCallCount == 1 }
+        try await waitUntil("same day indicator load") { appState.calendarDayIndicators[normalized] != nil }
+        #expect(repository.loadCallCount == 1)
         #expect(appState.calendarDayIndicators[normalized]?.totalCount == 1)
 
         appState.loadCalendarIndicators(from: morning, to: evening)
