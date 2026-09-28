@@ -9,7 +9,7 @@ protocol CloudSyncAPI {
 struct SyncReport: Equatable {
     /// Local files replaced with a newer cloud version.
     var changedPaths: [String] = []
-    /// Local files whose previous content was saved under `quickbox-conflicts/`.
+    /// Local files whose previous content was saved under `_conflicts/`.
     var conflictCopies: [String] = []
     /// Ops the server refused (e.g. the task was deleted elsewhere); they are dropped.
     var rejectedOps = 0

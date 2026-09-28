@@ -89,9 +89,9 @@
     },
     {
       "name": "follow-up written by an agent",
-      "lines": ["- [ ] 11:40 Publish post @Marketing for:me by:claude from:k3f9x2ab ref:notes/k3f9x2ab.md id:p7a2m1cd"],
+      "lines": ["- [ ] 11:40 Publish post @Marketing for:me by:claude from:k3f9x2ab ref:_notes/k3f9x2ab.md id:p7a2m1cd"],
       "expected": [
-        { "lineIndex": 0, "completed": false, "time": "11:40", "text": "Publish post", "tags": [], "priority": null, "project": "Marketing", "due": null, "metadata": { "for": "me", "by": "claude", "from": "k3f9x2ab", "ref": "notes/k3f9x2ab.md" }, "taskID": "p7a2m1cd" }
+        { "lineIndex": 0, "completed": false, "time": "11:40", "text": "Publish post", "tags": [], "priority": null, "project": "Marketing", "due": null, "metadata": { "for": "me", "by": "claude", "from": "k3f9x2ab", "ref": "_notes/k3f9x2ab.md" }, "taskID": "p7a2m1cd" }
       ]
     }
   ]

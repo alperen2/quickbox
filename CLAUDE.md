@@ -56,8 +56,12 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - Line format: `- [ ] HH:mm text !1 @Project #tag due:YYYY-MM-DD key:value date:YYYY-MM-DD id:xxxxxxxx` (parsed by the `InboxParser.taskPattern` regex). New lines get a stable `id:` (`TaskIdentifier`), which is exposed as `InboxItem.taskID`, not as metadata. Item IDs are `"<file>#id:<taskID>"`, so mutations survive lines shifting. Legacy lines without `id:` fall back to `"<file>#<lineIndex>#<rawLine>"`. Any code that rebuilds a line (writer, repository edit) must carry `id:` over.
 - Human↔agent handoff uses ordinary metadata keys defined in `TaskHandoff.swift`: `for:` (me/agent/name), `by:` (author, absent = user), `from:` (origin task id), `ref:` (related note path).
 - `fixtures/task-lines.json` (parser) and `fixtures/due-dates.json` (natural-language dates) are language-neutral golden cases. Both the Swift package and `cloud/` run them. When you change the syntax or the date rules, add a case there and update **both** implementations.
-- **Routing:** `InboxWriter.appendEntry` parses the draft. A task with `@Project` is appended to `<Project>.md` along with a hidden `date:` tag. Other tasks go to the daily file (named via `FormatSettings`, default `YYYY-MM-DD.md`) for the resolved `due:` date, or for today.
-- **Reading:** for a given day, `InboxRepository.load(on:)` reads that day's file and also scans every other `.md` file for lines carrying the matching `date:` tag. It hides items whose `defer:` date is in the future.
+- **Layout (`StorageLayout`):** inbox tasks live in `<day>.md` and project tasks in `<Project>/<day>.md`. File names come from `FormatSettings` (default `YYYY-MM-DD.md`), and the day is the resolved `due:` date or the capture day.
+  - Item `sourceID`s are paths relative to the storage folder, e.g. `Marketing/2026-09-28.md`.
+  - Folders starting with `_` are system folders and are never projects: `_notes/` holds agent notes and `_conflicts/` holds kept local copies.
+  - `LegacyProjectMigrator` moves the old flat `<Project>.md` files (which carried `date:` routing tags) into the new layout on first load.
+- **Reading:** for a given day, `InboxRepository.load(on:)` reads `<day>.md` plus `<Project>/<day>.md` for every project folder. It hides items whose `defer:` date is in the future.
+- The cloud (`cloud/src/inbox/inbox.ts`) implements the same layout. Keep the two in step.
 - Natural-language dates are resolved **only** inside `due:`, `defer:`, and `start:` values (`DueDateResolver`; `DeferDateResolver` delegates to it). `CaptureDraftAnalyzer` generates live token previews for the capture UI using the same token rules as the parser. Keep the parser, analyzer, and writer consistent when you change the syntax.
 - All file I/O is serialized on `InboxStorageQueue.shared`. It always follows the resolve-then-`stopAccess` pattern (`storageResolver.resolvedBaseURL()` + `defer stopAccess`) needed for security-scoped access.
 - `IndexManager.shared` scans the storage folder for known `#tags` and projects (non-date filenames) to feed autocomplete. `inject` updates it incrementally after each capture.
@@ -71,7 +75,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 **Cloud sync in the app (`quickbox/Core/Cloud/`), optional:**
 - `AppState` wraps the local `InboxWriter` and `InboxRepository` in `SyncingInboxWriter` and `SyncingInboxRepository`, but only when `enableCloudSync` is on. `AppDelegate` turns it off for UI tests and when hosting unit tests. The wrappers keep writing files locally, then record `SyncOp`s into the persisted `SyncOutbox`. Captures get an explicit `id:` so the local and cloud lines share it.
 - `SyncEngine` runs one pass:
-  - First sync: import local-only files; where both sides have a file and it differs, the cloud wins and the local copy goes to `quickbox-conflicts/`.
+  - First sync: import local-only files; where both sides have a file and it differs, the cloud wins and the local copy goes to `_conflicts/`.
   - Push the outbox in batches. Ops the server rejects are dropped.
   - Pull changes since the cursor. A file edited outside quickbox gets a conflict copy before it is overwritten.
 - `CloudSyncController` (Settings → quickbox Cloud) owns sign-in and the schedule (every 60 s, on app activation, and 2 s after a local change). Sign-in is `CloudAuthenticator`: OAuth + PKCE via `ASWebAuthenticationSession`, tokens in the Keychain, client id from `GET /app/config`.

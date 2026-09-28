@@ -97,7 +97,8 @@ struct SyncEngineTests {
         let folder = try TempFolder(files: [
             "2026-09-20.md": "- [ ] 08:00 Only on this Mac\n",
             "2026-09-28.md": "- [ ] 08:00 Local version\n",
-            "notes/idea.md": "an idea",
+            "_notes/idea.md": "an idea",
+            "Marketing/2026-09-20.md": "- [ ] 09:00 Project task @Marketing\n",
         ])
         let cloud = FakeCloud()
         cloud.remoteWrite("2026-09-28.md", "- [ ] 07:00 From an agent id:agent001\n")
@@ -108,7 +109,7 @@ struct SyncEngineTests {
         let imported = cloud.pushes.flatMap(\.ops).compactMap { op -> String? in
             if case .importFile(_, let path, _) = op { return path } else { return nil }
         }
-        #expect(imported.sorted() == ["2026-09-20.md", "notes/idea.md"])
+        #expect(imported.sorted() == ["2026-09-20.md", "Marketing/2026-09-20.md", "_notes/idea.md"])
         #expect(cloud.pushes.first?.timeZone == "Europe/Istanbul")
         #expect(folder.read("2026-09-28.md") == "- [ ] 07:00 From an agent id:agent001\n")
         #expect(report.conflictCopies == ["2026-09-28.md"])
@@ -204,6 +205,36 @@ struct SyncEngineTests {
 
         #expect(outbox.count == 0) // the late op is pushed in the same pass
         #expect(state.load().cursor >= cursorBefore)
+    }
+}
+
+// MARK: - Layout
+
+@MainActor
+struct SyncLayoutTests {
+
+    @Test
+    func mirrorsProjectFoldersAndNotesButNotConflictCopiesOrHiddenFiles() throws {
+        let folder = try TempFolder(files: [
+            "2026-09-28.md": "inbox",
+            "Marketing/2026-09-28.md": "project",
+            "_notes/k3f9x2ab.md": "note",
+            "_conflicts/2026-09-28 20260928-101010.md": "kept copy",
+            ".hidden.md": "hidden",
+        ])
+
+        let files = try LocalMirror(storageResolver: FolderResolver(baseURL: folder.url)).markdownFiles()
+
+        #expect(files.keys.sorted() == ["2026-09-28.md", "Marketing/2026-09-28.md", "_notes/k3f9x2ab.md"])
+    }
+
+    @Test
+    func systemFoldersAreNeverProjects() throws {
+        let folder = try TempFolder(files: ["Marketing/2026-09-28.md": "", "_notes/a.md": "", "_conflicts/b.md": ""])
+
+        let projects = try StorageLayout.projectDirectories(in: folder.url).map(\.lastPathComponent)
+
+        #expect(projects == ["Marketing"])
     }
 }
 

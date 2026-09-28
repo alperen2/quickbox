@@ -77,14 +77,16 @@ describe("SyncService.push", () => {
     sync.push([
       op("importFile", { path: "2026-09-20.md", content: "# Notes\r\n- [ ] 08:00 Legacy\n- [x] 09:00 Has id id:keep0001\n- [ ] 10:00 Pasted id:keep0001\n" }, "op-1"),
       op("importFile", { path: "2026-09-28.md", content: "- [ ] 08:00 Local version\n" }, "op-2"),
-      op("importFile", { path: "notes/idea.md", content: "- [ ] 00:00 not a task file" }, "op-3"),
+      op("importFile", { path: "_notes/idea.md", content: "- [ ] 00:00 not a task file" }, "op-3"),
+      op("importFile", { path: "Marketing/2026-09-20.md", content: "- [ ] 09:00 Project task @Marketing\n" }, "op-4"),
     ]);
 
     expect(store.read("2026-09-20.md")).toBe(
       "# Notes\n- [ ] 08:00 Legacy id:gen00001\n- [x] 09:00 Has id id:keep0001\n- [ ] 10:00 Pasted id:gen00002\n",
     );
     expect(store.read("2026-09-28.md")).toBe("- [ ] 07:00 From an agent id:agent001\n");
-    expect(store.read("notes/idea.md")).toBe("- [ ] 00:00 not a task file\n");
+    expect(store.read("_notes/idea.md")).toBe("- [ ] 00:00 not a task file\n");
+    expect(store.read("Marketing/2026-09-20.md")).toBe("- [ ] 09:00 Project task @Marketing id:gen00003\n");
   });
 
   it("rejects unsafe file names", () => {
@@ -93,7 +95,8 @@ describe("SyncService.push", () => {
     const results = sync.push([
       op("importFile", { path: "../escape.md", content: "" }, "op-1"),
       op("importFile", { path: ".hidden.md", content: "" }, "op-2"),
-      op("insertLine", { path: "sub/dir.md", line: "- [ ] 08:00 x id:abc12345" }, "op-3"),
+      op("insertLine", { path: "_system/2026-09-28.md", line: "- [ ] 08:00 x id:abc12345" }, "op-3"),
+      op("importFile", { path: "a/b/c.md", content: "" }, "op-4"),
     ]);
 
     expect(results.every((r) => !r.ok)).toBe(true);

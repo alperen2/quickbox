@@ -13,6 +13,9 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 - Natural date phrases for `due:`, `defer:`, and `start:` values (for example `next friday`, `end of month`, `in 2 weeks`)
 - Expanded date autocomplete suggestions for phrase-based input
 
+### Changed
+- `@Project` entries are stored in dated files inside a per-project folder (`Project/2026-02-27.md`); legacy flat `Project.md` files are migrated automatically
+
 ### Fixed
 - Preserved metadata tokens during inline task edits in repository mutation flow
 
