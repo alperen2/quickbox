@@ -417,6 +417,7 @@ struct CloudAuthenticatorTests {
         #expect(tokenForm["code"] == "code-1")
         #expect(CloudAuthenticator.codeChallenge(for: tokenForm["code_verifier"] ?? "") == query["code_challenge"])
         #expect(store.tokens?.accessToken == "access-1")
+        #expect(store.tokens?.origin == StubServer.baseURL.absoluteString)
     }
 
     @Test
@@ -443,7 +444,7 @@ struct CloudAuthenticatorTests {
                 : (400, #"{"error":"invalid_grant"}"#)
         }
         let store = MemoryTokenStore()
-        store.tokens = CloudTokens(accessToken: "access-1", refreshToken: "refresh-1", expiresAt: Date().addingTimeInterval(30))
+        store.tokens = CloudTokens(accessToken: "access-1", refreshToken: "refresh-1", expiresAt: Date().addingTimeInterval(30), origin: StubServer.baseURL.absoluteString)
         let authenticator = CloudAuthenticator(baseURL: StubServer.baseURL, urlSession: stub.session, tokenStore: store, web: FakeWeb { $0 })
 
         #expect(try await authenticator.accessToken() == "access-2")
@@ -451,12 +452,22 @@ struct CloudAuthenticatorTests {
         await #expect(throws: CloudAuthError.signedOut) { try await authenticator.refresh() }
         #expect(store.tokens == nil)
     }
+
+    @Test
+    func tokensFromAnotherServerCountAsSignedOut() async {
+        let store = MemoryTokenStore()
+        store.tokens = CloudTokens(accessToken: "old", refreshToken: "old", expiresAt: Date().addingTimeInterval(3600), origin: "https://old.example.com")
+        let authenticator = CloudAuthenticator(baseURL: StubServer.baseURL, tokenStore: store, web: FakeWeb { $0 })
+
+        #expect(!authenticator.isSignedIn)
+        await #expect(throws: CloudAuthError.signedOut) { try await authenticator.accessToken() }
+    }
 }
 
 extension CloudAuthenticatorTests {
     private func signedInClient(_ stub: StubServer) -> CloudHTTPClient {
         let store = MemoryTokenStore()
-        store.tokens = CloudTokens(accessToken: "access-1", refreshToken: "refresh-1", expiresAt: Date().addingTimeInterval(3600))
+        store.tokens = CloudTokens(accessToken: "access-1", refreshToken: "refresh-1", expiresAt: Date().addingTimeInterval(3600), origin: StubServer.baseURL.absoluteString)
         let authenticator = CloudAuthenticator(baseURL: StubServer.baseURL, urlSession: stub.session, tokenStore: store, web: FakeWeb { $0 })
         return CloudHTTPClient(baseURL: StubServer.baseURL, authenticator: authenticator, urlSession: stub.session)
     }

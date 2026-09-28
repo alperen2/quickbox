@@ -81,6 +81,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
   - Push the outbox in batches. Ops the server rejects are dropped.
   - Pull changes since the cursor. A file edited outside Pigeon gets a conflict copy before it is overwritten.
 - `CloudSyncController` (Settings → Pigeon Cloud) owns sign-in and the schedule (every 60 s, on app activation, and 2 s after a local change). Sign-in is `CloudAuthenticator`: OAuth + PKCE via `ASWebAuthenticationSession`, tokens in the Keychain, client id from `GET /app/config`.
+- Stored tokens record the server origin that issued them (`CloudTokens.origin`). Tokens from another origin count as signed out, because the OAuth provider binds tokens to its resource URL. After a server move, `CloudSyncController` keeps the outbox and cursor, so reconnecting to the same account resumes sync.
 - While connected, file naming is fixed to the cloud's format (`yyyy-MM-dd.md`, `HH:mm`, no prefix).
 - The op types (`SyncOp`, `PushRequest`, `ChangesResponse`) live in `QuickboxCore` (`SyncModels.swift`), where iOS can reuse them. Their JSON is pinned by `fixtures/sync-push-request.json`, which both the package tests and the server's zod schema check.
 - App-hosted unit tests must not read files under `~/Documents`, the repository included. An unsigned host app triggers a macOS privacy prompt and the test hangs. Put repository-fixture tests in the package instead.
