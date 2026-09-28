@@ -20,7 +20,7 @@ Inside spotlight panel, manage today's items quickly:
 Quickbox uses a powerful, natural language-friendly syntax to organize your thoughts instantly:
 
 ### Projects & Context
-- `@ProjectName` — Routes the task to a specific project file (e.g., `ProjectName.md`) instead of the daily inbox.
+- `@ProjectName` — Routes the task to the project's own folder instead of the daily inbox. Project entries use the same dated file naming as the inbox (e.g., `ProjectName/2026-02-27.md`).
 
 ### Priorities
 - `!1` — High Priority
