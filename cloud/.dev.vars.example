@@ -6,6 +6,9 @@ DEFAULT_TIMEZONE=Europe/Istanbul
 DEV_LOG_EMAIL_CODES=true
 # In production, set the Resend key as a secret (EMAIL_FROM is in wrangler.jsonc):
 # RESEND_API_KEY=
+# App Review sign-in (secrets): this address gets no email and signs in with the fixed six-digit code.
+# APP_REVIEW_EMAIL=
+# APP_REVIEW_CODE=
 
 # Sign in with Apple (Services ID with the web redirect URL <PUBLIC_URL>/auth/apple/callback):
 # APPLE_SERVICES_ID=

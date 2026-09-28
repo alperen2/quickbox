@@ -106,7 +106,7 @@ async function sendCode(request: Request, env: Env): Promise<Response> {
   if (!result.ok) {
     return html(codePage(state, normalized, `Please wait ${result.retryAfterSeconds} seconds before asking for another code.`));
   }
-  await sender.sendSignInCode(normalized, result.code);
+  if (result.deliver) await sender.sendSignInCode(normalized, result.code);
   return html(codePage(state, normalized));
 }
 

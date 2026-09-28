@@ -98,6 +98,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - Expected errors cross the Durable Object RPC boundary as `InboxResult` values, not exceptions.
 - The server derives `by:` from the OAuth client's name (token props), never from tool input.
 - Auth: `@cloudflare/workers-oauth-provider` (`src/oauth.ts`) protects `/mcp`. `/authorize` is a consent page offering Sign in with Apple and email codes (`src/auth/`). The global `AccountDirectory` Durable Object owns users and codes.
+- App Review sign-in: when the `APP_REVIEW_EMAIL` and `APP_REVIEW_CODE` secrets are set, that address gets the fixed six-digit code and no email (`reviewAccount` in `src/accounts/accounts.ts`). The same attempt and resend limits apply. Keep the code out of the repository.
 - Apple's `form_post` callback is bridged to a same-site GET, because the flow's binding cookie is `SameSite=Lax`.
 - Device sync lives under `/mcp/sync/*` (it shares the MCP resource's tokens):
   - `GET changes?cursor=N` returns versioned files.
