@@ -58,7 +58,8 @@ npm install
 npm run docs:dev
 ```
 
-- Published site: [alperen2.github.io/quickbox](https://alperen2.github.io/quickbox/)
+- Published site: [usepigeon.cc](https://usepigeon.cc), deployed with `npm run site:deploy` (Cloudflare Workers static assets, `website/wrangler.jsonc`).
+- The GitHub Pages copy at [alperen2.github.io/quickbox](https://alperen2.github.io/quickbox/) stays up for links that already point there.
 
 ## Privacy
 

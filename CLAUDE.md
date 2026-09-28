@@ -34,6 +34,7 @@ cd cloud && npm ci && npm test && npm run typecheck   # npm run dev needs cloud/
 
 # Docs (VitePress, source in docs/)
 npm install && npm run docs:dev   # docs:build is checked in CI
+npm run site:deploy               # builds with DOCS_BASE=/ and deploys usepigeon.cc (website/wrangler.jsonc)
 ```
 
 CI (`.github/workflows/ci.yml`) **fails on any Swift compiler warning** (it greps the unit test and `swift test` logs for `.swift:N:N: warning:`), so keep builds warning-free. Release scripts live in `scripts/release/` (archive → export `.pkg` → upload); see `docs/release-playbook.md`.
