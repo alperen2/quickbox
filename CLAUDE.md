@@ -91,4 +91,9 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
   - `GET changes?cursor=N` returns versioned files.
   - `POST push` takes idempotent op batches: `add`, `update`, `delete`, `insertLine`, `importFile`.
   - Only the first-party app client may call it, and it writes as the user.
+- Account management lives under `/mcp/account*` (`src/account/api.ts`) and is first-party only:
+  - It lists grants as "connected apps" and can revoke one.
+  - `POST /mcp/account/delete` with `{"confirm":"DELETE"}` deletes the account in this order: revoke all grants, wipe the user's `InboxStore` storage, then remove the directory entry.
+  - The Mac's "Disconnect this Mac" also revokes its own grant.
+- If you change what the cloud stores, update `docs/privacy.md` and `quickbox/PrivacyInfo.xcprivacy`.
 - Local dev: `DEV_LOG_EMAIL_CODES=true` prints codes to the console. Tests run the Durable Object SQL on `node:sqlite` (`test/sqlite.ts`).

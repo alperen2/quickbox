@@ -13,12 +13,15 @@ final class CloudSyncController: ObservableObject {
     @Published private(set) var lastSyncedAt: Date?
     @Published private(set) var pendingChanges = 0
     @Published private(set) var statusMessage: String?
+    /// Loaded on demand for Settings; `nil` until then or while disconnected.
+    @Published private(set) var account: CloudAccount?
 
     /// Called on the main actor after cloud changes were written to the local folder.
     var onRemoteChanges: (() -> Void)?
 
     let outbox: SyncOutbox
     private let authenticator: CloudAuthenticator
+    private let accountAPI: CloudAccountAPI
     private let engine: SyncEngine
     private let stateStore: SyncStateStoring
     private var timer: Timer?
@@ -30,13 +33,15 @@ final class CloudSyncController: ObservableObject {
 
     init(storageResolver: StorageResolving, supportDirectory: URL = CloudSyncController.defaultSupportDirectory) {
         let authenticator = CloudAuthenticator()
+        let client = CloudHTTPClient(authenticator: authenticator)
         let stateStore = FileSyncStateStore(fileURL: supportDirectory.appendingPathComponent("cloud-sync-state.json"))
         let outbox = SyncOutbox(fileURL: supportDirectory.appendingPathComponent("cloud-sync-outbox.json"), isRecording: authenticator.isSignedIn)
         self.authenticator = authenticator
+        self.accountAPI = client
         self.stateStore = stateStore
         self.outbox = outbox
         self.engine = SyncEngine(
-            api: HTTPCloudSyncAPI(authenticator: authenticator),
+            api: client,
             mirror: LocalMirror(storageResolver: storageResolver),
             outbox: outbox,
             stateStore: stateStore
@@ -79,8 +84,53 @@ final class CloudSyncController: ObservableObject {
         }
     }
 
-    /// Stops syncing and forgets the cloud session. Local files stay as they are.
-    func disconnect() {
+    /// Stops syncing and revokes this device's access. Local files stay as they are.
+    func disconnect() async {
+        // Best effort: a device that is offline still disconnects locally.
+        if let thisDevice = try? await accountAPI.account().apps.first(where: \.isThisDevice) {
+            try? await accountAPI.disconnectApp(grantID: thisDevice.grantId)
+        }
+        forgetSession()
+    }
+
+    func refreshAccount() async {
+        guard isConnected else { return }
+        do {
+            account = try await accountAPI.account()
+        } catch CloudAuthError.signedOut {
+            forgetSession()
+            statusMessage = CloudAuthError.signedOut.errorDescription
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
+    func disconnectApp(_ app: ConnectedApp) async {
+        do {
+            try await accountAPI.disconnectApp(grantID: app.grantId)
+            statusMessage = "\(app.name) can no longer use your inbox."
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+        await refreshAccount()
+    }
+
+    /// Deletes the cloud account and all cloud data. Local files stay as they are.
+    @discardableResult
+    func deleteAccount() async -> Bool {
+        do {
+            try await accountAPI.deleteAccount()
+            forgetSession()
+            statusMessage = "Your quickbox Cloud account and its data were deleted. Your local files are unchanged."
+            return true
+        } catch {
+            statusMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    /// Forgets the cloud session on this device without contacting the server.
+    private func forgetSession() {
         stopSchedule()
         authenticator.signOut()
         outbox.setRecording(false)
@@ -89,6 +139,7 @@ final class CloudSyncController: ObservableObject {
         isConnected = false
         lastSyncedAt = nil
         pendingChanges = 0
+        account = nil
         statusMessage = nil
     }
 
@@ -108,7 +159,7 @@ final class CloudSyncController: ObservableObject {
                 onRemoteChanges?()
             }
         } catch CloudAuthError.signedOut {
-            disconnect()
+            forgetSession()
             statusMessage = CloudAuthError.signedOut.errorDescription
         } catch {
             // Offline or a server hiccup: changes stay queued and the next pass retries.
