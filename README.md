@@ -1,6 +1,6 @@
-# quickbox
+# Pigeon
 
-quickbox is a minimalist macOS menubar + spotlight-style capture app built for fast thought capture with minimal distraction.
+Pigeon is a minimalist macOS menubar + spotlight-style capture app built for fast thought capture with minimal distraction.
 
 ## Why
 
@@ -16,7 +16,7 @@ When you are in flow and a thought appears, you should be able to capture it in 
 
 Natural language date phrases are intentionally parsed only inside `due:`, `defer:`, and `start:` values for deterministic behavior.
 
-quickbox intentionally stays in **capture + light triage** territory, not a full task manager.
+Pigeon intentionally stays in **capture + light triage** territory, not a full task manager.
 
 ## Install (from source)
 
@@ -62,7 +62,7 @@ npm run docs:dev
 
 ## Privacy
 
-quickbox is local-first. Crash diagnostics are opt-in and do not include task text content.
+Pigeon is local-first. Crash diagnostics are opt-in and do not include task text content.
 
 ## Contributing
 

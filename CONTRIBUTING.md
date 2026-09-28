@@ -1,4 +1,4 @@
-# Contributing to quickbox
+# Contributing to Pigeon
 
 Thanks for contributing.
 
@@ -14,12 +14,12 @@ Thanks for contributing.
 Run unit tests before every PR:
 
 ```bash
-xcodebuild test -project quickbox.xcodeproj -scheme quickbox -destination 'platform=macOS' -only-testing:quickboxTests
+xcodebuild test -project quickbox.xcodeproj -scheme quickbox-AppStore -destination 'platform=macOS' -only-testing:quickboxTests
 ```
 
 ## Design Constraints
 
-quickbox is intentionally minimal:
+Pigeon is intentionally minimal:
 
 - Capture speed first
 - Low visual/interaction noise

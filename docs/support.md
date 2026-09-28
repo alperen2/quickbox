@@ -1,6 +1,6 @@
 # Support
 
-Need help with quickbox? Use one of these support channels:
+Need help with Pigeon? Use one of these support channels:
 
 - Open a support request on GitHub: [github.com/alperen2/quickbox/issues/new](https://github.com/alperen2/quickbox/issues/new)
 - Review common setup and troubleshooting: [FAQ](/faq), [Settings](/settings), and [Usage](/usage)
@@ -9,7 +9,7 @@ Need help with quickbox? Use one of these support channels:
 When requesting support, include:
 
 - macOS version
-- quickbox version and build number
+- Pigeon version and build number
 - The action you were trying to complete
 - Any visible error message
 

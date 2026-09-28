@@ -1,4 +1,4 @@
-# quickbox Release Playbook (App Store)
+# Pigeon Release Playbook (App Store)
 
 ## Prerequisites
 

@@ -4,11 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-quickbox is a minimalist macOS (14+) menu bar + Spotlight-style capture app. Captured thoughts are written as Markdown task lines into plain `.md` files in a user-chosen folder. Scope is intentionally limited to **capture + light triage** — avoid features that push it toward a full task manager.
+Pigeon (formerly quickbox) is a minimalist macOS (14+) menu bar + Spotlight-style capture app. Captured thoughts are written as Markdown task lines into plain `.md` files in a user-chosen folder. Scope is intentionally limited to **capture + light triage** — avoid features that push it toward a full task manager.
+
+User-facing product names live in one place: `Brand` (`quickbox/Shared/Brand.swift`) for the app and `PRODUCT_NAME` (`cloud/src/brand.ts`) for the server. Internal identifiers (bundle IDs, the `quickbox` schemes/targets, defaults keys, the Keychain service, the `quickbox://` callback scheme, the `quickbox-cloud` Worker name, JSON field names) intentionally keep the old spelling; renaming them would break persisted data or released clients.
 
 ## Commands
 
-Schemes are `quickbox-Direct` and `quickbox-AppStore` (README/CONTRIBUTING mention a `quickbox` scheme, which no longer exists).
+Schemes are `quickbox-Direct` and `quickbox-AppStore`.
 
 ```bash
 # Unit tests (same invocation as CI)
@@ -40,7 +42,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 
 ## Build targets
 
-- `quickbox` (bundle `alperen.quickbox`, direct distribution) and `quickboxAppStore` (bundle `alperen.quickbox.appstore`, product name "Quickbox Capture") compile **the same `quickbox/` folder** (file-system synchronized groups, so new files are picked up automatically). Each has its own entitlements file.
+- `quickbox` (bundle `alperen.quickbox`, direct distribution) and `quickboxAppStore` (bundle `alperen.quickbox.appstore`, product name "Pigeon"; the direct build keeps product name `quickbox` and only shows "Pigeon" via `CFBundleDisplayName`, because `TEST_HOST` and the release scripts use `quickbox.app`) compile **the same `quickbox/` folder** (file-system synchronized groups, so new files are picked up automatically). Each has its own entitlements file.
 - There are no compile-time flags that tell the two apart. Runtime branching uses the bundle ID. For example, `StorageAccessManager` requires a security-scoped bookmark folder only in the App Store build; the direct build falls back to `fallbackStoragePath`.
 - App targets use `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` with Swift 5 language mode. Test targets don't use that setting, and they host `quickbox.app`.
 - Both app targets link the local SwiftPM package **`Packages/QuickboxCore`**, which holds platform-independent logic: `InboxItem`, `InboxParser`, `CaptureDraftAnalyzer`, the date resolvers, `TaskIdentifier`, `TaskHandoff`, and the sync wire models. It is meant to be shared with future iOS and cloud clients, so keep it free of UI, file I/O, and app types (`AppPreferences`, `FormatSettings`). Its API is `public`, and app files need `import QuickboxCore`. It uses Swift 5 language mode with `BareSlashRegexLiterals`. Its types are nonisolated, not MainActor. The package is wired into `project.pbxproj` by hand (`XCLocalSwiftPackageReference`).
@@ -77,8 +79,8 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - `SyncEngine` runs one pass:
   - First sync: import local-only files; where both sides have a file and it differs, the cloud wins and the local copy goes to `_conflicts/`.
   - Push the outbox in batches. Ops the server rejects are dropped.
-  - Pull changes since the cursor. A file edited outside quickbox gets a conflict copy before it is overwritten.
-- `CloudSyncController` (Settings → quickbox Cloud) owns sign-in and the schedule (every 60 s, on app activation, and 2 s after a local change). Sign-in is `CloudAuthenticator`: OAuth + PKCE via `ASWebAuthenticationSession`, tokens in the Keychain, client id from `GET /app/config`.
+  - Pull changes since the cursor. A file edited outside Pigeon gets a conflict copy before it is overwritten.
+- `CloudSyncController` (Settings → Pigeon Cloud) owns sign-in and the schedule (every 60 s, on app activation, and 2 s after a local change). Sign-in is `CloudAuthenticator`: OAuth + PKCE via `ASWebAuthenticationSession`, tokens in the Keychain, client id from `GET /app/config`.
 - While connected, file naming is fixed to the cloud's format (`yyyy-MM-dd.md`, `HH:mm`, no prefix).
 - The op types (`SyncOp`, `PushRequest`, `ChangesResponse`) live in `QuickboxCore` (`SyncModels.swift`), where iOS can reuse them. Their JSON is pinned by `fixtures/sync-push-request.json`, which both the package tests and the server's zod schema check.
 - App-hosted unit tests must not read files under `~/Documents`, the repository included. An unsigned host app triggers a macOS privacy prompt and the test hangs. Put repository-fixture tests in the package instead.
