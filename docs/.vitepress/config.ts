@@ -1,12 +1,16 @@
+// usepigeon.cc serves the site at the root; GitHub Pages keeps /quickbox/ so existing links work.
+const base = process.env.DOCS_BASE ?? "/quickbox/";
+
 export default {
   lang: "en-US",
   title: "Pigeon",
-  description: "Minimal macOS quick capture app",
-  // usepigeon.cc serves the site at the root; GitHub Pages keeps /quickbox/ so existing links work.
-  base: process.env.DOCS_BASE ?? "/quickbox/",
-  cleanUrls: process.env.DOCS_BASE === "/",
+  description: "Agentic to-do tracker: quick capture for you and your AI agents",
+  base,
+  cleanUrls: base === "/",
+  head: [["link", { rel: "icon", type: "image/svg+xml", href: `${base}pigeon-mark.svg` }]],
   lastUpdated: true,
   themeConfig: {
+    logo: "/pigeon-mark.svg",
     nav: [
       { text: "Guide", link: "/getting-started" },
       { text: "Agents", link: "/agents" },

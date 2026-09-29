@@ -1,5 +1,6 @@
 import type { AuthRequest, ClientInfo } from "@cloudflare/workers-oauth-provider";
 import { PRODUCT_NAME } from "../brand";
+import { BRAND_MARK_SVG } from "./brandMark";
 
 /** Every value that reaches HTML goes through this: client names and URIs are attacker-chosen. */
 export function escapeHtml(value: string): string {
@@ -7,8 +8,8 @@ export function escapeHtml(value: string): string {
 }
 
 const STYLE = `
-:root { --bg:#f6f6f4; --card:#fff; --text:#1c1c1e; --muted:#6b6b70; --line:#e3e3df; --accent:#1c1c1e; --accent-text:#fff; --danger:#b3261e; }
-@media (prefers-color-scheme: dark) { :root { --bg:#111113; --card:#1c1c1f; --text:#f2f2f3; --muted:#a1a1a8; --line:#2e2e33; --accent:#f2f2f3; --accent-text:#111113; --danger:#ff8a80; } }
+:root { --bg:#fbf7f7; --card:#fff; --text:#1c1c1e; --muted:#6b6b70; --line:#eee2e3; --accent:#d1425a; --accent-text:#fff; --danger:#b3261e; }
+@media (prefers-color-scheme: dark) { :root { --bg:#111113; --card:#1c1c1f; --text:#f2f2f3; --muted:#a1a1a8; --line:#2e2e33; --accent:#f36175; --accent-text:#111113; --danger:#ff8a80; } }
 * { box-sizing:border-box; }
 body { margin:0; min-height:100vh; display:grid; place-items:center; padding:16px; background:var(--bg); color:var(--text);
   font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -23,7 +24,8 @@ input[type=email], input[type=text] { width:100%; padding:12px; font:inherit; bo
 button { width:100%; margin-top:12px; padding:12px; font:inherit; font-weight:600; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--text); cursor:pointer; }
 button.primary { background:var(--accent); color:var(--accent-text); border-color:var(--accent); }
 button.link { border:none; background:none; color:var(--muted); font-weight:400; }
-.brand { font-weight:700; letter-spacing:-0.01em; margin-bottom:20px; }
+.brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-0.01em; margin-bottom:20px; }
+.brand svg { width:28px; height:auto; flex:none; }
 `;
 
 function page(title: string, body: string, scriptNonce?: string): string {
@@ -39,7 +41,7 @@ function page(title: string, body: string, scriptNonce?: string): string {
 <title>${escapeHtml(title)}</title>
 <style>${STYLE}</style>
 </head>
-<body><main><div class="brand">${PRODUCT_NAME}</div>${body}</main>${script}</body>
+<body><main><div class="brand">${BRAND_MARK_SVG}<span>${PRODUCT_NAME}</span></div>${body}</main>${script}</body>
 </html>`;
 }
 

@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pigeon (formerly quickbox) is a minimalist macOS (14+) menu bar + Spotlight-style capture app. Captured thoughts are written as Markdown task lines into plain `.md` files in a user-chosen folder. Scope is intentionally limited to **capture + light triage** — avoid features that push it toward a full task manager.
 
+The brand guide (logo files, colors with contrast ratios, voice) is `brand/README.md`. Use its colors instead of new ones; the logo coral `#F36175` is not a text color on white.
+
 User-facing product names live in one place: `Brand` (`quickbox/Shared/Brand.swift`) for the app and `PRODUCT_NAME` (`cloud/src/brand.ts`) for the server. Internal identifiers (bundle IDs, the `quickbox` schemes/targets, defaults keys, the Keychain service, the `quickbox://` callback scheme, the `quickbox-cloud` Worker name, JSON field names) intentionally keep the old spelling; renaming them would break persisted data or released clients.
 
 ## Commands
