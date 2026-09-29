@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Pigeon (formerly quickbox) is a minimalist macOS (14+) menu bar + Spotlight-style capture app. Captured thoughts are written as Markdown task lines into plain `.md` files in a user-chosen folder. Scope is intentionally limited to **capture + light triage** — avoid features that push it toward a full task manager.
 
+The brand guide (logo files, colors with contrast ratios, voice) is `brand/README.md`. Use its colors instead of new ones; the logo coral `#F36175` is not a text color on white.
+
 User-facing product names live in one place: `Brand` (`quickbox/Shared/Brand.swift`) for the app and `PRODUCT_NAME` (`cloud/src/brand.ts`) for the server. Internal identifiers (bundle IDs, the `quickbox` schemes/targets, defaults keys, the Keychain service, the `quickbox://` callback scheme, the `quickbox-cloud` Worker name, JSON field names) intentionally keep the old spelling; renaming them would break persisted data or released clients.
 
 ## Commands
@@ -34,6 +36,7 @@ cd cloud && npm ci && npm test && npm run typecheck   # npm run dev needs cloud/
 
 # Docs (VitePress, source in docs/)
 npm install && npm run docs:dev   # docs:build is checked in CI
+npm run site:deploy               # builds with DOCS_BASE=/ and deploys usepigeon.cc (website/wrangler.jsonc)
 ```
 
 CI (`.github/workflows/ci.yml`) **fails on any Swift compiler warning** (it greps the unit test and `swift test` logs for `.swift:N:N: warning:`), so keep builds warning-free. Release scripts live in `scripts/release/` (archive → export `.pkg` → upload); see `docs/release-playbook.md`.
@@ -81,6 +84,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
   - Push the outbox in batches. Ops the server rejects are dropped.
   - Pull changes since the cursor. A file edited outside Pigeon gets a conflict copy before it is overwritten.
 - `CloudSyncController` (Settings → Pigeon Cloud) owns sign-in and the schedule (every 60 s, on app activation, and 2 s after a local change). Sign-in is `CloudAuthenticator`: OAuth + PKCE via `ASWebAuthenticationSession`, tokens in the Keychain, client id from `GET /app/config`.
+- Stored tokens record the server origin that issued them (`CloudTokens.origin`). Tokens from another origin count as signed out, because the OAuth provider binds tokens to its resource URL. After a server move, `CloudSyncController` keeps the outbox and cursor, so reconnecting to the same account resumes sync.
 - While connected, file naming is fixed to the cloud's format (`yyyy-MM-dd.md`, `HH:mm`, no prefix).
 - The op types (`SyncOp`, `PushRequest`, `ChangesResponse`) live in `QuickboxCore` (`SyncModels.swift`), where iOS can reuse them. Their JSON is pinned by `fixtures/sync-push-request.json`, which both the package tests and the server's zod schema check.
 - App-hosted unit tests must not read files under `~/Documents`, the repository included. An unsigned host app triggers a macOS privacy prompt and the test hangs. Put repository-fixture tests in the package instead.
@@ -96,6 +100,7 @@ Commit style: `feat:`, `fix:`, `docs:`, `chore:`, `test:`.
 - Expected errors cross the Durable Object RPC boundary as `InboxResult` values, not exceptions.
 - The server derives `by:` from the OAuth client's name (token props), never from tool input.
 - Auth: `@cloudflare/workers-oauth-provider` (`src/oauth.ts`) protects `/mcp`. `/authorize` is a consent page offering Sign in with Apple and email codes (`src/auth/`). The global `AccountDirectory` Durable Object owns users and codes.
+- App Review sign-in: when the `APP_REVIEW_EMAIL` and `APP_REVIEW_CODE` secrets are set, that address gets the fixed six-digit code and no email (`reviewAccount` in `src/accounts/accounts.ts`). The same attempt and resend limits apply. Keep the code out of the repository.
 - Apple's `form_post` callback is bridged to a same-site GET, because the flow's binding cookie is `SameSite=Lax`.
 - Device sync lives under `/mcp/sync/*` (it shares the MCP resource's tokens):
   - `GET changes?cursor=N` returns versioned files.

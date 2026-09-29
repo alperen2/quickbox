@@ -11,8 +11,11 @@ nonisolated enum CloudConfiguration {
         if let override = UserDefaults.standard.string(forKey: "quickbox.cloudBaseURL"), let url = URL(string: override) {
             return url
         }
-        return URL(string: "https://quickbox-cloud.aalperendurmuss.workers.dev")!
+        return URL(string: "https://api.usepigeon.cc")!
     }
+
+    /// Where the cloud ran before it moved to the product domain. Tokens saved without an origin came from here.
+    static let legacyOrigin = "https://quickbox-cloud.aalperendurmuss.workers.dev"
 }
 
 /// Published by the server at `/app/config`: everything needed to start OAuth as the quickbox app.
@@ -29,6 +32,12 @@ nonisolated struct CloudTokens: Codable, Equatable, Sendable {
     let accessToken: String
     let refreshToken: String
     let expiresAt: Date
+    /// The server that issued them. Tokens are bound to that server's resource, so they are
+    /// useless after a move to another address. `nil` for tokens saved before this was recorded.
+    let origin: String?
+
+    /// `origin`, or the legacy server for tokens saved before the origin was recorded.
+    var issuer: String { origin ?? CloudConfiguration.legacyOrigin }
 }
 
 enum CloudAuthError: LocalizedError, Equatable {
@@ -147,7 +156,10 @@ final class CloudAuthenticator {
         self.now = now
     }
 
-    var isSignedIn: Bool { tokenStore.load() != nil }
+    var isSignedIn: Bool { storedTokens() != nil }
+
+    /// Signed in to a server at another address, e.g. before the cloud moved to its own domain.
+    var hasSessionFromAnotherServer: Bool { tokenStore.load() != nil && storedTokens() == nil }
 
     func signIn() async throws {
         let config = try await appConfig()
@@ -186,14 +198,14 @@ final class CloudAuthenticator {
 
     /// A valid access token, refreshed shortly before it expires.
     func accessToken() async throws -> String {
-        guard let tokens = tokenStore.load() else { throw CloudAuthError.signedOut }
+        guard let tokens = storedTokens() else { throw CloudAuthError.signedOut }
         if tokens.expiresAt.timeIntervalSince(now()) > 60 { return tokens.accessToken }
         return try await refresh()
     }
 
     @discardableResult
     func refresh() async throws -> String {
-        guard let tokens = tokenStore.load() else { throw CloudAuthError.signedOut }
+        guard let tokens = storedTokens() else { throw CloudAuthError.signedOut }
         let config = try await appConfig()
         return try await requestTokens([
             "grant_type": "refresh_token",
@@ -204,6 +216,13 @@ final class CloudAuthenticator {
 
     func signOut() {
         tokenStore.clear()
+    }
+
+    /// Tokens issued by this server. Ones from another address (the server moved) count as signed out,
+    /// so the user connects again instead of hitting authorization errors.
+    private func storedTokens() -> CloudTokens? {
+        guard let tokens = tokenStore.load(), tokens.issuer == baseURL.absoluteString else { return nil }
+        return tokens
     }
 
     private func appConfig() async throws -> AppCloudConfig {
@@ -235,12 +254,13 @@ final class CloudAuthenticator {
         try Self.ensureSuccess(response, data: data)
 
         let token = try JSONDecoder().decode(TokenResponse.self, from: data)
-        let previousRefresh = tokenStore.load()?.refreshToken
+        let previousRefresh = storedTokens()?.refreshToken
         guard let refreshToken = token.refresh_token ?? previousRefresh else { throw CloudAuthError.invalidCallback }
         tokenStore.save(CloudTokens(
             accessToken: token.access_token,
             refreshToken: refreshToken,
-            expiresAt: now().addingTimeInterval(TimeInterval(token.expires_in ?? 3600))
+            expiresAt: now().addingTimeInterval(TimeInterval(token.expires_in ?? 3600)),
+            origin: baseURL.absoluteString
         ))
         return token.access_token
     }

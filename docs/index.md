@@ -3,15 +3,18 @@ layout: home
 
 hero:
   name: Pigeon
-  text: Fast thought capture for macOS
-  tagline: Capture in 1-2 seconds and get back to work.
+  text: Agentic To Do Tracker
+  tagline: Capture a thought in a second. Tasks stay plain Markdown, and the AI agents you connect pick them up and hand work back.
+  image:
+    src: /pigeon-mark.svg
+    alt: Pigeon
   actions:
     - theme: brand
       text: Get Started
       link: /getting-started
     - theme: alt
-      text: Usage
-      link: /usage
+      text: Connect an agent
+      link: /agents
     - theme: alt
       text: Support
       link: /support
@@ -19,8 +22,8 @@ hero:
 features:
   - title: Minimal by design
     details: Pigeon stays focused on fast capture and light triage instead of becoming a full task manager.
-  - title: Local-first
-    details: Your notes stay in the folder you choose. No network dependency for daily use.
-  - title: Production-ready baseline
-    details: CI, release scripts, docs deployment, and OSS contribution workflow are included.
+  - title: Plain Markdown files
+    details: Tasks are lines in .md files in a folder you choose. Open them in any editor, sync them however you like.
+  - title: Works with your AI agents
+    details: Optionally connect Claude, ChatGPT or any MCP client through Pigeon Cloud. Agents take tasks meant for them and hand the next step back to you.
 ---

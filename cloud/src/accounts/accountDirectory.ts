@@ -1,5 +1,5 @@
 import { DurableObject } from "cloudflare:workers";
-import { Accounts, type AppleIdentity } from "./accounts";
+import { Accounts, reviewAccount, type AppleIdentity } from "./accounts";
 
 /**
  * The global user directory. A single instance keeps email-code attempts and account
@@ -10,7 +10,7 @@ export class AccountDirectory extends DurableObject<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    this.accounts = new Accounts(ctx.storage.sql);
+    this.accounts = new Accounts(ctx.storage.sql, Date.now, reviewAccount(env.APP_REVIEW_EMAIL, env.APP_REVIEW_CODE));
     ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
   }
 

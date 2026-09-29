@@ -6,14 +6,16 @@
   // global_fetch_strictly_public: SSRF protection for Client ID Metadata Document fetches.
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "observability": { "enabled": true },
+  // Served on the product domain; the zone must be active on Cloudflare before deploying.
+  "routes": [{ "pattern": "api.usepigeon.cc", "custom_domain": true }],
   "vars": {
     // The public origin; OAuth resource and issuer identifiers are built from it.
     // Changing it invalidates existing connector connections. `.dev.vars` overrides it locally.
-    "PUBLIC_URL": "https://quickbox-cloud.aalperendurmuss.workers.dev",
+    "PUBLIC_URL": "https://api.usepigeon.cc",
     // Used until users can set their own time zone.
     "DEFAULT_TIMEZONE": "Europe/Istanbul",
     // Sender for sign-in codes; RESEND_API_KEY is a secret.
-    "EMAIL_FROM": "Pigeon <giris@fsg.alperendurmus.com>"
+    "EMAIL_FROM": "Pigeon <signin@usepigeon.cc>"
   },
   "kv_namespaces": [{ "binding": "OAUTH_KV" }],
   "durable_objects": {

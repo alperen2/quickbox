@@ -10,13 +10,30 @@ const MAX_SENDS_PER_WINDOW = 5;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export type EmailCodeRequest =
-  | { ok: true; code: string }
+  /** `deliver` is false for the App Review account, whose code is known in advance. */
+  | { ok: true; code: string; deliver: boolean }
   | { ok: false; reason: "invalid_email" }
   | { ok: false; reason: "rate_limited"; retryAfterSeconds: number };
 
 export type EmailCodeVerification =
   | { ok: true; userId: string }
   | { ok: false; reason: "invalid_code" | "expired" | "too_many_attempts" };
+
+/**
+ * A sign-in for App Review, whose reviewers cannot receive our emails. The address gets a fixed
+ * code instead of a random one. It still goes through the same attempt and resend limits.
+ */
+export interface ReviewAccount {
+  email: string;
+  code: string;
+}
+
+/** The review account, or null unless both values are set and the code has the normal format. */
+export function reviewAccount(email: string | undefined, code: string | undefined): ReviewAccount | null {
+  const normalized = email ? normalizeEmail(email) : null;
+  if (!normalized || !code || !new RegExp(`^\\d{${EMAIL_CODE_LENGTH}}$`).test(code)) return null;
+  return { email: normalized, code };
+}
 
 export interface AppleIdentity {
   /** Apple's stable user identifier (`sub`). */
@@ -36,6 +53,7 @@ export class Accounts {
   constructor(
     private readonly sql: Sql,
     private readonly now: () => number = Date.now,
+    private readonly review: ReviewAccount | null = null,
   ) {
     sql.exec(`CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
@@ -59,7 +77,7 @@ export class Accounts {
     )`);
   }
 
-  /** Issues a new one-time code for `email`, replacing any earlier one. The caller emails it. */
+  /** Issues a new one-time code for `email`, replacing any earlier one. The caller emails it when `deliver` is set. */
   requestEmailCode(rawEmail: string): EmailCodeRequest {
     const email = normalizeEmail(rawEmail);
     if (!email) return { ok: false, reason: "invalid_email" };
@@ -81,7 +99,8 @@ export class Accounts {
       return { ok: false, reason: "rate_limited", retryAfterSeconds: secondsUntil(previous.window_started_at + SEND_WINDOW_MS, now) };
     }
 
-    const code = String(randomInt(0, 10 ** EMAIL_CODE_LENGTH)).padStart(EMAIL_CODE_LENGTH, "0");
+    const isReview = email === this.review?.email;
+    const code = isReview ? this.review!.code : String(randomInt(0, 10 ** EMAIL_CODE_LENGTH)).padStart(EMAIL_CODE_LENGTH, "0");
     this.sql.exec(
       `INSERT INTO email_codes (email, code_hash, expires_at, attempts, sent_at, window_started_at, sends_in_window)
        VALUES (?, ?, ?, 0, ?, ?, ?)
@@ -96,7 +115,7 @@ export class Accounts {
       windowOpen ? previous.window_started_at : now,
       sendsInWindow + 1,
     );
-    return { ok: true, code };
+    return { ok: true, code, deliver: !isReview };
   }
 
   /** Checks a code; on success the code is used up and the email's user is returned (created if new). */
