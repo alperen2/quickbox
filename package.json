@@ -7,7 +7,7 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "site:build": "DOCS_BASE=/ vitepress build docs",
-    "site:deploy": "npm run site:build && npx --prefix cloud wrangler deploy --config website/wrangler.jsonc"
+    "site:deploy": "npm run site:build && npx --prefix cloud wrangler deploy --config website/wrangler.jsonc && npx --prefix cloud wrangler deploy --config website/www.wrangler.jsonc"
   },
   "devDependencies": {
     "vitepress": "1.6.4"

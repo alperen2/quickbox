@@ -1,0 +1,9 @@
+{
+  // Redirects www.usepigeon.cc to usepigeon.cc. Deployed by `npm run site:deploy`.
+  "$schema": "../cloud/node_modules/wrangler/config-schema.json",
+  "name": "pigeon-www",
+  "main": "www-redirect.js",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": false,
+  "routes": [{ "pattern": "www.usepigeon.cc", "custom_domain": true }]
+}
