@@ -8,8 +8,9 @@
   "observability": { "enabled": true },
   // Served on the product domain; the zone must be active on Cloudflare before deploying.
   "routes": [{ "pattern": "api.usepigeon.cc", "custom_domain": true }],
-  // Keep the old workers.dev address up while users reconnect; turn it off once they have moved.
-  "workers_dev": true,
+  // Only the product domain serves the API; tokens are bound to it, so workers.dev would only confuse clients.
+  "workers_dev": false,
+  "preview_urls": false,
   "vars": {
     // The public origin; OAuth resource and issuer identifiers are built from it.
     // Changing it invalidates existing connector connections. `.dev.vars` overrides it locally.
