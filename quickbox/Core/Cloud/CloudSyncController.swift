@@ -33,9 +33,12 @@ final class CloudSyncController: ObservableObject {
 
     init(storageResolver: StorageResolving, supportDirectory: URL = CloudSyncController.defaultSupportDirectory) {
         let authenticator = CloudAuthenticator()
+        // The server moved: its old tokens no longer work, but the account and its data are the same.
+        // Keep recording local changes and keep the cursor, so reconnecting picks up where sync stopped.
+        let serverMoved = authenticator.hasSessionFromAnotherServer
         let client = CloudHTTPClient(authenticator: authenticator)
         let stateStore = FileSyncStateStore(fileURL: supportDirectory.appendingPathComponent("cloud-sync-state.json"))
-        let outbox = SyncOutbox(fileURL: supportDirectory.appendingPathComponent("cloud-sync-outbox.json"), isRecording: authenticator.isSignedIn)
+        let outbox = SyncOutbox(fileURL: supportDirectory.appendingPathComponent("cloud-sync-outbox.json"), isRecording: authenticator.isSignedIn || serverMoved)
         self.authenticator = authenticator
         self.accountAPI = client
         self.stateStore = stateStore
@@ -52,6 +55,9 @@ final class CloudSyncController: ObservableObject {
 
         if isConnected {
             startSchedule()
+        } else if serverMoved {
+            authenticator.signOut()
+            statusMessage = "\(Brand.cloudName) moved to a new address. Connect again to keep syncing."
         }
     }
 

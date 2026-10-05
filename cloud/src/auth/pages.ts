@@ -1,5 +1,6 @@
 import type { AuthRequest, ClientInfo } from "@cloudflare/workers-oauth-provider";
 import { PRODUCT_NAME } from "../brand";
+import { BRAND_MARK_SVG } from "./brandMark";
 
 /** Every value that reaches HTML goes through this: client names and URIs are attacker-chosen. */
 export function escapeHtml(value: string): string {
@@ -7,8 +8,8 @@ export function escapeHtml(value: string): string {
 }
 
 const STYLE = `
-:root { --bg:#f6f6f4; --card:#fff; --text:#1c1c1e; --muted:#6b6b70; --line:#e3e3df; --accent:#1c1c1e; --accent-text:#fff; --danger:#b3261e; }
-@media (prefers-color-scheme: dark) { :root { --bg:#111113; --card:#1c1c1f; --text:#f2f2f3; --muted:#a1a1a8; --line:#2e2e33; --accent:#f2f2f3; --accent-text:#111113; --danger:#ff8a80; } }
+:root { --bg:#fbf7f7; --card:#fff; --text:#1c1c1e; --muted:#6b6b70; --line:#eee2e3; --accent:#d1425a; --accent-text:#fff; --danger:#b3261e; }
+@media (prefers-color-scheme: dark) { :root { --bg:#111113; --card:#1c1c1f; --text:#f2f2f3; --muted:#a1a1a8; --line:#2e2e33; --accent:#f36175; --accent-text:#111113; --danger:#ff8a80; } }
 * { box-sizing:border-box; }
 body { margin:0; min-height:100vh; display:grid; place-items:center; padding:16px; background:var(--bg); color:var(--text);
   font:16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -23,7 +24,8 @@ input[type=email], input[type=text] { width:100%; padding:12px; font:inherit; bo
 button { width:100%; margin-top:12px; padding:12px; font:inherit; font-weight:600; border-radius:10px; border:1px solid var(--line); background:var(--card); color:var(--text); cursor:pointer; }
 button.primary { background:var(--accent); color:var(--accent-text); border-color:var(--accent); }
 button.link { border:none; background:none; color:var(--muted); font-weight:400; }
-.brand { font-weight:700; letter-spacing:-0.01em; margin-bottom:20px; }
+.brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-0.01em; margin-bottom:20px; }
+.brand svg { width:28px; height:auto; flex:none; }
 `;
 
 function page(title: string, body: string, scriptNonce?: string): string {
@@ -39,7 +41,7 @@ function page(title: string, body: string, scriptNonce?: string): string {
 <title>${escapeHtml(title)}</title>
 <style>${STYLE}</style>
 </head>
-<body><main><div class="brand">${PRODUCT_NAME}</div>${body}</main>${script}</body>
+<body><main><div class="brand">${BRAND_MARK_SVG}<span>${PRODUCT_NAME}</span></div>${body}</main>${script}</body>
 </html>`;
 }
 
@@ -106,7 +108,30 @@ export function codePage(state: string, email: string, message?: string): string
     `<h1>Check your email</h1>
 <p>Enter the code we sent to <strong>${escapeHtml(email)}</strong>. It expires in 10 minutes.</p>
 ${message ? `<p class="warning">${escapeHtml(message)}</p>` : ""}
-<form method="post" action="/auth/email/verify?state=${encodeURIComponent(state)}">
+${codeForms(state, email)}`,
+  );
+}
+
+/** The address used up its codes for the hour: say so plainly instead of "check your email". */
+export function codeLimitPage(state: string, email: string, retryAfterSeconds: number): string {
+  return page(
+    "Too many codes",
+    `<h1>Too many codes</h1>
+<p>We've sent several codes to <strong>${escapeHtml(email)}</strong> in the last hour. You can ask for a new one ${escapeHtml(waitDescription(retryAfterSeconds))}.</p>
+<p>If you got a code in the last 10 minutes, you can still use it.</p>
+${codeForms(state, email)}`,
+  );
+}
+
+/** "in about 34 minutes", "in 45 seconds". */
+export function waitDescription(seconds: number): string {
+  if (seconds < 90) return `in ${seconds} second${seconds === 1 ? "" : "s"}`;
+  const minutes = Math.ceil(seconds / 60);
+  return `in about ${minutes} minutes`;
+}
+
+function codeForms(state: string, email: string): string {
+  return `<form method="post" action="/auth/email/verify?state=${encodeURIComponent(state)}">
   <input type="hidden" name="email" value="${escapeHtml(email)}">
   <label for="code">Code</label>
   <input id="code" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" required autofocus>
@@ -115,8 +140,7 @@ ${message ? `<p class="warning">${escapeHtml(message)}</p>` : ""}
 <form method="post" action="/auth/email/send?state=${encodeURIComponent(state)}">
   <input type="hidden" name="email" value="${escapeHtml(email)}">
   <button class="link">Send a new code</button>
-</form>`,
-  );
+</form>`;
 }
 
 /**

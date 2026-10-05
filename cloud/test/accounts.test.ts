@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Accounts } from "../src/accounts/accounts";
+import { Accounts, reviewAccount } from "../src/accounts/accounts";
 import { memorySql } from "./sqlite";
 
 function makeAccounts() {
@@ -60,7 +60,7 @@ describe("email codes", () => {
     const { accounts, advance } = makeAccounts();
     requestCode(accounts, "ada@example.com");
 
-    expect(accounts.requestEmailCode("ada@example.com")).toEqual({ ok: false, reason: "rate_limited", retryAfterSeconds: 60 });
+    expect(accounts.requestEmailCode("ada@example.com")).toEqual({ ok: false, reason: "rate_limited", limit: "interval", retryAfterSeconds: 60 });
 
     for (let send = 2; send <= 5; send += 1) {
       advance(61_000);
@@ -68,7 +68,7 @@ describe("email codes", () => {
     }
     advance(61_000);
     const limited = accounts.requestEmailCode("ada@example.com");
-    expect(limited.ok === false && limited.reason === "rate_limited").toBe(true);
+    expect(limited.ok === false && limited.reason === "rate_limited" && limited.limit === "hourly").toBe(true);
 
     advance(60 * 60 * 1000);
     expect(accounts.requestEmailCode("ada@example.com").ok).toBe(true);
@@ -126,5 +126,43 @@ describe("account deletion", () => {
     expect(accounts.email(first.userId)).toBeNull();
     expect(again.ok && again.userId).not.toBe(first.userId);
     expect(accounts.signInWithApple({ subject: "apple-1", email: null, emailVerified: false })).not.toBe(first.userId);
+  });
+});
+
+describe("App Review account", () => {
+  const review = reviewAccount("Review@Example.com", "246810")!;
+
+  function makeReviewAccounts() {
+    return new Accounts(memorySql(), () => Date.UTC(2026, 8, 28, 9, 0), review);
+  }
+
+  it("signs in with the fixed code and sends no email", () => {
+    const accounts = makeReviewAccounts();
+
+    const request = accounts.requestEmailCode("review@example.com");
+
+    expect(request).toEqual({ ok: true, code: "246810", deliver: false });
+    expect(accounts.verifyEmailCode("review@example.com", "246810").ok).toBe(true);
+  });
+
+  it("keeps the attempt limit on the fixed code", () => {
+    const accounts = makeReviewAccounts();
+    accounts.requestEmailCode("review@example.com");
+
+    for (let attempt = 0; attempt < 5; attempt++) accounts.verifyEmailCode("review@example.com", "000000");
+
+    expect(accounts.verifyEmailCode("review@example.com", "246810")).toEqual({ ok: false, reason: "too_many_attempts" });
+  });
+
+  it("leaves other addresses on random, delivered codes", () => {
+    const result = makeReviewAccounts().requestEmailCode("ada@example.com");
+
+    expect(result.ok && result.deliver).toBe(true);
+  });
+
+  it("is off unless both values are set and the code has six digits", () => {
+    expect(reviewAccount("review@example.com", undefined)).toBeNull();
+    expect(reviewAccount(undefined, "246810")).toBeNull();
+    expect(reviewAccount("review@example.com", "review")).toBeNull();
   });
 });

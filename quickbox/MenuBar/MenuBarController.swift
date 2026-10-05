@@ -13,12 +13,14 @@ final class MenuBarController: NSObject {
         popover.contentViewController = popoverContentViewController
 
         if let button = statusItem.button {
-            if let image = NSImage(systemSymbolName: "bird.fill", accessibilityDescription: Brand.name) {
+            // Template image from brand/make_icons.py, so the menu bar tints it for light and dark.
+            if let image = NSImage(named: "MenuBarIcon") {
                 image.isTemplate = true
+                image.accessibilityDescription = Brand.name
                 button.image = image
                 button.imagePosition = .imageOnly
             } else {
-                button.title = "QB"
+                button.title = Brand.name
             }
             button.toolTip = Brand.name
             button.target = self

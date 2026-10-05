@@ -4,7 +4,7 @@ import { appleConfig } from "../config";
 import { AppleSignInError, appleAuthorizeUrl, base64Url, isEmailVerified, redeemAppleCode } from "./apple";
 import { EmailDeliveryError, emailSender } from "./email";
 import { isFirstPartyClient } from "./firstParty";
-import { appleBridgePage, appSignInPage, codePage, consentPage, emailPage, messagePage } from "./pages";
+import { appleBridgePage, appSignInPage, codeLimitPage, codePage, consentPage, emailPage, messagePage, waitDescription } from "./pages";
 import { PRODUCT_NAME } from "../brand";
 
 /** The single scope: full access to the user's inbox. */
@@ -104,9 +104,13 @@ async function sendCode(request: Request, env: Env): Promise<Response> {
 
   const normalized = email.trim().toLowerCase();
   if (!result.ok) {
-    return html(codePage(state, normalized, `Please wait ${result.retryAfterSeconds} seconds before asking for another code.`));
+    return html(
+      result.limit === "hourly"
+        ? codeLimitPage(state, normalized, result.retryAfterSeconds)
+        : codePage(state, normalized, `We sent a code a moment ago. You can ask for another ${waitDescription(result.retryAfterSeconds)}.`),
+    );
   }
-  await sender.sendSignInCode(normalized, result.code);
+  if (result.deliver) await sender.sendSignInCode(normalized, result.code);
   return html(codePage(state, normalized));
 }
 

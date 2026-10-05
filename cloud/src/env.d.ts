@@ -12,4 +12,8 @@ interface Env {
   RESEND_API_KEY?: string;
   /** `"true"` prints sign-in codes to the console instead of emailing them. Local development only. */
   DEV_LOG_EMAIL_CODES?: string;
+
+  /** App Review sign-in: this address signs in with APP_REVIEW_CODE (six digits) and gets no email. */
+  APP_REVIEW_EMAIL?: string;
+  APP_REVIEW_CODE?: string;
 }

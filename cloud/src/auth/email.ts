@@ -29,7 +29,14 @@ export class ResendEmailSender implements EmailSender {
         text: `Your ${PRODUCT_NAME} sign-in code is ${code}.\n\nIt expires in 10 minutes. If you didn't try to sign in, you can ignore this email.`,
       }),
     });
-    if (!response.ok) throw new EmailDeliveryError(`Resend returned ${response.status}`);
+    if (!response.ok) {
+      // Resend explains rejections (unverified domain, key scope) in `message`; it never echoes the key.
+      const detail = await response
+        .json()
+        .then((body) => (body as { message?: unknown }).message)
+        .catch(() => undefined);
+      throw new EmailDeliveryError(`Resend returned ${response.status}${typeof detail === "string" ? `: ${detail}` : ""}`);
+    }
   }
 }
 
