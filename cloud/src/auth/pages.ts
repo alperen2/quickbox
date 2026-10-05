@@ -108,7 +108,30 @@ export function codePage(state: string, email: string, message?: string): string
     `<h1>Check your email</h1>
 <p>Enter the code we sent to <strong>${escapeHtml(email)}</strong>. It expires in 10 minutes.</p>
 ${message ? `<p class="warning">${escapeHtml(message)}</p>` : ""}
-<form method="post" action="/auth/email/verify?state=${encodeURIComponent(state)}">
+${codeForms(state, email)}`,
+  );
+}
+
+/** The address used up its codes for the hour: say so plainly instead of "check your email". */
+export function codeLimitPage(state: string, email: string, retryAfterSeconds: number): string {
+  return page(
+    "Too many codes",
+    `<h1>Too many codes</h1>
+<p>We've sent several codes to <strong>${escapeHtml(email)}</strong> in the last hour. You can ask for a new one ${escapeHtml(waitDescription(retryAfterSeconds))}.</p>
+<p>If you got a code in the last 10 minutes, you can still use it.</p>
+${codeForms(state, email)}`,
+  );
+}
+
+/** "in about 34 minutes", "in 45 seconds". */
+export function waitDescription(seconds: number): string {
+  if (seconds < 90) return `in ${seconds} second${seconds === 1 ? "" : "s"}`;
+  const minutes = Math.ceil(seconds / 60);
+  return `in about ${minutes} minutes`;
+}
+
+function codeForms(state: string, email: string): string {
+  return `<form method="post" action="/auth/email/verify?state=${encodeURIComponent(state)}">
   <input type="hidden" name="email" value="${escapeHtml(email)}">
   <label for="code">Code</label>
   <input id="code" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" required autofocus>
@@ -117,8 +140,7 @@ ${message ? `<p class="warning">${escapeHtml(message)}</p>` : ""}
 <form method="post" action="/auth/email/send?state=${encodeURIComponent(state)}">
   <input type="hidden" name="email" value="${escapeHtml(email)}">
   <button class="link">Send a new code</button>
-</form>`,
-  );
+</form>`;
 }
 
 /**

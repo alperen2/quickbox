@@ -13,7 +13,8 @@ export type EmailCodeRequest =
   /** `deliver` is false for the App Review account, whose code is known in advance. */
   | { ok: true; code: string; deliver: boolean }
   | { ok: false; reason: "invalid_email" }
-  | { ok: false; reason: "rate_limited"; retryAfterSeconds: number };
+  /** `interval`: a code went out under a minute ago. `hourly`: the address used up its sends for the hour. */
+  | { ok: false; reason: "rate_limited"; limit: "interval" | "hourly"; retryAfterSeconds: number };
 
 export type EmailCodeVerification =
   | { ok: true; userId: string }
@@ -93,10 +94,10 @@ export class Accounts {
     const windowOpen = previous !== undefined && now - previous.window_started_at < SEND_WINDOW_MS;
     const sendsInWindow = windowOpen ? previous.sends_in_window : 0;
     if (previous && now - previous.sent_at < RESEND_INTERVAL_MS) {
-      return { ok: false, reason: "rate_limited", retryAfterSeconds: secondsUntil(previous.sent_at + RESEND_INTERVAL_MS, now) };
+      return { ok: false, reason: "rate_limited", limit: "interval", retryAfterSeconds: secondsUntil(previous.sent_at + RESEND_INTERVAL_MS, now) };
     }
     if (windowOpen && sendsInWindow >= MAX_SENDS_PER_WINDOW) {
-      return { ok: false, reason: "rate_limited", retryAfterSeconds: secondsUntil(previous.window_started_at + SEND_WINDOW_MS, now) };
+      return { ok: false, reason: "rate_limited", limit: "hourly", retryAfterSeconds: secondsUntil(previous.window_started_at + SEND_WINDOW_MS, now) };
     }
 
     const isReview = email === this.review?.email;

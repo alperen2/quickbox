@@ -60,7 +60,7 @@ describe("email codes", () => {
     const { accounts, advance } = makeAccounts();
     requestCode(accounts, "ada@example.com");
 
-    expect(accounts.requestEmailCode("ada@example.com")).toEqual({ ok: false, reason: "rate_limited", retryAfterSeconds: 60 });
+    expect(accounts.requestEmailCode("ada@example.com")).toEqual({ ok: false, reason: "rate_limited", limit: "interval", retryAfterSeconds: 60 });
 
     for (let send = 2; send <= 5; send += 1) {
       advance(61_000);
@@ -68,7 +68,7 @@ describe("email codes", () => {
     }
     advance(61_000);
     const limited = accounts.requestEmailCode("ada@example.com");
-    expect(limited.ok === false && limited.reason === "rate_limited").toBe(true);
+    expect(limited.ok === false && limited.reason === "rate_limited" && limited.limit === "hourly").toBe(true);
 
     advance(60 * 60 * 1000);
     expect(accounts.requestEmailCode("ada@example.com").ok).toBe(true);
