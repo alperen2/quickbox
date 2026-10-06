@@ -1,0 +1,72 @@
+name: App Store Metadata
+
+# Pushes the store listing in fastlane/metadata and the screenshots in fastlane/screenshots
+# to App Store Connect, and attaches an uploaded build to the version. Submitting for review
+# is a separate, explicit choice.
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: "Version in App Store Connect (MARKETING_VERSION)"
+        required: true
+        default: "1.1.0"
+      build_number:
+        description: "Uploaded build to attach (CURRENT_PROJECT_VERSION)"
+        required: true
+        default: "9"
+      submit_for_review:
+        description: "Submit the version for App Review"
+        type: boolean
+        default: false
+      automatic_release:
+        description: "Release automatically once approved"
+        type: boolean
+        default: true
+
+jobs:
+  metadata:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Prepare credentials
+        env:
+          KEY_ID: ${{ secrets.APPSTORE_CONNECT_API_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APPSTORE_CONNECT_API_ISSUER_ID }}
+          PRIVATE_KEY: ${{ secrets.APPSTORE_CONNECT_API_PRIVATE_KEY }}
+          APP_REVIEW_CODE: ${{ secrets.APP_REVIEW_CODE }}
+        run: |
+          for name in KEY_ID ISSUER_ID PRIVATE_KEY APP_REVIEW_CODE; do
+            [[ -n "${!name}" ]] || { echo "Missing secret for $name" >&2; exit 1; }
+          done
+          python3 - <<'PY'
+          import json, os
+          key = {"key_id": os.environ["KEY_ID"], "issuer_id": os.environ["ISSUER_ID"],
+                 "key": os.environ["PRIVATE_KEY"], "in_house": False}
+          path = os.path.join(os.environ["RUNNER_TEMP"], "asc-api-key.json")
+          with open(path, "w") as f:
+              json.dump(key, f)
+          os.chmod(path, 0o600)
+          PY
+          # The review sign-in code lives only in secrets; deliver reads it from this file.
+          printf '%s\n' "$APP_REVIEW_CODE" > fastlane/metadata/review_information/demo_password.txt
+
+      - name: Upload listing and attach build
+        run: |
+          fastlane deliver \
+            --api_key_path "$RUNNER_TEMP/asc-api-key.json" \
+            --app_identifier alperen.quickbox.appstore \
+            --platform osx \
+            --app_version "${{ inputs.app_version }}" \
+            --build_number "${{ inputs.build_number }}" \
+            --skip_binary_upload true \
+            --overwrite_screenshots true \
+            --submit_for_review "${{ inputs.submit_for_review }}" \
+            --automatic_release "${{ inputs.automatic_release }}" \
+            --submission_information '{"export_compliance_uses_encryption": false, "add_id_info_uses_idfa": false}' \
+            --run_precheck_before_submit false \
+            --force true
+
+      - name: Remove credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/asc-api-key.json" fastlane/metadata/review_information/demo_password.txt

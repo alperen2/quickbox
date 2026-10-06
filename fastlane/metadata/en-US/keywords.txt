@@ -1,0 +1,1 @@
+todo,tasks,markdown,ai agents,claude,chatgpt,mcp,quick capture,menu bar,inbox,productivity

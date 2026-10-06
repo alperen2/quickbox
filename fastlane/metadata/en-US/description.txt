@@ -1,0 +1,22 @@
+Pigeon is a quick-capture inbox for you and your AI agents.
+
+Press ⌘⇧Space anywhere, type a thought, and get back to work. Pigeon saves it as a task line in a plain Markdown file, in a folder you choose. Open your tasks in any editor and sync them however you like.
+
+WORK WITH YOUR AI AGENTS
+Turn on the optional Pigeon Cloud and connect Claude, ChatGPT or any MCP client. Tag a task for:agent and your agent picks it up. When it needs you to review, approve or send something, it adds a task for you, so the next step lands in your inbox. It works with the AI subscription you already have.
+
+CAPTURE IN A SECOND
+• A Spotlight-style panel from anywhere with a global shortcut
+• Priorities (!1–!3), @projects and #tags as you type
+• Natural dates: due:tomorrow, due:next friday, defer:in 3 days
+• Autocomplete for your tags and projects
+
+LIGHT TRIAGE, NOT A TASK MANAGER
+• See today's tasks from the menu bar
+• Check off, edit or delete, with undo
+• Jump between days with a calendar
+
+YOUR DATA, YOUR FILES
+• Tasks are plain Markdown lines you own
+• Pigeon Cloud is off until you connect it, and you can delete your cloud account and data at any time
+• No tracking, no ads
