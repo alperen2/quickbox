@@ -30,3 +30,7 @@ When enabled, diagnostics include technical metadata only (version, OS, operatio
 - With Pigeon Cloud connected, your email address and task content are stored to provide sync and agent access. They are linked to your account, never used for tracking, and deleted with the account.
 - Crash diagnostics are optional and controlled by the user.
 - Privacy manifest is provided via `quickbox/PrivacyInfo.xcprivacy`.
+
+## Contact
+
+Questions about your data or a deletion request: [support@usepigeon.cc](mailto:support@usepigeon.cc).

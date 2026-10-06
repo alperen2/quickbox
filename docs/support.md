@@ -2,6 +2,7 @@
 
 Need help with Pigeon? Use one of these support channels:
 
+- Email: [support@usepigeon.cc](mailto:support@usepigeon.cc)
 - Open a support request on GitHub: [github.com/alperen2/quickbox/issues/new](https://github.com/alperen2/quickbox/issues/new)
 - Review common setup and troubleshooting: [FAQ](/faq), [Settings](/settings), and [Usage](/usage)
 - Report security-sensitive issues privately through GitHub Security Advisories: [github.com/alperen2/quickbox/security/advisories/new](https://github.com/alperen2/quickbox/security/advisories/new)
