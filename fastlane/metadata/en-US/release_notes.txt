@@ -1,0 +1,7 @@
+Quickbox is now Pigeon.
+
+• Connect Claude, ChatGPT or any MCP client through the optional Pigeon Cloud. Your agents pick up tasks meant for them and hand the next step back to you.
+• Sync your tasks across your devices with Pigeon Cloud.
+• A fresh icon, menu bar icon and look.
+
+Your tasks stay plain Markdown files in your folder.

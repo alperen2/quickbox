@@ -27,3 +27,5 @@ docs/.vitepress/dist/
 # Swift packages
 Packages/*/.build/
 Packages/*/.swiftpm/
+fastlane/metadata/review_information/demo_password.txt
+fastlane/report.xml

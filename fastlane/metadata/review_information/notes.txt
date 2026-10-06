@@ -1,0 +1,5 @@
+Pigeon is a menu bar capture app. Press Command-Shift-Space (or click the menu bar icon) to open the capture panel. On first launch, choose any folder; tasks are saved there as Markdown files.
+
+Pigeon Cloud is optional. To try it: Settings > Pigeon Cloud > Connect > Continue with email. Use the demo account above. The "password" is the six-digit sign-in code: no email is sent to this address, so enter the code directly.
+
+Account deletion: Settings > Pigeon Cloud > Delete account... permanently deletes the account and its cloud data.
