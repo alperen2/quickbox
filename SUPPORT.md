@@ -2,6 +2,7 @@
 
 ## Where to Ask for Help
 
+- Email support@usepigeon.cc
 - Open a GitHub issue for bugs and feature requests
 - Use Discussions (if enabled) for usage questions
 
