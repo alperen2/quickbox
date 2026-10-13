@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { BRAND_MARK_SVG } from "../src/auth/brandMark";
-import { codeLimitPage, messagePage, waitDescription } from "../src/auth/pages";
+import { ACCOUNT_HINT, codeLimitPage, codePage, emailPage, messagePage, waitDescription } from "../src/auth/pages";
 
 describe("sign-in pages", () => {
   it("inline the logo mark exactly as brand/pigeon-mark.svg", () => {
@@ -24,6 +24,17 @@ describe("sign-in pages", () => {
     expect(html).toContain("<h1>Too many codes</h1>");
     expect(html).toContain("in about 34 minutes");
     expect(html).not.toContain("Check your email");
+  });
+
+  it("warn that a different email opens a separate inbox, without revealing which addresses have one", () => {
+    expect(emailPage("state-1")).toContain(ACCOUNT_HINT);
+  });
+
+  it("offer to switch addresses before the code is entered", () => {
+    const html = codePage("state 1", "ada@example.com");
+
+    expect(html).toContain("<strong>ada@example.com</strong>");
+    expect(html).toContain('<a href="/auth/email?state=state%201">Use another email</a>');
   });
 
   it("describe short and long waits", () => {

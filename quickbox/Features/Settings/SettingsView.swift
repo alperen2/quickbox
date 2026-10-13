@@ -363,6 +363,11 @@ private struct CloudSyncCard: View {
         .task(id: cloudSync.isConnected) {
             await cloudSync.refreshAccount()
         }
+        // The window is reused, so `.task` runs only once. Coming back to the app (for example
+        // after connecting an agent in the browser) reloads the account and its connected apps.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await cloudSync.refreshAccount() }
+        }
         .confirmationDialog("Delete your \(Brand.cloudName) account?", isPresented: $isConfirmingDeletion) {
             Button("Delete account and cloud data", role: .destructive) {
                 run { await cloudSync.deleteAccount() }

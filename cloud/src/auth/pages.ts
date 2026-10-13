@@ -17,6 +17,7 @@ main { width:100%; max-width:420px; background:var(--card); border:1px solid var
 h1 { font-size:20px; margin:0 0 12px; }
 p { margin:0 0 12px; color:var(--muted); }
 strong { color:var(--text); }
+a { color:var(--accent); }
 .warning { color:var(--danger); }
 form { margin:0; }
 label { display:block; font-size:14px; margin:16px 0 6px; }
@@ -88,11 +89,18 @@ ${signInButtons(handle, methods, "Don't allow")}`,
   );
 }
 
+/**
+ * Each email address is its own account, so a second address silently opens a second, empty
+ * inbox. Shown to everyone: saying whether an address already has an account would reveal it.
+ */
+export const ACCOUNT_HINT = `Use the same email on every device and agent. A different address opens a separate ${PRODUCT_NAME} inbox.`;
+
 export function emailPage(state: string, message?: string): string {
   return page(
     `Sign in to ${PRODUCT_NAME}`,
     `<h1>Sign in with email</h1>
 <p>We'll send you a 6-digit code.</p>
+<p>${ACCOUNT_HINT}</p>
 ${message ? `<p class="warning">${escapeHtml(message)}</p>` : ""}
 <form method="post" action="/auth/email/send?state=${encodeURIComponent(state)}">
   <label for="email">Email</label>
@@ -107,6 +115,7 @@ export function codePage(state: string, email: string, message?: string): string
     "Enter your code",
     `<h1>Check your email</h1>
 <p>Enter the code we sent to <strong>${escapeHtml(email)}</strong>. It expires in 10 minutes.</p>
+<p>Not the address you use with ${PRODUCT_NAME}? <a href="/auth/email?state=${encodeURIComponent(state)}">Use another email</a>.</p>
 ${message ? `<p class="warning">${escapeHtml(message)}</p>` : ""}
 ${codeForms(state, email)}`,
   );
